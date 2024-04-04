@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# @author: Louis Rossignol
+from tqdm import tqdm
+import torch
+import numpy as np
+import pandas as pd
+
+path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+resolution = 512
+number_of_n2 = 10
+number_of_puiss = 1
+num_epochs = 60
+learning_rate = 0.001
+batch_size = 20
+accumulation_steps = 5
+n2_label_clean = np.tile(np.arange(0, number_of_n2), number_of_puiss)
+n2_label_noisy = np.repeat(n2_label_clean, 23)
+
+
+backend = "GPU"
+if backend == "GPU":
+    device = torch.device("cuda:0")
+else:
+    device = torch.device("cpu")
+
+data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap"]
+
+
+data_type_results = {}
+for data_types_index in range(5):
+
+    model_result = {}
+    for model_index in range(2, 6):
+        
+        model_version =  f"model_resnetv{model_index}_1powers"
+
+        noise_dict = {}
+        for noisy in ["noise","no_noise"]:
+
+            noise_list = {}
+            puiss_list_accuracy = []
+            puiss_list_index_error = []
+            for puiss in tqdm(np.linspace(0.02, .5001, 10), position=4,desc="Iteration", leave=False):
+                
+                stamp = f"{noisy}_power{str(puiss)[:4]}_{data_types[data_types_index]}_{model_version}"
+                new_path = f"{path}/{stamp}_training"
+
+                f = open(f'{new_path}/testing.txt', 'r')
+
+                count = 0
+                for line in f.readlines():
+                    if "TESTING" in line:
+                        break
+                    count += 1
+                f.close()
+
+                f = open(f'{new_path}/testing.txt', 'r')
+                lines = f.readlines()
+                accuracy = lines[count+2].split(" ")[-1].split("%")[0]
+                puiss_list_accuracy.append(float(accuracy))
+                if len(accuracy) == len("100.00"):
+                    puiss_list_index_error.append(0)
+                else:
+                    puiss_list_index_error.append(float(lines[count+13].split(" ")[-1].split("\n")[0]))
+                f.close
+            noise_list["accuracy"] = puiss_list_accuracy
+            noise_list["index_error"] = puiss_list_index_error 
+                
+            noise_dict[noisy] = noise_list 
+        model_result[model_version] = noise_dict
+    data_type_results[data_types[data_types_index]] = model_result
+
+df = pd.DataFrame.from_dict(data_type_results, orient="columns")
+df.to_json(f'{path}/model_analysis_1power.json')            
+                
+                
