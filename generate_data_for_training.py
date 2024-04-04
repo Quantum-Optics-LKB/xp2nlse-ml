@@ -100,30 +100,30 @@ def from_gaussian(
     return np.ones((number_of_n2,number_of_power,number_of_isat, resolution_in, resolution_in), dtype=precision) * np.exp(-(XX**2 + YY**2) / (waist**2))
 
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
-resolution_in = 1024
+resolution_in = 512
 resolution_out = 512
 
-number_of_n2 = 5
-number_of_power = 3
-number_of_isat = 5
+number_of_n2 = 10
+number_of_power = 10
+number_of_isat = 10
 
 is_from_image = True
-visualize = True
-expension = False
+visualize = False
+expension = True
 generate = True
 precision = np.complex64
 delta_z = 1e-5
 trans = 0.01
 length = 20e-2
-factor_window = 10
+factor_window = 13
 
-n2_values = np.linspace(-3.25e-11, -7.75e-11, number_of_n2)#np.linspace(-1e-11, -1e-10, number_of_n2)
+n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
 n2_labels = np.arange(0, number_of_n2)
 
 power_values = np.linspace(.02, 0.5001, number_of_power)
 power_labels = np.arange(0, number_of_power)
 
-isat_values = np.linspace(1e5, 5e5, number_of_isat)
+isat_values = np.linspace(1e4, 1e6, number_of_isat)
 isat_labels = np.arange(0, number_of_isat)
 
 N2_values, POWER_values, ISAT_values = np.meshgrid(n2_values,power_values, isat_values,) 

@@ -163,19 +163,9 @@ class Inception_ResNet_C(nn.Module):
             return self.relu(x + self.scale * x_res)
         return x + self.scale * x_res
 
-class PowerTransformation(nn.Module):
-    def __init__(self, power_dim, feature_dim):
-        super(PowerTransformation, self).__init__()
-        self.fc_scale = nn.Linear(power_dim, feature_dim)
-        self.fc_shift = nn.Linear(power_dim, feature_dim)
-
-    def forward(self, power):
-        scale = self.fc_scale(power) + 1  # +1 to ensure the scale starts as neutral
-        shift = self.fc_shift(power)
-        return scale, shift
 
 class Inception_ResNetv2(nn.Module):
-    def __init__(self, in_channels=2, class_power=10, class_n2=10, batch_size =6, k=256, l=256, m=384, n=384):
+    def __init__(self, in_channels, class_isat, class_n2, class_power, batch_size, k=256, l=256, m=384, n=384):
         super(Inception_ResNetv2, self).__init__()
         blocks = []
         blocks.append(Stem(in_channels))
@@ -191,22 +181,14 @@ class Inception_ResNetv2(nn.Module):
         self.features = nn.Sequential(*blocks)
         self.conv = Conv2d(2080, 1536, 1, stride=1, padding=0, bias=False)
         self.global_average_pooling = nn.AdaptiveAvgPool2d((1, 1))
-
-        self.power_transform = PowerTransformation(1, feature_dim=1536)
-
-        self.linear_power = nn.Linear(1536, class_power)
         self.linear_n2 = nn.Linear(1536, class_n2)
+        self.linear_isat = nn.Linear(1536, class_isat)
 
     def forward(self, x, power):
         x = self.features(x)
         x = self.conv(x)
         x = self.global_average_pooling(x)
         x = x.view(x.size(0), -1)
-
-        scale, shift = self.power_transform(power.view(power.size(0), -1))
-    
-        x = x * scale + shift
-    
-        x_power = self.linear_power(x)#nn.functional.softmax(self.linear_power(x), dim=1)
         x_n2 = self.linear_n2(x)
-        return x_n2, x_power
+        x_isat = self.linear_isat(x)
+        return x_n2, x_isat

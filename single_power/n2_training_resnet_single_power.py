@@ -3,51 +3,7 @@
 # @author: Louis Rossignol
 import torch
 import numpy as np
-from field_dataset import FieldDataset
-from torch.utils.data import DataLoader
-import torch.optim 
-
-def data_split(E, n2_labels, puiss_labels, puiss_values, train_ratio=0.8, validation_ratio=0.1, test_ratio=0.1):
-    # Ensure the ratios sum to 1
-    assert train_ratio + validation_ratio + test_ratio == 1
-    
-    np.random.seed(0)
-    indices = np.arange(E.shape[0])
-    np.random.shuffle(indices)
-        
-    input = E[indices,:,:,:]
-    n2label = n2_labels[indices]
-    puisslabel = puiss_labels[indices]
-    puissvalues= puiss_values[indices]
-    
-    # Calculate split indices
-    train_index = int(len(indices) * train_ratio)
-    validation_index = int(len(indices) * (train_ratio + validation_ratio))
-    
-    # Split the datasets
-    train = input[:train_index]
-    validation = input[train_index:validation_index]
-    test = input[validation_index:]
-    
-    train_n2_label = n2label[:train_index]
-    validation_n2_label = n2label[train_index:validation_index]
-    test_n2_label = n2label[validation_index:]
-
-    train_puiss_label = puisslabel[:train_index]
-    validation_puiss_label = puisslabel[train_index:validation_index]
-    test_puiss_label = puisslabel[validation_index:]
-
-    train_puiss_value = puissvalues[:train_index]
-    validation_puiss_value = puissvalues[train_index:validation_index]
-    test_puiss_value = puissvalues[validation_index:]
-
-    return (train, train_n2_label, train_puiss_label,train_puiss_value), (validation, validation_n2_label, validation_puiss_label,validation_puiss_value), (test, test_n2_label, test_puiss_label,test_puiss_value)
-
-def data_treatment(myset, n2label,puissvalue, puisslabel, batch_size, device, training):
-    fieldset = FieldDataset(myset,puissvalue, puisslabel, n2label, training, device)
-    fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
-
-    return fieldloader
+import torch.optim
 
 def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, device, accumulation_steps, backend):
     loss_list = np.zeros(num_epochs)

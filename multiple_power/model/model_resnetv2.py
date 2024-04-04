@@ -42,24 +42,21 @@ class Stem(nn.Module):
             nn.MaxPool2d(3, stride=2, padding=0), # 73 x 73 x 64
             Conv2d(64, 80, 1, stride=1, padding=0, bias=False), # 73 x 73 x 80
             Conv2d(80, 192, 3, stride=1, padding=0, bias=False), # 71 x 71 x 192
-            nn.MaxPool2d(3, stride=2, padding=0), # 35 x 35 x 192 -> 192 x 61 x 61
-            Conv2d(192, 210, 1, stride=1, padding=0, bias=False), # 73 x 73 x 80
-            Conv2d(210, 400, 3, stride=1, padding=0, bias=False), # 71 x 71 x 192
             nn.MaxPool2d(3, stride=2, padding=0), # 35 x 35 x 192
         )
-        self.branch_0 = Conv2d(400,  96, 1, stride=1, padding=0, bias=False)
+        self.branch_0 = Conv2d(192,  96, 1, stride=1, padding=0, bias=False)
         self.branch_1 = nn.Sequential(
-            Conv2d(400, 48, 1, stride=1, padding=0, bias=False),
+            Conv2d(192, 48, 1, stride=1, padding=0, bias=False),
             Conv2d(48, 64, 5, stride=1, padding=2, bias=False),
         )
         self.branch_2 = nn.Sequential(
-            Conv2d(400, 64, 1, stride=1, padding=0, bias=False),
+            Conv2d(192, 64, 1, stride=1, padding=0, bias=False),
             Conv2d(64, 96, 3, stride=1, padding=1, bias=False),
             Conv2d(96, 96, 3, stride=1, padding=1, bias=False),
         )
         self.branch_3 = nn.Sequential(
             nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
-            Conv2d(400, 64, 1, stride=1, padding=0, bias=False)
+            Conv2d(192, 64, 1, stride=1, padding=0, bias=False)
         )
     def forward(self, x):
         x = self.features(x)
@@ -165,7 +162,7 @@ class Inception_ResNet_C(nn.Module):
 
 
 class Inception_ResNetv2(nn.Module):
-    def __init__(self, in_channels=2, class_power=10, class_n2=10,batch_size=6, k=256, l=256, m=384, n=384):
+    def __init__(self, in_channels, class_isat, class_n2, class_power, batch_size, k=256, l=256, m=384, n=384):
         super(Inception_ResNetv2, self).__init__()
         blocks = []
         blocks.append(Stem(in_channels))
@@ -181,18 +178,16 @@ class Inception_ResNetv2(nn.Module):
         self.features = nn.Sequential(*blocks)
         self.conv = Conv2d(2080, 1536, 1, stride=1, padding=0, bias=False)
         self.global_average_pooling = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear_power = nn.Linear(1536 + 1, class_power)
-        self.linear_n2 = nn.Linear(1536 + 1, class_n2)
+        self.linear_power = nn.Linear(1536, class_power)
+        self.linear_n2 = nn.Linear(1536, class_n2)
+        self.linear_isat = nn.Linear(1536, class_isat)
 
     def forward(self, x, power):
         x = self.features(x)
         x = self.conv(x)
         x = self.global_average_pooling(x)
         x = x.view(x.size(0), -1)
-        power = power.view(power.size(0), -1)
-
-        x = torch.cat((x, power), dim=1)
-        
-        x_power = self.linear_power(x)#nn.functional.softmax(self.linear_power(x), dim=1)
+        x_power = self.linear_power(x)
         x_n2 = self.linear_n2(x)
-        return x_n2, x_power
+        x_isat = self.linear_isat(x)
+        return x_n2, x_power, x_isat

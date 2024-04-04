@@ -4,23 +4,9 @@
 from matplotlib import pyplot as plt
 import torch
 import numpy as np
-import torch.nn as nn
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
-from data_creator_2D_cupy import normalize_data
-
-def network_init(learning_rate, channels, class_n2, class_power,batch, index_power):
-    
-    # weights = torch.from_numpy(create_1d_gradient_filter(class_power, index_power))
-    cnn = Inception_ResNetv2(in_channels=channels, batch_size=batch,class_n2=class_n2, class_power=class_power)
-    weight_decay = 1e-5
-    criterion = nn.CrossEntropyLoss()#, nn.CrossEntropyLoss(weight=weights)]#[nn.CrossEntropyLoss(), nn.MSELoss()]
-    optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True)
-
-    return cnn, optimizer, criterion, scheduler
-
+from nlse_generator import normalize_data
 
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 resolution = 512
