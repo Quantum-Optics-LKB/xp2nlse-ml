@@ -4,7 +4,10 @@
 
 import numpy as np
 
-def salt_and_pepper_noise(data: np.ndarray, noise_level: float) -> np.ndarray:
+def salt_and_pepper_noise(
+        data: np.ndarray,
+        noise_level: float
+        ) -> np.ndarray:
     """
     Adds salt and pepper noise to the given data.
 
@@ -27,7 +30,12 @@ def salt_and_pepper_noise(data: np.ndarray, noise_level: float) -> np.ndarray:
     noisy_data[salt_pepper == 1] = np.max(data)  # salt (white)
     return noisy_data
 
-def line_noise(image: np.ndarray, num_lines: int, amplitude: float, angle: float) -> np.ndarray:
+def line_noise(
+        image: np.ndarray,
+        num_lines: int, 
+        amplitude: float, 
+        angle: float
+        ) -> np.ndarray:
     """
     Applies a pattern of lines at a specified angle across the image.
 

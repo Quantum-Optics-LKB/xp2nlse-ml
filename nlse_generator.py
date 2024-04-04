@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
+
 from NLSE import NLSE
 from tqdm import tqdm
 import numpy as np
@@ -8,11 +9,10 @@ import cupy as cp
 from scipy.constants import c, epsilon_0
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
-
 from noise_generator import line_noise, salt_and_pepper_noise
 
 
-def create(
+def data_creation(
     input_field: np.ndarray,
     window: float,
     n2_values: np.ndarray,
@@ -21,28 +21,41 @@ def create(
     resolution_in: int,
     resolution_out: int,
     delta_z:float,
+    trans: float,
+    L: float,
     path: str = None,
     ) -> np.ndarray:
     """
-    Generates a sequence of a certain number of frames (number_of_frames) for each n2 (number_of_n2)
-    from [-1e-8 ; -1e-9] where each frame a certain resolution (resolution) and stores the data 
-    in an array of shape (n2_num, frame_num, resolution)
+    Simulates the nonlinear Schrödinger equation (NLSE package) propagation of an input field over a distance L, 
+    considering various nonlinear refractive index (n2), power, and saturation intensity (Isat) values. 
+    It generates and optionally saves the output field's amplitude and phase (both wrapped and unwrapped) 
+    at a specified resolution.
 
-    Args:
-        number_of_n2 (int): number of different n2.
-        resolution (int): resolution of the 1d array.
-        full (bool): checks if we want the full sequence or just beginning and start. (Default to True)
-        number_of_frames (int): number of frames per n2. (Default to 2 when full == False)
-        extend (bool): checks if we want to add data with noise. (Default to False)
-        extension (int): number of extensions per n2 (Default to 0)
-        path (str): path of directory in which the data is saved. (Default to None)
+    Parameters:
+    - input_field (np.ndarray): The input optical field as a 2D numpy array.
+    - window (float): The spatial extent of the simulation window in meters.
+    - n2_values (np.ndarray): An array of nonlinear refractive index (n2) values to simulate.
+    - power_values (np.ndarray): An array of optical power values to simulate.
+    - isat_values (np.ndarray): An array of saturation intensities (Isat) to simulate.
+    - resolution_in (int): The resolution of the input field (assumed to be square).
+    - resolution_out (int): The desired resolution of the output fields (assumed to be square).
+    - delta_z (float): The step size in meters for the simulation propagation.
+    - trans (float): The transmission coefficient for the medium.
+    - L (float): The total propagation distance in meters.
+    - path (str, optional): The file path for saving the output arrays. If None, arrays are not saved.
+
     Returns:
-        The complete data set
-    """
-    #NLSE parameters
-    trans = 0.01
-    L = 20e-2
+    - np.ndarray: A 4D numpy array containing the simulation results for all combinations of n2, power, 
+      and Isat values. The dimensions are [n2*power*Isat, 3, resolution_out, resolution_out], where 
+      the second dimension corresponds to the output amplitude, phase, and unwrapped phase fields.
 
+    This function uses GPU acceleration (via CuPy) for NLSE simulation and post-processing. It calculates 
+    the nonlinear propagation using specified parameters, then resizes the output to the desired resolution, 
+    and normalizes the data. If a path is provided, it saves the output arrays in the specified directory 
+    with a naming convention that reflects the simulation parameters.
+    """
+    
+    #NLSE parameters
     number_of_power = len(power_values)
     number_of_n2 = len(n2_values)
     number_of_isat = len(isat_values)
@@ -101,7 +114,7 @@ def create(
         np.save(f'{path}/Es_w{E_all.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all', E_all)
     return E_all
 
-def expend(
+def data_augmentation(
     number_of_n2: int, 
     number_of_power: int,
     number_of_isat: int,
@@ -111,20 +124,37 @@ def expend(
     path: str = None, 
     ) -> np.ndarray:
     """
-    From data in a array of shape (n2_num, frame_num, resolution), take the sequence for each n2
-    and add a certain amount of noisy extra datasets for each n2 (number_of_extra) and return it
-    or save.
+    Applies data augmentation techniques to a set of input data arrays representing optical fields. 
+    This augmentation includes adding salt-and-pepper noise, line noise at various angles, and 
+    creating multiple instances with different noise intensities. The function aims to increase 
+    the robustness of machine learning models by providing a more diverse training dataset.
 
-    Args:
-        number_of_n2 (int): number of different n2.
-        number_of_frames (int): number of frames per n2.
-        resolution (int): resolution of the 1d array.
-        number_of_extra (int): number of extra datasets for each n2,
-        noise_level (float): amount of noise added,
-        path (str): path of directory in which the data is saved. (Default to None)
-        data (np.ndarray): an array of shape (n2_num, frame_num, resolution) (Default to None)
+    Parameters:
+    - number_of_n2 (int): The number of different nonlinear refractive index (n2) values used in the simulation.
+    - number_of_power (int): The number of different power levels used in the simulation.
+    - number_of_isat (int): The number of different saturation intensities (Isat) used in the simulation.
+    - power (int): The specific power value for which the augmentation is being done. If set to 0, 
+      it assumes augmentation across all power levels.
+    - E (np.ndarray): The input data array to be augmented. Expected shape is 
+      [n2*power*Isat, channels, resolution, resolution], where channels typically include amplitude, 
+      phase, and unwrapped phase information.
+    - noise_level (float): The base level of noise to be applied. This function will also apply a 
+      noise level ten times greater as part of the augmentation.
+    - path (str, optional): The file path for saving the augmented data arrays. If None, data arrays 
+      are not saved. The saved filename reflects the augmentation parameters.
+
     Returns:
-        The complete dataset
+    - np.ndarray: An augmented data array with an increased number of samples due to applied 
+      augmentations. The shape of the array is determined by the augmentation factors applied to 
+      the original dataset.
+
+    The function iterates over each channel in the input data array, applying noise and line noise 
+    augmentations at various intensities and angles. The augmented data significantly increases 
+    the dataset size, enhancing the potential diversity for training purposes. The augmentation 
+    parameters include a fixed set of angles (0 to 90 degrees at intervals), two levels of 
+    salt-and-pepper noise based on the provided noise_level, and line noise with a predefined 
+    set of line densities. If a save path is provided, the augmented dataset is saved using numpy's 
+    .npy format, with filenames that reflect the simulation and augmentation parameters.
     """
     angles = np.linspace(0, 90, 5)
     noises = [noise_level, noise_level*10] 
@@ -153,21 +183,30 @@ def expend(
             np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data)
     return augmented_data
 
-def normalize_data(data):
+def normalize_data(
+        data: np.ndarray
+        ) -> np.ndarray:
     """
-    Normalize the data by applying channel-wise normalization.
+    Normalizes the data in each channel of a multi-channel dataset to a range of [0, 1]. 
+    This is done individually for each data array (e.g., image or field) across all channels, 
+    by subtracting the minimum value and dividing by the range of the data.
 
     Parameters:
-    data (np.ndarray): The input data array of shape (N, C, H, W) where
-                       N is the number of images,
-                       C is the number of channels (expected to be 4 in this case),
-                       H is the height,
-                       W is the width.
+    - data (np.ndarray): A multi-dimensional numpy array where the first dimension is considered 
+      as different data samples (e.g., images), and the second dimension as different channels 
+      (e.g., RGB channels, amplitude/phase in optical fields, etc.). The last two dimensions are 
+      considered the spatial dimensions of the data.
 
     Returns:
-    np.ndarray: The normalized data with the same shape as input.
-    """
+    - np.ndarray: A numpy array of the same shape as the input, containing the normalized data. 
+      Each element in the array is a float64 representing the normalized value of that data point, 
+      ensuring that each channel of each data sample has values scaled between 0 and 1.
 
+    The normalization process enhances the numerical stability of algorithms processing the data 
+    and is often a prerequisite step for machine learning model inputs. This function ensures that 
+    each channel of each data sample is independently normalized, making it suitable for diverse 
+    datasets with varying ranges of values across samples or channels.
+    """
     normalized_data = np.zeros_like(data, dtype=np.float64)
     
     for ch in range(data.shape[1]):

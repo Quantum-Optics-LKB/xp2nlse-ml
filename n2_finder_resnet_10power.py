@@ -52,19 +52,19 @@ puiss_value_noisy = (np.repeat(puiss_value_clean, 23) - 0.02 ) / (0.5 - 0.02)
 count = 0
 for model_index in tqdm(range(4, 6), position=4,desc="Iteration", leave=False):
     if model_index == 2:
-        from model_resnetv2 import Inception_ResNetv2
+        from model.multi_power.model_resnetv2 import Inception_ResNetv2
     elif model_index == 3:
-        from model_resnetv3 import Inception_ResNetv2
+        from model.multi_power.model_resnetv3 import Inception_ResNetv2
     elif model_index == 4:
-        from model_resnetv4 import Inception_ResNetv2
+        from model.multi_power.model_resnetv4 import Inception_ResNetv2
     elif model_index == 5:
-        from model_resnetv5 import Inception_ResNetv2
+        from model.multi_power.model_resnetv5 import Inception_ResNetv2
 
     for data_types_index in range(5):
         for noisy in ["noise","no_noise"]:
             count += 1
             
-            model_version =  str(Inception_ResNetv2).split('.')[0][8:]
+            model_version =  str(Inception_ResNetv2).split('.')[-2]
             stamp = f"{noisy}_{data_types[data_types_index]}_{model_version}"
             
             if not os.path.isdir(f"{path}/{stamp}_training"):

@@ -12,6 +12,7 @@ from n2_test_resnet_1powers import count_parameters_pandas, test_model_classific
 from n2_training_resnet_1powers import data_split, data_treatment, network_training
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 def network_init(learning_rate, channels, class_n2, class_power,batch, index_power):
     
     # weights = torch.from_numpy(create_1d_gradient_filter(class_power, index_power))
@@ -55,13 +56,13 @@ for puiss in tqdm(np.linspace(0.02, .5001, 10), position=4,desc="Iteration", lea
     puiss_index += 1
     for model_index in range(2, 6):
         if model_index == 2:
-            from model_resnetv2_1powers import Inception_ResNetv2
+            from model.single_power.model_resnetv2_1powers import Inception_ResNetv2
         elif model_index == 3:
-            from model_resnetv3_1powers import Inception_ResNetv2
+            from model.single_power.model_resnetv3_1powers import Inception_ResNetv2
         elif model_index == 4:
-            from model_resnetv4_1powers import Inception_ResNetv2
+            from model.single_power.model_resnetv4_1powers import Inception_ResNetv2
         elif model_index == 5:
-            from model_resnetv5_1powers import Inception_ResNetv2
+            from model.single_power.model_resnetv5_1powers import Inception_ResNetv2
 
         for data_types_index in range(5):
             for noisy in ["noise","no_noise"]:
