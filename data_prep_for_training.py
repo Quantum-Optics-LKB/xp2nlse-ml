@@ -11,8 +11,9 @@ import torch.optim
 def data_split(
         E: np.ndarray, 
         n2_labels: np.ndarray, 
-        puiss_labels: np.ndarray, 
-        puiss_values: np.ndarray, 
+        power_labels: np.ndarray,
+        isat_labels: np.ndarray,
+        power_values: np.ndarray, 
         train_ratio: float = 0.8, 
         validation_ratio: float = 0.1, 
         test_ratio: float = 0.1
@@ -22,15 +23,16 @@ def data_split(
 
     This function randomly shuffles the dataset and then splits it according to the provided 
     proportions for training, validation, and testing. It ensures that the split is performed 
-    across all provided arrays (E, n2_labels, puiss_labels, puiss_values) to maintain consistency 
+    across all provided arrays (E, n2_labels, power_labels, power_values) to maintain consistency 
     between data points and their corresponding labels.
 
     Parameters:
     - E (np.ndarray): The dataset array containing the features, expected to be of shape 
       [num_samples, num_channels, height, width].
     - n2_labels (np.ndarray): Array of n2 labels for each data sample.
-    - puiss_labels (np.ndarray): Array of power (puissance) labels for each data sample.
-    - puiss_values (np.ndarray): Array of power values for each data sample.
+    - power_labels (np.ndarray): Array of power labels for each data sample.
+    - isat_labels (np.ndarray): Array of isat labels for each data sample.
+    - power_values (np.ndarray): Array of power values for each data sample.
     - train_ratio (float, optional): Proportion of the dataset to include in the train split. 
       Default is 0.8.
     - validation_ratio (float, optional): Proportion of the dataset to include in the validation 
@@ -41,12 +43,12 @@ def data_split(
     Returns:
     tuple of tuples: Each tuple contains four np.ndarrays corresponding to one of the splits 
     (train, validation, test). Each of these tuples contain the split's data (E), n2 labels, 
-    power labels (puiss_labels), and power values (puiss_values), in that order.
+    power labels (power_labels), and power values (power_values), in that order.
 
     Example Usage:
-        (train_data, train_n2, train_puiss_label, train_puiss_value), 
-        (val_data, val_n2, val_puiss_label, val_puiss_value), 
-        (test_data, test_n2, test_puiss_label, test_puiss_value) = data_split(E, n2_labels, puiss_labels, puiss_values)
+        (train_data, train_n2, train_power_label, train_power_value), 
+        (val_data, val_n2, val_power_label, val_power_value), 
+        (test_data, test_n2, test_power_label, test_power_value) = data_split(E, n2_labels, power_labels, power_values)
 
     Raises:
     AssertionError: If the sum of train_ratio, validation_ratio, and test_ratio does not equal 1.
@@ -60,8 +62,9 @@ def data_split(
         
     input = E[indices,:,:,:]
     n2label = n2_labels[indices]
-    puisslabel = puiss_labels[indices]
-    puissvalues= puiss_values[indices]
+    powerlabel = power_labels[indices]
+    isatlabel = isat_labels[indices]
+    powervalues= power_values[indices]
     
     # Calculate split indices
     train_index = int(len(indices) * train_ratio)
@@ -76,21 +79,29 @@ def data_split(
     validation_n2_label = n2label[train_index:validation_index]
     test_n2_label = n2label[validation_index:]
 
-    train_puiss_label = puisslabel[:train_index]
-    validation_puiss_label = puisslabel[train_index:validation_index]
-    test_puiss_label = puisslabel[validation_index:]
+    train_power_label = powerlabel[:train_index]
+    validation_power_label = powerlabel[train_index:validation_index]
+    test_power_label = powerlabel[validation_index:]
 
-    train_puiss_value = puissvalues[:train_index]
-    validation_puiss_value = puissvalues[train_index:validation_index]
-    test_puiss_value = puissvalues[validation_index:]
+    train_isat_label = isatlabel[:train_index]
+    validation_isat_label = isatlabel[train_index:validation_index]
+    test_isat_label = isatlabel[validation_index:]
 
-    return (train, train_n2_label, train_puiss_label,train_puiss_value), (validation, validation_n2_label, validation_puiss_label,validation_puiss_value), (test, test_n2_label, test_puiss_label,test_puiss_value)
+    train_power_value = powervalues[:train_index]
+    validation_power_value = powervalues[train_index:validation_index]
+    test_power_value = powervalues[validation_index:]
+
+    train = (train, train_n2_label, train_power_label,train_isat_label, train_power_value)
+    validation = (validation, validation_n2_label, validation_power_label, validation_isat_label, validation_power_value)
+    test = (test, test_n2_label, test_power_label, test_isat_label, test_power_value)
+    return train, validation, test
 
 def data_treatment(
         myset: np.ndarray, 
         n2label: np.ndarray,
-        puissvalue: np.ndarray, 
-        puisslabel: np.ndarray, 
+        powerlabel: np.ndarray, 
+        isatlabel: np.ndarray,
+        powervalue: np.ndarray, 
         batch_size: int, 
         device: torch.device,
         training: bool):
@@ -105,10 +116,12 @@ def data_treatment(
       [num_samples, num_channels, height, width].
     - n2label (np.ndarray): The labels for the nonlinear refractive index (n2), with shape
       [num_samples].
-    - puissvalue (np.ndarray): The continuous values for the laser power associated with each
-      sample in the dataset, with shape [num_samples].
-    - puisslabel (np.ndarray): The categorical labels for the laser power, intended for
+    - powerlabel (np.ndarray): The categorical labels for the laser power, intended for
       classification tasks, with shape [num_samples].
+    - isatlabel (np.ndarray): The categorical labels for the saturation intensity, intended for
+      classification tasks, with shape [num_samples].
+    - powervalue (np.ndarray): The continuous values for the laser power associated with each
+      sample in the dataset, with shape [num_samples].
     - batch_size (int): The number of samples to load per batch.
     - device (torch.device): The computing device (CPU or GPU) where the dataset tensors
       are stored and operations are performed.
@@ -130,7 +143,7 @@ def data_treatment(
         for batch in field_loader:
             # Process each batch
     """
-    fieldset = FieldDataset(myset,puissvalue, puisslabel, n2label, training, device)
+    fieldset = FieldDataset(myset,powervalue, powerlabel, n2label, training, device)
     fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
 
     return fieldloader

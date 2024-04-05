@@ -181,7 +181,7 @@ def data_augmentation(
             np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
         else:
             np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data)
-    return augmented_data
+    return augmented_data, augmentation
 
 def normalize_data(
         data: np.ndarray

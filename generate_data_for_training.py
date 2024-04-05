@@ -107,10 +107,10 @@ number_of_n2 = 10
 number_of_power = 10
 number_of_isat = 10
 
-is_from_image = True
+is_from_image = False
 visualize = False
 expension = True
-generate = True
+generate = False
 precision = np.complex64
 delta_z = 1e-5
 trans = 0.01
@@ -153,9 +153,23 @@ else:
     E_clean = np.load(f"{path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all.npy")
 
 if expension:
+    print("---- EXPEND ----")
     noise = 0.01
     power = 0
-    E_expend = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, path)
+    E_expend, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, path)
+    power_labels_augmented = np.repeat(power_labels_all, expension)
+    n2_labels_augmented = np.repeat(n2_labels_all, expension)
+    isat_labels_augmented = np.repeat(isat_labels_all, expension)
+
+    for power in power_values:
+        file = f'{path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
+        E = np.load(file)
+
+        noise = 0.01
+        E_expend, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, path)
+
+
+
 
 if visualize:
     print("---- VISUALIZE ----")

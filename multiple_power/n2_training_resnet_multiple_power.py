@@ -51,27 +51,32 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         running_loss = 0.0
         net.train()
 
-        for i, (images, powers, powers_labels, labels) in enumerate(trainloader, 0):
+        for i, (images, power_values, power_labels, n2_labels, isat_labels) in enumerate(trainloader, 0):
             # Process original images
             if backend == "GPU":
                 images = images
-                powers_labels = powers_labels
-                powers_values = torch.from_numpy(powers.cpu().numpy()[:,np.newaxis]).float().to(device)
-                n2_labels = labels
+                power_labels = power_labels
+                n2_labels = n2_labels
+                isat_labels = isat_labels
+                power_values = torch.from_numpy(power_values.cpu().numpy()[:,np.newaxis]).float().to(device)
             else:
                 images = images.to(device) 
-                powers_labels = powers_labels.to(device) 
-                powers_values = torch.from_numpy(powers.numpy()[:,np.newaxis]).float().to(device)
-                n2_labels = labels.to(device)
-
+                power_labels = power_labels.to(device) 
+                n2_labels = n2_labels.to(device)
+                isat_labels = isat_labels.to(device)
+                power_values = torch.from_numpy(power_values.numpy()[:,np.newaxis]).float().to(device)
+                
 
             # # Forward pass with original images
-            outputs_n2, outputs_power = net(images, powers_values)
+            outputs_n2, outputs_power, outputs_isat = net(images, power_values)
 
-            loss_n2 = criterion[0](outputs_n2, n2_labels)
-            loss_powers = criterion[1](outputs_power, powers_labels)
-            loss_n2.backward(retain_graph=True)
-            loss_powers.backward(retain_graph=True)
+            loss_n2 = criterion(outputs_n2, n2_labels)
+            loss_powers = criterion(outputs_power, power_labels)
+            loss_isat = criterion(outputs_isat, isat_labels)
+
+            loss_n2.backward(retain_graph = True)
+            loss_isat.backward(retain_graph = True)
+            loss_powers.backward(retain_graph = True)
 
             if accumulation_steps == 0:
                 optimizer.step()
@@ -85,31 +90,36 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
                     for param in net.parameters():
                         param.grad.zero_()
             
-            running_loss += loss_n2.item() + loss_powers.item()
+            running_loss += loss_n2.item() + loss_powers.item() + loss_isat.item()
         
         # Validation loop
         val_running_loss = 0.0
         net.eval()  # Set the model to evaluation mode
         with torch.no_grad():  # No gradients tracked
-            for i, (images, powers, powers_labels, labels) in enumerate(validationloader, 0):
+            for i, (images, power_values, power_labels, n2_labels, isat_labels) in enumerate(validationloader, 0):
                 if backend == "GPU":
                     images = images
-                    powers_labels = powers_labels
-                    powers_values = torch.from_numpy(powers.cpu().numpy()[:,np.newaxis]).float().to(device)
-                    n2_labels = labels
+                    power_labels = power_labels
+                    n2_labels = n2_labels
+                    isat_labels = isat_labels
+                    power_values = torch.from_numpy(power_values.cpu().numpy()[:,np.newaxis]).float().to(device)
+                    
                 else:
                     images = images.to(device) 
-                    powers_labels = powers_labels.to(device) 
-                    powers_values = torch.from_numpy(powers.numpy()[:,np.newaxis]).float().to(device)
-                    n2_labels = labels.to(device)
+                    power_labels = power_labels.to(device) 
+                    n2_labels = n2_labels.to(device)
+                    isat_labels = isat_labels.to(device)
+                    power_values = torch.from_numpy(power_values.numpy()[:,np.newaxis]).float().to(device)
 
                 # Forward pass with original images
-                outputs_n2, outputs_power = net(images,  powers_values)
+                outputs_n2, outputs_isat = net(images, power_values)
 
-                loss_n2 = criterion[0](outputs_n2, n2_labels)
-                loss_powers = criterion[1](outputs_power, powers_labels)
+                loss_n2 = criterion(outputs_n2, n2_labels)
+                loss_powers = criterion(outputs_power, power_labels)
+                loss_isat = criterion(outputs_isat, isat_labels)
                 
-                val_running_loss += loss_n2.item() + loss_powers.item()
+                
+                val_running_loss += loss_n2.item() + loss_powers.item() + loss_isat.item()
 
         # Step the scheduler with the validation loss
         scheduler.step(val_running_loss / len(validationloader))

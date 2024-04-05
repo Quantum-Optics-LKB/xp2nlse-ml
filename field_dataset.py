@@ -61,12 +61,14 @@ class FieldDataset(Dataset):
         device (torch.device): The computing device (CPU or GPU) where the dataset tensors are stored.
         training (bool): Flag indicating whether the dataset is in training mode, which influences
                          whether data augmentation is applied.
+        n2_label (torch.Tensor): Tensor containing labels for the nonlinear refractive index values,
+                           used for categorization or parameter estimation.
         power_label (torch.Tensor): Tensor containing categorical labels for laser power, intended
                                     for classification tasks.
-        power (torch.Tensor): Tensor containing continuous power values for each sample, useful
-                              for regression tasks.
-        n2 (torch.Tensor): Tensor containing labels for the nonlinear refractive index values,
+        isat_label (torch.Tensor): Tensor containing labels for the saturation index values,
                            used for categorization or parameter estimation.
+        power_value (torch.Tensor): Tensor containing continuous power values for each sample, useful
+                              for regression tasks.
         data (torch.Tensor): The primary dataset tensor containing the field data, structured as
                              [num_samples, num_channels, height, width].
 
@@ -92,9 +94,10 @@ class FieldDataset(Dataset):
     def __init__(
             self, 
             data: np.ndarray, 
-            power: np.ndarray, 
-            power_lab: np.ndarray, 
-            n2: np.ndarray, 
+            n2_labels: np.ndarray, 
+            power_labels: np.ndarray, 
+            isat_labels: np.ndarray,
+            power_values: np.ndarray, 
             training: bool, 
             device=torch.device("cpu")):
         """
@@ -124,9 +127,10 @@ class FieldDataset(Dataset):
         """
         self.device = device
         self.training = training
-        self.power_label = torch.from_numpy(power_lab).long().to(self.device)  # Convert power values to tensor and move to device
-        self.power = torch.from_numpy(power).float().to(self.device)  # Convert power values to tensor and move to device
-        self.n2 = torch.from_numpy(n2).long().to(self.device)
+        self.power_labels = torch.from_numpy(power_labels).long().to(self.device)  # Convert power values to tensor and move to device
+        self.power_values = torch.from_numpy(power_values).float().to(self.device)  # Convert power values to tensor and move to device
+        self.n2_labels = torch.from_numpy(n2_labels).long().to(self.device)
+        self.isat_labels = torch.from_numpy(isat_labels).long().to(self.device)
         self.augmentation = get_augmentation(data.shape[-1], data.shape[-1])
         self.data = torch.from_numpy(data).float().to(self.device)
 
@@ -186,8 +190,9 @@ class FieldDataset(Dataset):
         """
 
         data_item = self.data[idx,:,:,:]
-        power_value =self.power[idx]
-        power_labels =self.power_label[idx]
-        labels = self.n2[idx]
+        power_value =self.power_values[idx]
+        power_label =self.power_labels[idx]
+        n2_label = self.n2_labels[idx]
+        isat_label = self.isat_labels[idx]
 
-        return  data_item, power_value, power_labels, labels
+        return  data_item, power_value, power_label, n2_label, isat_label
