@@ -226,7 +226,7 @@ def generate_data(
             print("---- NLSE ----")
             E_clean = data_creation(input_field, window, n2_values,power_values,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
     else:
-        E_clean = np.load(f"{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all.npy")
+        E_clean = np.load(f"{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all.npy")
 
     if expension:
 
@@ -250,7 +250,7 @@ def generate_data(
             for power in power_values:
 
                 print("---- EXPEND SINGLE ----")
-                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
+                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
                 E = np.load(file)
 
                 noise = 0.01
@@ -275,7 +275,7 @@ def generate_data(
             for power in power_values:
 
                 print("---- EXPEND SINGLE ----")
-                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
+                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
                 E = np.load(file)
 
                 noise = 0.01
