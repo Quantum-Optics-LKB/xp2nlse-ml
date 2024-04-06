@@ -4,7 +4,6 @@
 
 import os
 import sys
-from tqdm import tqdm
 import torch
 import numpy as np
 from loss_plot_2D import plotter
@@ -14,8 +13,31 @@ from multiple_power.n2_training_resnet_multiple_power import network_training
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-def network_init(learning_rate, channels, class_n2, class_power, class_isat, model):
-    
+def network_init(
+        learning_rate: float, 
+        channels: int, 
+        class_n2: int, 
+        class_power: int, 
+        class_isat: int, 
+        model: torch.nn.Module
+        ) -> tuple:
+    """
+    Initializes the neural network model, criterion, optimizer, and scheduler.
+
+    Parameters:
+    - learning_rate (float): The initial learning rate for the optimizer.
+    - channels (int): The number of channels in the input data.
+    - class_n2 (int): The number of classes for n2 predictions.
+    - class_power (int): The number of classes for power predictions.
+    - class_isat (int): The number of classes for isat predictions.
+    - model (torch.nn.Module class): The neural network model class to be initialized.
+
+    Returns:
+    - cnn (torch.nn.Module): The initialized neural network model.
+    - optimizer (torch.optim.Optimizer): The Adam optimizer initialized with the model parameters.
+    - criterion (torch.nn.Module): The CrossEntropyLoss criterion for the model's output.
+    - scheduler (torch.optim.lr_scheduler): A ReduceLROnPlateau learning rate scheduler.
+    """
     cnn = model(channels, class_isat, class_n2, class_power)
     weight_decay = 1e-5
     criterion = nn.CrossEntropyLoss()
@@ -24,8 +46,37 @@ def network_init(learning_rate, channels, class_n2, class_power, class_isat, mod
 
     return cnn, optimizer, criterion, scheduler
 
-def lauch_training(numbers, labels, values, path, resolution, learning_rate, batch_size, num_epochs, accumulation_steps):
-    
+def lauch_training(
+        numbers: tuple, 
+        labels: tuple, 
+        values: tuple, 
+        path: str, 
+        resolution: int, 
+        learning_rate: float, 
+        batch_size: int, 
+        num_epochs: int, 
+        accumulation_steps: int
+        ) -> None:
+    """
+    Prepares the dataset and launches the training process for a neural network model.
+
+    Parameters:
+    - numbers (tuple): A tuple containing the numbers of n2, power, and isat instances.
+    - labels (tuple): A tuple containing n2 labels, power labels, and isat labels arrays.
+    - values (tuple): A tuple containing n2 values, power values, and isat values arrays.
+    - path (str): The path where training outputs will be saved.
+    - resolution (int): The resolution of the input data.
+    - learning_rate (float): The learning rate for the optimizer.
+    - batch_size (int): The size of batches for training.
+    - num_epochs (int): The number of training epochs.
+    - accumulation_steps (int): The number of steps to accumulate gradients before an optimizer step.
+
+    This function iterates over different power values and model configurations to train multiple models. 
+    For each model and power configuration, it initializes the model, splits the dataset, prepares DataLoader
+    objects, and then trains the model using the `network_training` function. Results, including losses and 
+    the trained model, are saved to the specified path.
+    """
+
     number_of_n2, number_of_power, number_of_isat = numbers
     n2_labels, power_labels, isat_labels = labels
     n2_values, power_values, isat_values = values
@@ -100,7 +151,7 @@ def lauch_training(numbers, labels, values, path, resolution, learning_rate, bat
 
             
             print("---- MODEL INITIALIZING ----")
-            cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_power,number_of_isat, batch_size, power_index, Inception_ResNetv2)
+            cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_power,number_of_isat, Inception_ResNetv2)
             cnn = cnn.to(device)
             
             print("---- DATA TREATMENT ----")

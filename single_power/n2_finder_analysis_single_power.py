@@ -3,10 +3,34 @@
 # @author: Louis Rossignol
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
 
+def analysis(path: str, power_values: np.ndarray):
+    """
+    Analyzes and aggregates the accuracy and index error across different power values for various 
+    models and data type configurations, ultimately saving the aggregated results in a JSON file.
 
-def analysis(path, power_values):
+    This function cycles through a list of predefined data types and model versions, reading testing 
+    results for each combination of power value, model version, and data type. It extracts accuracy 
+    and index error metrics from the 'testing.txt' files located in respective subdirectories. These 
+    metrics are then compiled into a structured format that associates each set of metrics with its 
+    corresponding model version, data type, and power value, exporting the aggregated analysis as a 
+    JSON file for further exploration.
 
+    Parameters:
+    - path (str): The directory path where model training results are stored, expected to contain 
+      subdirectories for each model version and data type configuration.
+    - power_values (np.ndarray): A list of power values for which the models have been evaluated. This list 
+      is used to locate the specific 'testing.txt' files within each subdirectory.
+
+    The function iterates over multiple data types and model versions, using the provided list of power 
+    values to access and process specific testing results for each configuration. The aggregated results 
+    are saved in a JSON file named 'model_analysis_single_power.json' within the specified path.
+
+    Note: The function assumes a specific structure for the 'testing.txt' files and expects the accuracy 
+    and index error information to be formatted consistently across these files. The presence of the 
+    specific "TESTING" line in the files is used as a marker to locate the relevant metrics.
+    """
     data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap", "amp_pha_pha_unwrap"]
     data_type_results = {}
     for data_types_index in range(len(data_types)):

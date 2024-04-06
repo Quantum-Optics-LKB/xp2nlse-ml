@@ -6,7 +6,23 @@ import pandas as pd
 import torch
 
 def test_model_classification(totalloader, net, classes, device, backend):
-    
+    """
+    Tests the classification accuracy of a trained neural network model on a given dataset.
+
+    Parameters:
+    - totalloader (torch.utils.data.DataLoader): DataLoader containing the test dataset.
+    - net (torch.nn.Module): The trained neural network model to be evaluated.
+    - classes (dict): A dictionary with keys 'n2' and 'isat', where each key maps to a list of class names
+      corresponding to the output predictions of the network.
+    - device (torch.device): The device on which the model and data are loaded.
+    - backend (str): Specifies the computing backend, such as "GPU" for CUDA devices.
+
+    The function iterates over the test dataset to evaluate the model's performance on n2 and isat 
+    classification tasks, computing overall accuracy, class-wise accuracy, average distance error 
+    (how far the predicted class is from the true class), and average percentage error for misclassifications.
+
+    Outputs are printed to the console, summarizing the model's classification performance and error metrics.
+    """
     correct_n2 = 0
     correct_power = 0
     correct_isat = 0
@@ -148,6 +164,23 @@ def test_model_classification(totalloader, net, classes, device, backend):
         print('Average percentage error for isat: N/A (no incorrect predictions)')
 
 def count_parameters_pandas(model):
+    """
+    Counts the total number of trainable parameters in a neural network model and prints a summary.
+
+    Parameters:
+    - model (torch.nn.Module): The neural network model whose parameters are to be counted.
+
+    This function iterates through all trainable parameters of the given model, summarizing the count
+    of parameters per module and the total count of trainable parameters across the model. The summary
+    is printed in a tabular format using pandas DataFrame for clear visualization.
+
+    Returns:
+    - total_params (int): The total number of trainable parameters in the model.
+
+    Example usage:
+    - total_trainable_params = count_parameters_pandas(my_model)
+      Prints a table summarizing parameters per module and the total trainable parameters.
+    """
     data = []
     total_params = 0
 
