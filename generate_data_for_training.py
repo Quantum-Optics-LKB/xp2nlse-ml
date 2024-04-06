@@ -234,33 +234,32 @@ def generate_data(
             print("---- EXPEND MULTIPLE----")
             noise = 0.01
             power = 0
-            E_expend_multiple, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
-            power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension)
-            n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension)
-            isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension)
+            E_expend_multiple, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
+            power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
+            n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
+            isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
 
-            power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension)
-            n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension)
-            isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension)
+            power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
+            n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
+            isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
 
             values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
             labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
 
 
             for power in power_values:
-
                 print("---- EXPEND SINGLE ----")
                 file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
                 E = np.load(file)
 
                 noise = 0.01
-                E_expend_single, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
+                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
 
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension)
+            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
 
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension)
+            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
 
             values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
             labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
@@ -279,13 +278,13 @@ def generate_data(
                 E = np.load(file)
 
                 noise = 0.01
-                E_expend_single, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
+                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
 
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension)
+            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
 
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension)
+            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
 
             values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
             labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
@@ -295,18 +294,17 @@ def generate_data(
             return single_augmented
         
         elif multiple_power:
-            
             print("---- EXPEND MULTIPLE----")
             noise = 0.01
             power = 0
-            E_expend_multiple, expension = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
-            power_labels_augmented = np.repeat(power_labels_all_multiple, expension)
-            n2_labels_augmented = np.repeat(n2_labels_all_multiple, expension)
-            isat_labels_augmented = np.repeat(isat_labels_all_multiple, expension)
+            E_expend_multiple, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
+            power_labels_augmented = np.repeat(power_labels_all_multiple, expension_factor)
+            n2_labels_augmented = np.repeat(n2_labels_all_multiple, expension_factor)
+            isat_labels_augmented = np.repeat(isat_labels_all_multiple, expension_factor)
 
-            power_values_augmented = np.repeat(power_values_all_multiple, expension)
-            n2_values_augmented = np.repeat(n2_values_all_multiple, expension)
-            isat_values_augmented = np.repeat(isat_values_all_multiple, expension)
+            power_values_augmented = np.repeat(power_values_all_multiple, expension_factor)
+            n2_values_augmented = np.repeat(n2_values_all_multiple, expension_factor)
+            isat_values_augmented = np.repeat(isat_values_all_multiple, expension_factor)
 
             values_augmented = (n2_values_augmented, power_values_augmented, isat_values_augmented)
             labels_augmented = (n2_labels_augmented, power_labels_augmented, isat_labels_augmented)
@@ -315,13 +313,36 @@ def generate_data(
             
             return  multiple_augmented
     else:
+        expension_factor = 33
+        power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
+        n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
+        isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
+
+        power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
+        n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
+        isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
+
+        values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
+        labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
+    
+        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
+
+        n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+        isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
+
+        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+
         if multiple_power and single_power:
-            labels_all = (labels_all_single, labels_all_multiple)
-            values_all = (values_all_single, values_all_multiple)
-            return labels_all, values_all
+            labels_augmented = (labels_augmented_single, labels_augmented_multiple)
+            values_augmented = (values_augmented_single, values_augmented_multiple)
+            return labels_augmented, values_augmented
         
         elif multiple_power:
-            return labels_all_multiple, values_all_multiple
+            multiple_augmented = labels_augmented_multiple, values_augmented_multiple
+            return multiple_augmented
         
         elif single_power:
-            return labels_all_single, values_all_single
+            single_augmented = labels_augmented_single, values_augmented_single
+            return single_augmented

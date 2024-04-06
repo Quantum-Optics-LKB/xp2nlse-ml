@@ -143,7 +143,7 @@ def data_treatment(
         for batch in field_loader:
             # Process each batch
     """
-    fieldset = FieldDataset(myset,powervalue, powerlabel, n2label, training, device)
+    fieldset = FieldDataset(myset, n2label, powerlabel, isatlabel, powervalue, training, device)
     fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
 
     return fieldloader

@@ -102,6 +102,7 @@ class FieldDataset(Dataset):
         """
         self.device = device
         self.training = training
+        print(power_labels)
         self.power_labels = torch.from_numpy(power_labels).long().to(self.device)  # Convert power values to tensor and move to device
         self.power_values = torch.from_numpy(power_values).float().to(self.device)  # Convert power values to tensor and move to device
         self.n2_labels = torch.from_numpy(n2_labels).long().to(self.device)

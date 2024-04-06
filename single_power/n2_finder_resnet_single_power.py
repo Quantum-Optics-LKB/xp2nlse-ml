@@ -86,11 +86,13 @@ def lauch_training(
     data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap", "amp_pha_pha_unwrap"]
 
     power_index = 0
-    powers = power_values = np.linspace(.02, 0.5001, number_of_power)
+    powers = np.linspace(.02, 0.5001, number_of_power)
     n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
     
     for power in tqdm(powers, position=4,desc="Iteration", leave=False):
+        power_values = np.ones(len(n2_labels))*power
+        power_labels = np.ones(len(n2_labels))*power_index
 
         power_index += 1
         for model_index in range(2, 6):
@@ -142,12 +144,12 @@ def lauch_training(
                     assert E_noisy.shape[1] == 3
 
 
-                assert E_noisy.shape[0] == n2_labels.shape[0]
-                assert E_noisy.shape[0] == power_labels.shape[0]
-                assert E_noisy.shape[0] == isat_labels.shape[0]
-                assert E_noisy.shape[0] == n2_values.shape[0]
-                assert E_noisy.shape[0] == power_values.shape[0]
-                assert E_noisy.shape[0] == isat_values.shape[0]
+                assert E_noisy.shape[0] == n2_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_labels[0] is {n2_labels.shape[0]}"
+                assert E_noisy.shape[0] == power_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, power_labels[0] is {power_labels.shape[0]}"
+                assert E_noisy.shape[0] == isat_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_labels[0] is {isat_labels.shape[0]}"
+                assert E_noisy.shape[0] == n2_values.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
+                assert E_noisy.shape[0] == power_values.shape[0], f"field[0] is {E_noisy.shape[0]}, power_values[0] is {power_values.shape[0]}"
+                assert E_noisy.shape[0] == isat_values.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
 
                 
                 print("---- MODEL INITIALIZING ----")
