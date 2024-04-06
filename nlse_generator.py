@@ -111,7 +111,7 @@ def data_creation(
     E_all = normalize_data(E_all).astype(np.float16)
     #Data saving
     if not (path == None):
-        np.save(f'{path}/Es_w{E_all.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all', E_all)
+        np.save(f'{path}/Es_w{E_all.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all', E_all)
     return E_all
 
 def data_augmentation(
@@ -178,9 +178,9 @@ def data_augmentation(
                         index += 1
     if not (path == None):
         if power != 0:
-            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data.astype(np.float16))
+            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data.astype(np.float16))
         else:
-            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_Isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data.astype(np.float16))
+            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data.astype(np.float16))
     return augmented_data, augmentation
 
 def normalize_data(

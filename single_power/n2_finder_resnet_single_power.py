@@ -78,15 +78,15 @@ def lauch_training(
     the trained model, are saved to the specified path.
     """
     number_of_n2, number_of_power, number_of_isat = numbers
-    n2_labels, power_labels, isat_labels = labels
-    n2_values, power_values, isat_values = values
+    n2_labels, isat_labels = labels
+    n2_values, isat_values = values
     backend = "GPU"
     device = torch.device("cuda:0")
 
     data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap", "amp_pha_pha_unwrap"]
 
     power_index = 0
-    powers = np.linspace(np.min(power_values), np.max(power_values), number_of_power)
+    powers = power_values = np.linspace(.02, 0.5001, number_of_power)
     n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
     

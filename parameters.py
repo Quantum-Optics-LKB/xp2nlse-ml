@@ -61,8 +61,6 @@ args = parser.parse_args()
 if args.image_path is None:
     args.image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
 
-
-
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
@@ -73,9 +71,29 @@ labels, values = generate_data(args.saving_path, args.image_path, resolutions, n
                                         args.trans)
 
 if args.training:
-    if args.single_powers:
+    print("-- TRAINING --")
+    if args.single_power and args.multiple_power:
+        print("-- SINGLE - MULTIPLE --")
+
+        labels_all_single, labels_all_multiple = labels
+        values_all_single, values_all_multiple = values
+        
+        print("-- SINGLE --")
+        from single_power.n2_finder_resnet_single_power import lauch_training
+        lauch_training(numbers, labels_all_single, values_all_single, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
+        
+        print("-- MULTIPLE --")
+        from multiple_power.n2_finder_resnet_multiple_power import lauch_training
+        lauch_training(numbers, labels_all_multiple, values_all_multiple, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
+    
+    elif args.single_power:
+        print("-- SINGLE --")
+
         from single_power.n2_finder_resnet_single_power import lauch_training
         lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
-    if args.multiple_power:
+    
+    elif args.multiple_power:
+
+        print("-- MULTIPLE --")
         from multiple_power.n2_finder_resnet_multiple_power import lauch_training
         lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
