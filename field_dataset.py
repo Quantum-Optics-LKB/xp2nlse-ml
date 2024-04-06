@@ -114,12 +114,12 @@ class FieldDataset(Dataset):
             # Split channels for amplitude and phase
             for i in range(data.shape[0]):
                 if self.device.type == 'cpu':
-                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float16) # Replace with your actual amplitude channels
+                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float32) # Replace with your actual amplitude channels
                     # Apply augmentations
                     augmented = self.augmentation(image=channels)['image']
                     self.data[i,:,:,:] = torch.from_numpy(augmented).float().permute(2, 0, 1).to(self.device)
                 else:
-                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).cpu().numpy().astype(np.float16)  # Replace with your actual amplitude channels
+                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).cpu().numpy().astype(np.float32)  # Replace with your actual amplitude channels
                     # Apply augmentations
                     augmented = self.augmentation(image=channels)['image']
                     self.data[i,:,:,:] = torch.from_numpy(augmented).float().permute(2, 0, 1).to(self.device)
