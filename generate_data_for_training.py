@@ -44,11 +44,9 @@ def from_input_image(
         image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]), order=5)
     print("--- FIND WAIST ---")
     window = resolution_in * 5.5e-6
-    # waist = waist_computation(image, window, resolution_in, resolution_in, False)
-    waist = 0.00043868048364296215
+    waist = waist_computation(image, window, resolution_in, resolution_in, False)
 
     print("--- PREPARE FOR NLSE ---")
-    # array_normalized = (image - np.min(image) )/ (np.max(image) - np.min(image))
     input_field = image + 1j * np.zeros_like(image, dtype=np.float32)
     input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_power,number_of_isat, 1,1))
 
@@ -60,6 +58,19 @@ def from_gaussian(
         numbers: tuple,
         waist: float 
         ) ->  np.ndarray:
+    """
+    Generates a 2D Gaussian beam profile across a specified meshgrid.
+
+    Parameters:
+    - NXY (int): The number of points in both the X and Y dimensions for the meshgrid.
+    - window (int): The spatial extent of the square window in which the beam is defined.
+    - numbers (tuple): A tuple containing the number of n2, power, and isat values.
+    - waist (float): The waist (radius) of the Gaussian beam, determining its spread.
+
+    Returns:
+    - np.ndarray: A complex numpy array representing the Gaussian beam profile across the
+      meshgrid, tiled according to the specified number of n2, power, and isat values.
+    """
     number_of_n2, number_of_power, number_of_isat = numbers
     X, delta_X = np.linspace(
         -window / 2,
@@ -98,6 +109,29 @@ def generate_data(
         length: float, 
         transmission: float
         )-> tuple:
+    """
+    Generates or loads data for NLSE simulation, optionally performing data augmentation and visualization.
+
+    Parameters:
+    - saving_path (str): Path to save generated or loaded data.
+    - image_path (str): Path to an input image, if `is_from_image` is True.
+    - resolutions (tuple): Tuple of input and output resolutions (resolution_in, resolution_out).
+    - numbers (tuple): Tuple of the numbers of n2, power, and isat instances (number_of_n2, number_of_power, number_of_isat).
+    - is_from_image (bool): Flag to indicate whether data is generated from an image.
+    - generate (bool): Flag to enable data generation.
+    - visualize (bool): Flag to enable visualization of generated data.
+    - expension (bool): Flag to enable data augmentation.
+    - single_power (bool): Flag to indicate single power data generation.
+    - multiple_power (bool): Flag to indicate multiple power levels data generation.
+    - factor_window (int): Factor to adjust the simulation window based on the waist.
+    - delta_z (float): Step size in the Z-direction for the NLSE simulation.
+    - length (float): Length of the propagation medium.
+    - transmission (float): Transmission coefficient for the medium.
+
+    Returns:
+    - tuple: Contains labels and values for augmented data, if `expension` is True; otherwise, 
+      it returns labels and values for the generated or loaded data.
+    """
     resolution_in, resolution_out = resolutions
     number_of_n2, number_of_power, number_of_isat = numbers
 
