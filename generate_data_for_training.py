@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import argparse
 from matplotlib import pyplot as plt
 import numpy as np
 import cupy as cp
@@ -10,8 +11,6 @@ from PIL import Image
 from waist_fitting import waist_computation
 from scipy.ndimage import zoom
 from matplotlib.colors import LogNorm
-import argparse
-
 
 def from_input_image(
         path: str,
@@ -59,28 +58,9 @@ def from_gaussian(
         NXY: int, 
         window: int,
         numbers: tuple,
-        precision,
         waist: float 
         ) ->  np.ndarray:
-    """
-    Generates a 2D Gaussian distribution based on the specified dimensions, window size, and waist. This function is
-    designed to create a Gaussian beam profile that can be used for simulations or analysis in optical physics and
-    related fields.
-
-    Parameters:
-    - NX (int): The number of points in the X dimension.
-    - NY (int): The number of points in the Y dimension.
-    - window (float): The size of the square window in meters through which the Gaussian beam is defined. The function
-      will generate points within this window centered around zero.
-    - waist (float): The waist (radius at which the field amplitude falls to 1/e of its axial value) of the Gaussian
-      beam in meters. This parameter determines the spread of the Gaussian distribution.
-
-    Returns:
-    - np.ndarray: A 2D numpy array representing the Gaussian beam intensity distribution over a meshgrid defined by
-      the NX and NY points within the specified window. The intensity values are calculated using the formula
-      exp(-(x^2 + y^2) / waist^2), where x and y are the coordinates of each point in the meshgrid.
-    """
-    
+    number_of_n2, number_of_power, number_of_isat = numbers
     X, delta_X = np.linspace(
         -window / 2,
         window / 2,
@@ -100,14 +80,26 @@ def from_gaussian(
     number_of_n2, number_of_power, number_of_isat = numbers
     XX, YY = np.meshgrid(X, Y)
 
-    return np.ones((number_of_n2,number_of_power,number_of_isat, NXY, NXY), dtype=precision) * np.exp(-(XX**2 + YY**2) / (waist**2))
+    return np.ones((number_of_n2,number_of_power,number_of_isat, NXY, NXY), dtype=np.complex64) * np.exp(-(XX**2 + YY**2) / (waist**2))
 
-def generate_data(saving_path, image_path, resolutions, numbers, is_from_image, generate, visualize, single_power, multiple_power, factor_window, delta_z, length, transmission):
-
+def generate_data(
+        saving_path: str, 
+        image_path: str,
+        resolutions: tuple,
+        numbers: tuple, 
+        is_from_image: bool, 
+        generate: bool, 
+        visualize: bool, 
+        expension: bool,
+        single_power: bool, 
+        multiple_power: bool, 
+        factor_window: int, 
+        delta_z: float, 
+        length: float, 
+        transmission: float
+        )-> tuple:
     resolution_in, resolution_out = resolutions
     number_of_n2, number_of_power, number_of_isat = numbers
-
-    precision = np.complex64
 
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
@@ -194,7 +186,7 @@ def generate_data(saving_path, image_path, resolutions, numbers, is_from_image, 
     else:
         waist = 1e-3
         window = factor_window*waist
-        input_field = from_gaussian(resolution_in, window, numbers,precision, waist)
+        input_field = from_gaussian(resolution_in, window, numbers, waist)
 
     if generate:
         with cp.cuda.Device(0):
@@ -300,3 +292,60 @@ def generate_data(saving_path, image_path, resolutions, numbers, is_from_image, 
         
         elif single_power:
             return labels_all_single, values_all_single
+        
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='')
+
+    parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN",
+                        help='Directory path for saving output files.')
+    parser.add_argument('--image_path', type=str, default=None,
+                        help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
+    parser.add_argument('--resolution_in', type=int, default=512,
+                        help='Input resolution.')
+    parser.add_argument('--resolution_out', type=int, default=512,
+                        help='Output resolution.')
+    parser.add_argument('--number_of_n2', type=int, default=10,
+                        help='Number of N2 instances.')
+    parser.add_argument('--number_of_power', type=int, default=10,
+                        help='Number of power instances.')
+    parser.add_argument('--number_of_isat', type=int, default=10,
+                        help='Number of ISAT instances.')
+    parser.add_argument('--is_from_image', action='store_true',
+                        help='Whether the input is from an image.')
+    parser.add_argument('--visualize', action='store_true',
+                        help='Enable visualization.')
+    parser.add_argument('--expension', action='store_true',
+                        help='Enable expension.')
+    parser.add_argument('--generate', action='store_true',
+                        help='Enable generation.')
+    parser.add_argument('--single_power', action='store_true',
+                        help='Enable generation.')
+    parser.add_argument('--multiple_power', action='store_true',
+                        help='Enable generation.')
+    parser.add_argument('--delta_z', type=float, default=1e-5,
+                        help='Delta Z value.')
+    parser.add_argument('--trans', type=float, default=0.01,
+                        help='Trans value.')
+    parser.add_argument('--length', type=float, default=20e-2,
+                        help='Length value.')
+    parser.add_argument('--factor_window', type=int, default=13,
+                        help='Factor window value.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Set the default for image_path if not specified
+    if args.image_path is None:
+        args.image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
+
+
+
+    # You can now use args to access the values of the arguments
+    resolutions = args.resolution_in, args.resolution_out
+    numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
+
+    labels, values = generate_data(args.saving_path, args.image_path, resolutions, numbers, 
+                                   args.is_from_image, args.generate, args.visualize, args.expension, args.single_power,
+                                      args.multiple_power, args.factor_window, args.delta_z, args.length, 
+                                          args.trans)
