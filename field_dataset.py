@@ -102,7 +102,6 @@ class FieldDataset(Dataset):
         """
         self.device = device
         self.training = training
-        print(power_labels)
         self.power_labels = torch.from_numpy(power_labels).long().to(self.device)  # Convert power values to tensor and move to device
         self.power_values = torch.from_numpy(power_values).float().to(self.device)  # Convert power values to tensor and move to device
         self.n2_labels = torch.from_numpy(n2_labels).long().to(self.device)
@@ -117,13 +116,12 @@ class FieldDataset(Dataset):
                     channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float32) # Replace with your actual amplitude channels
                     # Apply augmentations
                     augmented = self.augmentation(image=channels)['image']
-                    self.data[i,:,:,:] = torch.from_numpy(augmented).float().permute(2, 0, 1).to(self.device)
+                    self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
                 else:
                     channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).cpu().numpy().astype(np.float32)  # Replace with your actual amplitude channels
                     # Apply augmentations
                     augmented = self.augmentation(image=channels)['image']
-                    self.data[i,:,:,:] = torch.from_numpy(augmented).float().permute(2, 0, 1).to(self.device)
-            self.data.astype(np.float16)
+                    self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
     
     def __len__(self) -> int:
         """

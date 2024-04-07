@@ -95,7 +95,7 @@ def data_creation(
         
         E = normalize_data(E).astype(np.float16)
         if not (path == None):
-            np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_Isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
+            np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
         
     E_all = np.zeros((number_of_n2*number_of_power*number_of_isat ,3 , resolution_out, resolution_out))
     E_out = A.reshape((number_of_n2*number_of_power*number_of_isat,resolution_in, resolution_in)) 
@@ -161,7 +161,7 @@ def data_augmentation(
     lines = [20, 50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
-    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
+    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)
   
     for channel in range(E.shape[1]):
         index = 0
@@ -176,12 +176,12 @@ def data_augmentation(
                     for num_lines in lines:
                         augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)
                         index += 1
-    augmented_data = normalize_data(augmented_data).astype(np.float16)
+    augmented_data = normalize_data(augmented_data)
     if not (path == None):
         if power != 0:
             np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
         else:
-            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data.astype(np.float16))
+            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data)
     return augmented_data, augmentation
 
 def normalize_data(
@@ -208,11 +208,12 @@ def normalize_data(
     each channel of each data sample is independently normalized, making it suitable for diverse 
     datasets with varying ranges of values across samples or channels.
     """
-    normalized_data = np.zeros_like(data, dtype=np.float64)
     
-    for ch in range(data.shape[1]):
-        for i in range(data.shape[0]):
-            channel_data = data[i, ch, :, :]
-            normalized_data[i, ch, :, :] = (channel_data - np.min(channel_data)) / (np.max(channel_data) - np.min(channel_data))
+    min_vals = np.min(data, axis=(2, 3), keepdims=True)
+    max_vals = np.max(data, axis=(2, 3), keepdims=True)
+
+    normalized_data = (data - min_vals) / (max_vals - min_vals)
+
+    normalized_data = normalized_data.astype(np.float16)
 
     return normalized_data

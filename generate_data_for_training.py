@@ -253,7 +253,7 @@ def generate_data(
                 E = np.load(file)
 
                 noise = 0.01
-                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
+                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
 
             n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
             isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
