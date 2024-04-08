@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-
 import argparse
 
-from generate_data_for_training import generate_data
+from engine.generate_data_for_training import generate_data
 
 parser = argparse.ArgumentParser(description='')
 
