@@ -9,7 +9,6 @@ from nlse_generator import data_creation, data_augmentation
 from PIL import Image
 from waist_fitting import waist_computation
 from scipy.ndimage import zoom
-from matplotlib.colors import LogNorm
 
 def from_input_image(
         path: str,
