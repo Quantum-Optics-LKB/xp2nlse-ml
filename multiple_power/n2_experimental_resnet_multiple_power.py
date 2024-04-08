@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
-from nlse_generator import normalize_data
+from engine.nlse_generator import normalize_data
 
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 resolution = 512

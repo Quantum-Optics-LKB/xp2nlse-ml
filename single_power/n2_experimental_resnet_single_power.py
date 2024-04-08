@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
-from nlse_generator import normalize_data
+from engine.nlse_generator import normalize_data
 
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 resolution = 512

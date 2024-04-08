@@ -7,9 +7,9 @@ import sys
 from tqdm import tqdm
 import torch
 import numpy as np
-from loss_plot_2D import plotter
+from engine.loss_plot_2D import plotter
 from single_power.n2_test_resnet_single_power import count_parameters_pandas, test_model_classification
-from data_prep_for_training import data_split, data_treatment
+from engine.data_prep_for_training import data_split, data_treatment
 from single_power.n2_training_resnet_single_power import network_training
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
