@@ -107,7 +107,7 @@ def lauch_training(
 
             for data_types_index in range(len(data_types)):
             
-                model_version =  str(Inception_ResNetv2).split('.')[0][8:]
+                model_version =  str(Inception_ResNetv2).split('.')[-2]
                 stamp = f"power{str(power)[:4]}_{data_types[data_types_index]}_{model_version}"
                 
                 if not os.path.isdir(f"{path}/{stamp}_training"):
