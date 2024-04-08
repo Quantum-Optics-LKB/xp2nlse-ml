@@ -20,9 +20,9 @@ This repository introduces a Convolutional Neural Network (CNN) model dedicated 
 
 To utilize this repository for Nonlinear Schrödinger Equation (NLSE) parameter estimation with Neural Networks, follow these steps to set up and run the model.
 
-### Prerequisites
+### Prerequisites:
 
-### Installation
+#### Installation
 
 First, clone the repository to your local machine and navigate into the project directory:
 
@@ -31,7 +31,7 @@ git clone https://github.com/Quantum-Optics-LKB/nlse_parameter_nn.git
 cd nlse_parameter_nn
 ```
 
-### External Dependencies
+#### External Dependencies
 
 - **NumPy**
 - **Matplotlib**
