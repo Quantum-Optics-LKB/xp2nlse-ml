@@ -18,10 +18,9 @@ This repository introduces a Convolutional Neural Network (CNN) model dedicated 
 
 ## Getting Started
 
-To utilize this repository for Nonlinear Schrödinger Equation (NLSE) parameter classification with Neural Networks, follow these steps to set up and run the model.
+To utilize this repository for Nonlinear Schrödinger Equation (NLSE) parameter estimation with Neural Networks, follow these steps to set up and run the model.
 
 ### Prerequisites
-
 
 ### Installation
 
@@ -32,15 +31,18 @@ git clone https://github.com/Quantum-Optics-LKB/nlse_parameter_nn.git
 cd nlse_parameter_nn
 ```
 
-### Usage
+### External Dependencies
 
-Incorporating the detailed command usage information into the "Getting Started" section enriches the documentation by providing users with a comprehensive overview of all available options. Here's how you could integrate this information:
+- **NumPy**
+- **Matplotlib**
+- **SciPy**.
+- **CuPy**
+- **Pillow (PIL)**
+- **Pandas**
+- **PyTorch**
+- **Albumentations**
+- **Skimage**
 
----
-
-## Usage
-
-The main script accepts a variety of command-line arguments to customize the data generation and training process. Below is a detailed explanation of each option:
 
 ### Usage Command
 
