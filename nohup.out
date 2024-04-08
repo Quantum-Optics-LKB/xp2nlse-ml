@@ -1,14 +1,0 @@
-/opt/miniforge3/lib/python3.10/site-packages/cupyx/jit/_interface.py:173: FutureWarning: cupyx.jit.rawkernel is experimental. The interface can change in the future.
-  cupy._util.experimental('cupyx.jit.rawkernel')
---- LOAD INPUT IMAGE ---
---- FIND WAIST ---
-WAIST = 0.00010967012318560519
---- PREPARE FOR NLSE ---
--- TRAINING --
--- SINGLE - MULTIPLE --
--- SINGLE --
-
-
-
-
-Iteration:   0%|          | 0/10 [00:00<?, ?it/s][A[A[A[A
