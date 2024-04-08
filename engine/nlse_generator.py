@@ -9,7 +9,7 @@ import cupy as cp
 from scipy.constants import c, epsilon_0
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
-from noise_generator import line_noise, salt_and_pepper_noise
+from engine.noise_generator import line_noise, salt_and_pepper_noise
 
 
 def data_creation(

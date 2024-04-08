@@ -5,9 +5,9 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import cupy as cp
-from nlse_generator import data_creation, data_augmentation
+from engine.nlse_generator import data_creation, data_augmentation
 from PIL import Image
-from waist_fitting import waist_computation
+from engine.waist_fitting import waist_computation
 from scipy.ndimage import zoom
 
 def from_input_image(
