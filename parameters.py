@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# @author: Louis Rossignol
+
 import argparse
 
 from generate_data_for_training import generate_data
@@ -15,11 +19,11 @@ parser.add_argument('--resolution_out', type=int, default=256,
                     help='Output resolution.')
 
 parser.add_argument('--number_of_n2', type=int, default=10,
-                    help='Number of N2 instances.')
+                    help='Number of different n2')
 parser.add_argument('--number_of_power', type=int, default=10,
-                    help='Number of power instances.')
+                    help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
-                    help='Number of ISAT instances.')
+                    help='Number of different Isat')
 
 parser.add_argument('--is_from_image', action='store_true',
                     help='Whether the input is from an image.')
@@ -35,13 +39,13 @@ parser.add_argument('--multiple_power', action='store_true',
                     help='Enable generation.')
 
 parser.add_argument('--delta_z', type=float, default=1e-3,
-                    help='Delta Z value.')
+                    help='Step of the propagation of NLSE')
 parser.add_argument('--trans', type=float, default=0.01,
-                    help='Trans value.')
+                    help='Transmission through the cell')
 parser.add_argument('--length', type=float, default=20e-2,
-                    help='Length value.')
+                    help='Length of the cell')
 parser.add_argument('--factor_window', type=int, default=55,
-                    help='Factor window value.')
+                    help='Factor window that is multiplied by the waist')
 
 parser.add_argument('--training', action='store_true',
                     help='Enable training.')
@@ -50,7 +54,7 @@ parser.add_argument('--learning_rate', type=float, default=0.001,
 parser.add_argument('--batch_size', type=int, default=10,
                     help='Batch size')
 parser.add_argument('--accumulator', type=int, default=10,
-                    help='Number of accumulation steps')
+                    help='Number of accumulation steps to allow for gradient accumulation')
 parser.add_argument('--num_epochs', type=int, default=60,
                     help='Number of epochs')
 

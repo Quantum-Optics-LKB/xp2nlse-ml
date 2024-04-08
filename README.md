@@ -2,43 +2,85 @@
 
 ## Source
 
-The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper "Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016.
+The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper ["Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016](https://doi.org/10.48550/arXiv.1602.07261).
 
 ## Overview
 
-This repository introduces a Convolutional Neural Network (CNN) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) framework. Aimed at advancing research in quantum optical systems, this tool provides an efficient means for parameter analysis, thereby facilitating the exploration of complex dynamics.
+This repository introduces a Convolutional Neural Network (CNN) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
 
 ## Workflow
 
-1. **Create Your Setup**: Design the architecture of your experimental or simulated setup.
-2. **Record Input Beam**: Capture the input beam profile from your setup to closely align the data generation with your experimental conditions.
-3. **Generate Training Data**: Use `generate_data_for_training.py` to produce training data. This script leverages [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) for data synthesis, allowing you to specify parameters such as $n_2$, $I_{sat}$, and laser power.
-4. **Train the Model**: With the generated data, proceed to train the CNN model for parameter estimation.
-5. **Deploy the Model**: Once trained, the model is ready to estimate parameters from new output images.
+1. **Create Your Setup**
+2. **Record Input Beam**
+3. **Generate Training Data**
+4. **Train the Model**
+5. **Deploy the Model**
 
 ## Getting Started
 
+To utilize this repository for Nonlinear Schrödinger Equation (NLSE) parameter classification with Neural Networks, follow these steps to set up and run the model.
+
 ### Prerequisites
 
-[List any prerequisites or dependencies needed before installing the project.]
 
 ### Installation
 
-Follow these steps to set up the project environment on your local machine:
+First, clone the repository to your local machine and navigate into the project directory:
 
 ```bash
 git clone https://github.com/Quantum-Optics-LKB/nlse_parameter_nn.git
 cd nlse_parameter_nn
 ```
 
-[Further steps regarding environment setup, library installations, and any post-installation configuration.]
+### Usage
+
+Incorporating the detailed command usage information into the "Getting Started" section enriches the documentation by providing users with a comprehensive overview of all available options. Here's how you could integrate this information:
 
 ---
 
-### Additional Enhancements
+## Usage
 
-- **Prerequisites**: Detail the software and hardware prerequisites for someone looking to use your project. This could include programming languages, library versions, and hardware specifications.
-- **Detailed Installation Guide**: Beyond just cloning the repository, include instructions on setting up a virtual environment, installing dependencies, and any environment variables that need to be set.
-- **Usage Examples**: Provide a few examples of how the model can be used, including commands to run scripts or code snippets.
-- **Contribution Guidelines**: Encourage community involvement by adding a section for contributions. This can include how to submit issues, propose pullups, and contribute to the code.
-- **License**: Specify the license under which your project is released, making it clear how others can use or contribute to your project.
+The main script accepts a variety of command-line arguments to customize the data generation and training process. Below is a detailed explanation of each option:
+
+### Usage Command
+
+```plaintext
+usage: parameters.py [-h] [--saving_path SAVING_PATH] [--image_path IMAGE_PATH] [--resolution_in RESOLUTION_IN] [--resolution_out RESOLUTION_OUT] [--number_of_n2 NUMBER_OF_N2]
+                     [--number_of_power NUMBER_OF_POWER] [--number_of_isat NUMBER_OF_ISAT] [--is_from_image] [--visualize] [--expension] [--generate] [--single_power] [--multiple_power] [--delta_z DELTA_Z]
+                     [--trans TRANS] [--length LENGTH] [--factor_window FACTOR_WINDOW] [--training] [--learning_rate LEARNING_RATE] [--batch_size BATCH_SIZE] [--accumulator ACCUMULATOR]
+                     [--num_epochs NUM_EPOCHS]
+```
+
+### Options
+
+- `-h, --help`: Show this help message and exit.
+- `--saving_path SAVING_PATH`: Directory path for saving output files.
+- `--image_path IMAGE_PATH`: Path to the input image file. Default is `<saving_path>/exp_data/input_beam.tiff`.
+- `--resolution_in RESOLUTION_IN`: Input resolution.
+- `--resolution_out RESOLUTION_OUT`: Output resolution.
+- `--number_of_n2 NUMBER_OF_N2`: Number of different n2 values.
+- `--number_of_power NUMBER_OF_POWER`: Number of different power levels.
+- `--number_of_isat NUMBER_OF_ISAT`: Number of different Isat values.
+- `--is_from_image`: Specifies if the input is from an image.
+- `--visualize`: Enable visualization of the data generation process.
+- `--expension`: Enable expansion in the processing steps.
+- `--generate`: Enable data generation.
+- `--single_power`: Train the model with a single power setting.
+- `--multiple_power`: Train the model with multiple power settings.
+- `--delta_z DELTA_Z`: Step of the NLSE propagation.
+- `--trans TRANS`: Transmission through the optical cell.
+- `--length LENGTH`: Length of the optical cell.
+- `--factor_window FACTOR_WINDOW`: Factor window applied to the waist.
+- `--training`: Enable training mode.
+- `--learning_rate LEARNING_RATE`: Learning rate for the training.
+- `--batch_size BATCH_SIZE`: Batch size for training.
+- `--accumulator ACCUMULATOR`: Number of steps for gradient accumulation.
+- `--num_epochs NUM_EPOCHS`: Number of epochs for training.
+
+### Example Command
+
+To start the model with specific options enabled, you could use a command like this:
+
+```bash
+./parameters.py --saving_path "/path/to/save" --image_path "/path/to/input_image.tiff" --resolution_in 1024 --resolution_out 512 --number_of_n2 20 --number_of_power 20 --number_of_isat 20 --generate --training --single_power --learning_rate 0.001 --batch_size 16 --num_epochs 100
+```
