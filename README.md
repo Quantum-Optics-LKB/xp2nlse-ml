@@ -84,5 +84,5 @@ usage: parameters.py [-h] [--saving_path SAVING_PATH] [--image_path IMAGE_PATH] 
 To start the model with specific options enabled, you could use a command like this:
 
 ```bash
-./parameters.py --saving_path "/path/to/save" --image_path "/path/to/input_image.tiff" --resolution_in 1024 --resolution_out 512 --number_of_n2 20 --number_of_power 20 --number_of_isat 20 --generate --training --single_power --learning_rate 0.001 --batch_size 16 --num_epochs 100
+python ./parameters.py --saving_path "/path/to/save" --image_path "/path/to/input_image.tiff" --resolution_in 1024 --resolution_out 512 --number_of_n2 20 --number_of_power 20 --number_of_isat 20 --generate --training --single_power --learning_rate 0.001 --batch_size 16 --num_epochs 100
 ```
