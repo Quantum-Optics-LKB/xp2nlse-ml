@@ -4,7 +4,7 @@
 
 import torch
 import numpy as np
-from field_dataset import FieldDataset
+from engine.field_dataset import FieldDataset
 from torch.utils.data import DataLoader
 import torch.optim 
 
