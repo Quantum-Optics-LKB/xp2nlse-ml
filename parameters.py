@@ -11,7 +11,7 @@ parser.add_argument('--image_path', type=str, default=None,
 
 parser.add_argument('--resolution_in', type=int, default=512,
                     help='Input resolution.')
-parser.add_argument('--resolution_out', type=int, default=512,
+parser.add_argument('--resolution_out', type=int, default=256,
                     help='Output resolution.')
 
 parser.add_argument('--number_of_n2', type=int, default=10,
@@ -34,20 +34,20 @@ parser.add_argument('--single_power', action='store_true',
 parser.add_argument('--multiple_power', action='store_true',
                     help='Enable generation.')
 
-parser.add_argument('--delta_z', type=float, default=1e-5,
+parser.add_argument('--delta_z', type=float, default=1e-3,
                     help='Delta Z value.')
 parser.add_argument('--trans', type=float, default=0.01,
                     help='Trans value.')
 parser.add_argument('--length', type=float, default=20e-2,
                     help='Length value.')
-parser.add_argument('--factor_window', type=int, default=13,
+parser.add_argument('--factor_window', type=int, default=55,
                     help='Factor window value.')
 
 parser.add_argument('--training', action='store_true',
                     help='Enable training.')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='Learning rate')
-parser.add_argument('--batch_size', type=int, default=10,
+parser.add_argument('--batch_size', type=int, default=20,
                     help='Batch size')
 parser.add_argument('--accumulator', type=int, default=10,
                     help='Number of accumulation steps')

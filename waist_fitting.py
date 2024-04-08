@@ -100,7 +100,7 @@ def waist_computation(
     XX, YY = np.meshgrid(X, Y)
     XY_ravel =  np.vstack((XX.ravel(), YY.ravel()))
     field_ravel = field.ravel()
-    sigma_opt, _ = curve_fit(gaussian, XY_ravel, field_ravel,p0=[5e-4, 1, 0, 0] )
+    sigma_opt, _ = curve_fit(gaussian, XY_ravel, field_ravel,p0=[1e-3, 1, 0, 0] )
 
     sigma_waist = sigma_opt[0]
 
