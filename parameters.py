@@ -47,7 +47,7 @@ parser.add_argument('--training', action='store_true',
                     help='Enable training.')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='Learning rate')
-parser.add_argument('--batch_size', type=int, default=20,
+parser.add_argument('--batch_size', type=int, default=10,
                     help='Batch size')
 parser.add_argument('--accumulator', type=int, default=10,
                     help='Number of accumulation steps')

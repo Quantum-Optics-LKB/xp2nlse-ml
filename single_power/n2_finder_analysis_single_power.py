@@ -40,8 +40,11 @@ def analysis(path: str, power_values: np.ndarray):
             
             model_version =  f"model_resnetv{model_index}_1powers"
             model = {}
-            power_list_accuracy = []
-            power_list_index_error = []
+            power_list_accuracy_n2 = []
+            power_list_index_error_n2 = []
+
+            power_list_accuracy_isat = []
+            power_list_index_error_isat = []
             for power in tqdm(power_values, position=4,desc="Iteration", leave=False):
                 
                 stamp = f"power{str(power)[:4]}_{data_types[data_types_index]}_{model_version}"
@@ -59,14 +62,26 @@ def analysis(path: str, power_values: np.ndarray):
                 f = open(f'{new_path}/testing.txt', 'r')
                 lines = f.readlines()
                 accuracy = lines[count+2].split(" ")[-1].split("%")[0]
-                power_list_accuracy.append(float(accuracy))
+                error = lines[count+13].split(" ")[-1].split("\n")[0]
+                power_list_accuracy_n2.append(float(accuracy))
                 if len(accuracy) == len("100.00"):
-                    power_list_index_error.append(0)
+                    power_list_index_error_n2.append(0)
                 else:
-                    power_list_index_error.append(float(lines[count+13].split(" ")[-1].split("\n")[0]))
+                    power_list_index_error_n2.append(float(error))
+                
+                accuracy = lines[count+16].split(" ")[-1].split("%")[0]
+                error = lines[count+27].split(" ")[-1].split("\n")[0]
+                power_list_accuracy_isat.append(float(accuracy))
+                if len(accuracy) == len("100.00"):
+                    power_list_index_error_isat.append(0)
+                else:
+                    power_list_index_error_isat.append(float(error))
                 f.close
-            model["accuracy"] = power_list_accuracy
-            model["index_error"] = power_list_index_error 
+            model["accuracy_n2"] = power_list_accuracy_n2
+            model["index_error_n2"] = power_list_index_error_n2 
+
+            model["accuracy_isat"] = power_list_accuracy_isat
+            model["index_error_isat"] = power_list_index_error_isat 
                 
         models[model_version] = model
     data_type_results[data_types[data_types_index]] = models

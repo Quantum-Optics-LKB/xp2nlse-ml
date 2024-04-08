@@ -33,10 +33,17 @@ def analysis(path: str):
         models = {}
         for model_index in range(2, 6):
             
-            model_version =  f"model_resnetv{model_index}_1powers"
+            model_version =  f"model_resnetv{model_index}"
             model = {}
-            power_list_accuracy = []
-            power_list_index_error = []
+            power_list_accuracy_n2 = []
+            power_list_index_error_n2 = []
+
+            power_list_accuracy_isat = []
+            power_list_index_error_isat = []
+
+            power_list_accuracy_power = []
+            power_list_index_error_power = []
+
             stamp = f"multi_power_{data_types[data_types_index]}_{model_version}"
             new_path = f"{path}/{stamp}_training"
 
@@ -52,14 +59,38 @@ def analysis(path: str):
             f = open(f'{new_path}/testing.txt', 'r')
             lines = f.readlines()
             accuracy = lines[count+2].split(" ")[-1].split("%")[0]
-            power_list_accuracy.append(float(accuracy))
+            error = lines[count+13].split(" ")[-1].split("\n")[0]
+            power_list_accuracy_n2.append(float(accuracy))
             if len(accuracy) == len("100.00"):
-                power_list_index_error.append(0)
+                power_list_index_error_n2.append(0)
             else:
-                power_list_index_error.append(float(lines[count+13].split(" ")[-1].split("\n")[0]))
+                power_list_index_error_n2.append(float(error))
+            
+            accuracy = lines[count+16].split(" ")[-1].split("%")[0]
+            error = lines[count+27].split(" ")[-1].split("\n")[0]
+            power_list_accuracy_power.append(float(accuracy))
+            if len(accuracy) == len("100.00"):
+                power_list_index_error_power.append(0)
+            else:
+                power_list_index_error_power.append(float(error))
+
+            accuracy = lines[count+30].split(" ")[-1].split("%")[0]
+            error = lines[count+41].split(" ")[-1].split("\n")[0]
+            power_list_accuracy_isat.append(float(accuracy))
+            if len(accuracy) == len("100.00"):
+                power_list_index_error_isat.append(0)
+            else:
+                power_list_index_error_isat.append(float(error))
+            
             f.close
-        model["accuracy"] = power_list_accuracy
-        model["index_error"] = power_list_index_error 
+        model["accuracy_n2"] = power_list_accuracy_n2
+        model["index_error_n2"] = power_list_index_error_n2 
+
+        model["accuracy_power"] = power_list_accuracy_power
+        model["index_error_power"] = power_list_index_error_power
+
+        model["accuracy_isat"] = power_list_accuracy_isat
+        model["index_error_isat"] = power_list_index_error_isat 
             
     models[model_version] = model
     data_type_results[data_types[data_types_index]] = models
