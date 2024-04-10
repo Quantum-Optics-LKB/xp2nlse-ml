@@ -49,6 +49,8 @@ field_data = [E[:,[0],:,:], E[:,[0,1],:,:], E[:,[0,2],:,:], E[:,[1],:,:], E[:,[2
 data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap", "amp_pha_pha_unwrap"]
 
 data_types_results = {}
+from tqdm import tqdm
+
 for data_types_index in range(len(data_types)):
 
     E = field_data[data_types_index]
@@ -73,7 +75,7 @@ for data_types_index in range(len(data_types)):
         result_isat = np.zeros(number_of_power)
         result_index_isat = np.zeros(number_of_power)
         
-        for power_index in power_labels:
+        for power_index in tqdm(power_labels, position=4,desc="Iteration", leave=False):
             
             stamp = f"power{str(power_values[power_index])[:4]}_{data_types[data_types_index]}_{model_version}"
             new_path = f"{path}/{stamp}_training"
@@ -81,7 +83,7 @@ for data_types_index in range(len(data_types)):
             
             cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_power=number_of_power, class_isat=number_of_isat)
             cnn = cnn.to(device)
-            cnn.load_state_dict(torch.load(f'{new_path}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_puiss{1}.pth'))
+            cnn.load_state_dict(torch.load(f'{new_path}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth'))
 
             with torch.no_grad():
                 images = torch.from_numpy(E[[power_index],:,:,:]).float().to(device)

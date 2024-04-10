@@ -73,7 +73,7 @@ for data_types_index in range(len(data_types)):
         
         cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_power=number_of_power, class_isat=number_of_isat)
         cnn = cnn.to(device)
-        cnn.load_state_dict(torch.load(f'{new_path}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_puiss{number_of_power}.pth'))
+        cnn.load_state_dict(torch.load(f'{new_path}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth'))
 
         with torch.no_grad():
             images = torch.from_numpy(E).float().to(device)

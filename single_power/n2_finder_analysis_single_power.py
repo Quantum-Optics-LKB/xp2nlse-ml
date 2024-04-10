@@ -77,16 +77,19 @@ def analysis(path: str, power_values: np.ndarray):
                 else:
                     power_list_index_error_isat.append(float(error))
                 f.close
-            model["accuracy_n2"] = power_list_accuracy_n2
-            model["index_error_n2"] = power_list_index_error_n2 
+                model["accuracy_n2"] = power_list_accuracy_n2
+                model["index_error_n2"] = power_list_index_error_n2 
 
-            model["accuracy_isat"] = power_list_accuracy_isat
-            model["index_error_isat"] = power_list_index_error_isat 
+                model["accuracy_isat"] = power_list_accuracy_isat
+                model["index_error_isat"] = power_list_index_error_isat 
                 
-        models[model_version] = model
-    data_type_results[data_types[data_types_index]] = models
+            models[model_version] = model
+        data_type_results[data_types[data_types_index]] = models
 
     df = pd.DataFrame.from_dict(data_type_results, orient="columns")
     df.to_json(f'{path}/model_analysis_single_power.json')            
                 
-                
+if __name__ == "__main__":
+    path ="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+    power_values = np.linspace(0.02, 0.5001, 10)
+    analysis(path, power_values)
