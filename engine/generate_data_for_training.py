@@ -102,6 +102,7 @@ def generate_data(
         is_from_image: bool, 
         generate: bool, 
         visualize: bool, 
+        expended: bool,
         expension: bool,
         single_power: bool, 
         multiple_power: bool, 
@@ -318,57 +319,71 @@ def generate_data(
             
             return  multiple_augmented
     else:
-        expension_factor = 33
-        if multiple_power and single_power:
-            power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
-            n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
-            isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
+        if expended:
+            expension_factor = 33
+            if multiple_power and single_power:
+                power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
+                n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
+                isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
 
-            power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
-            n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
-            isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
+                power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
+                n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
+                isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
 
-            values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
-            labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
-        
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-
-            labels_augmented = (labels_augmented_single, labels_augmented_multiple)
-            values_augmented = (values_augmented_single, values_augmented_multiple)
-
-            return labels_augmented, values_augmented
-        
-        elif multiple_power:
-            power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
-            n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
-            isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
-
-            power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
-            n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
-            isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
-
-            values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
-            labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
-
-            multiple_augmented = labels_augmented_multiple, values_augmented_multiple
-            return multiple_augmented
-        
-        elif single_power:
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+                values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
+                labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
             
-            single_augmented = labels_augmented_single, values_augmented_single
-            return single_augmented
+                n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+                isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
+
+                n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+                isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
+
+                values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+                labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+
+                labels_augmented = (labels_augmented_single, labels_augmented_multiple)
+                values_augmented = (values_augmented_single, values_augmented_multiple)
+
+                return labels_augmented, values_augmented
+            
+            elif multiple_power:
+                power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
+                n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
+                isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
+
+                power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
+                n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
+                isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
+
+                values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
+                labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
+
+                multiple_augmented = labels_augmented_multiple, values_augmented_multiple
+                return multiple_augmented
+            
+            elif single_power:
+                n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+                isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
+
+                n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+                isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
+
+                values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+                labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+                
+                single_augmented = labels_augmented_single, values_augmented_single
+                return single_augmented
+        else:
+            if multiple_power and single_power:
+
+                labels_all = (labels_all_single, labels_all_multiple)
+                values_all = (values_all_single, values_all_multiple)
+
+                return labels_all, values_all
+            
+            elif multiple_power:
+                return labels_all_multiple, values_all_multiple
+            
+            elif single_power:
+                return labels_all_single, values_all_single
