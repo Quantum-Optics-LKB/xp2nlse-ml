@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-from matplotlib import pyplot as plt
 import torch
 import numpy as np
 from scipy.ndimage import zoom
@@ -26,11 +25,11 @@ else:
     device = torch.device("cpu")
 print("---- DATA LOADING ----")
 
-E = np.load("/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/field.npy")[:,0,:,:]
+E = np.load("/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/field.npy")
 E_data = np.zeros((E.shape[0], 3, E.shape[1], E.shape[2]))
 
 cut = (E.shape[2] - E.shape[1])//2
-E_reshape = E[:,:,cut:E.shape[2] - cut] 
+E_reshape = E[:,0,:,cut:E.shape[2] - cut] 
 E_resized =  zoom(E_reshape, (1, resolution_out/E_reshape.shape[1],resolution_out/E_reshape.shape[2]), order=3)
 
 E = np.zeros((E.shape[0], 3, resolution_out, resolution_out))
@@ -46,7 +45,7 @@ classes = {
         'isat' : tuple(map(str, np.linspace(1e4, 1e6, number_of_isat) ))
     }
 
-field_data = [E[:,0,:,:], E[:,[0,1],:,:], E[:,[0,2],:,:], E[:,1,:,:], E[:,2,:,:], E]
+field_data = [E[:,[0],:,:], E[:,[0,1],:,:], E[:,[0,2],:,:], E[:,[1],:,:], E[:,[2],:,:], E]
 data_types = ["amp", "amp_pha", "amp_pha_unwrap", "pha", "pha_unwrap", "amp_pha_pha_unwrap"]
 
 data_types_results = {}
