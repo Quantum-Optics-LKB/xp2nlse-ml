@@ -112,7 +112,7 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
                     power_values = torch.from_numpy(power_values.numpy()[:,np.newaxis]).float().to(device)
 
                 # Forward pass with original images
-                outputs_n2, outputs_isat = net(images, power_values)
+                outputs_n2, outputs_power, outputs_isat = net(images, power_values)
 
                 loss_n2 = criterion(outputs_n2, n2_labels)
                 loss_powers = criterion(outputs_power, power_labels)

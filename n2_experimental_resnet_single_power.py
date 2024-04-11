@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
+import pandas as pd
 import torch
 import numpy as np
 from scipy.ndimage import zoom
@@ -103,23 +104,26 @@ for data_types_index in range(len(data_types)):
         models[model_version] = [result_n2, result_index_n2, result_isat, result_index_isat]
     data_types_results[data_types[data_types_index]] = models
 
+df = pd.DataFrame.from_dict(data_types_results, orient="columns")
+df.to_json(f'{path}/experiment_results_single_power.json')   
 
-for data_types_index in range(len(data_types)):
-    for model_index in range(2, 6):
-        result_n2 = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][0])
-        result_index_n2 = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][1])
-        result_isat = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][2])
-        result_index_isat = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][3])
+
+# for data_types_index in range(len(data_types)):
+#     for model_index in range(2, 6):
+#         result_n2 = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][0])
+#         result_index_n2 = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][1])
+#         result_isat = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][2])
+#         result_index_isat = np.array(data_types_results[data_types[data_types_index]][f"model_resnetv{model_index}_1powers"][3])
         
-        print(f"For {data_types[data_types_index]} and model_resnetv{model_index}_1powers :\n") 
-        print(f"Average n2 = {np.mean(result_n2)}")
-        print(f"Std n2 = {np.std(result_n2)}")
+#         print(f"For {data_types[data_types_index]} and model_resnetv{model_index}_1powers :") 
+#         print(f"Average n2 = {np.mean(result_n2)}")
+#         print(f"Std n2 = {np.std(result_n2)}")
 
-        print(f"Average index n2 = {np.mean(result_index_n2)}")
-        print(f"Std index n2 = {np.std(result_index_n2)}")
+#         print(f"Average index n2 = {np.mean(result_index_n2)}")
+#         print(f"Std index n2 = {np.std(result_index_n2)}")
 
-        print(f"Average isat = {np.mean(result_isat)}")
-        print(f"Std isat = {np.std(result_isat)}")
+#         print(f"Average isat = {np.mean(result_isat)}")
+#         print(f"Std isat = {np.std(result_isat)}")
 
-        print(f"Average index isat = {np.mean(result_index_isat)}")
-        print(f"Std index isat = {np.std(result_index_isat)}")
+#         print(f"Average index isat = {np.mean(result_index_isat)}")
+#         print(f"Std index isat = {np.std(result_index_isat)}\n")

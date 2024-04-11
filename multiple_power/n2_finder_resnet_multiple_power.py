@@ -5,6 +5,7 @@
 import os
 import sys
 import torch
+from tqdm import tqdm
 import numpy as np
 from engine.loss_plot_2D import plotter
 from multiple_power.n2_test_resnet_multiple_power import count_parameters_pandas, test_model_classification
@@ -93,7 +94,7 @@ def lauch_training(
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
 
         
-    for model_index in range(2, 6):
+    for model_index in tqdm(range(2, 6), position=4,desc="Iteration", leave=False):
         if model_index == 2:
             from multiple_power.model.model_resnetv2 import Inception_ResNetv2
         elif model_index == 3:
@@ -105,11 +106,13 @@ def lauch_training(
 
         for data_types_index in range(len(data_types)):
         
-            model_version =  str(Inception_ResNetv2).split('.')[0][8:]
+            model_version =  str(Inception_ResNetv2).split('.')[-2]
             stamp = f"multi_power_{data_types[data_types_index]}_{model_version}"
             
             if not os.path.isdir(f"{path}/{stamp}_training"):
                 os.makedirs(f"{path}/{stamp}_training")
+            else:
+                continue
             new_path = f"{path}/{stamp}_training"
 
             orig_stdout = sys.stdout
