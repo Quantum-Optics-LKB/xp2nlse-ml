@@ -58,6 +58,6 @@ def plotter(
     plt.ylabel("Loss")
     plt.title("Training and Validation Losses")
     plt.legend()
-    plt.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_puiss{number_of_puiss}_2D.png")
+    plt.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_puiss{number_of_puiss}.png")
     plt.close()
     
