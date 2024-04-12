@@ -35,12 +35,12 @@ parser.add_argument('--number_of_isat', type=int, default=10,
 
 parser.add_argument('--visualize', action='store_true',
                     help='Enable visualization.')
-parser.add_argument('--expension', action='store_true',
-                    help='Enable expension.')
+parser.add_argument('--expansion', action='store_true',
+                    help='Enable expansion.')
 parser.add_argument('--generate', action='store_true',
                     help='Enable generation.')
-parser.add_argument('--expended', action='store_true',
-                    help='Add if your data was expended in a previous run')
+parser.add_argument('--expanded', action='store_true',
+                    help='Add if your data was expanded in a previous run')
 
 parser.add_argument('--delta_z', type=float, default=1e-3,
                     help='Step of the propagation of NLSE')
@@ -80,7 +80,7 @@ resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
-                                args.generate, args.visualize,args.expended, args.expension, args.factor_window, args.delta_z, args.length, 
+                                args.generate, args.visualize,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 
                                         args.trans, args.device)
 
 if args.training:

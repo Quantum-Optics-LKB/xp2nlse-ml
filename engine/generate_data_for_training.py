@@ -59,8 +59,8 @@ def generate_data(
         numbers: tuple, 
         generate: bool, 
         visualize: bool, 
-        expended: bool,
-        expension: bool,
+        expanded: bool,
+        expansion: bool,
         factor_window: int, 
         delta_z: float, 
         length: float, 
@@ -77,14 +77,14 @@ def generate_data(
     - numbers (tuple): Tuple of the numbers of n2, power, and isat instances (number_of_n2, number_of_power, number_of_isat).
     - generate (bool): Flag to enable data generation.
     - visualize (bool): Flag to enable visualization of generated data.
-    - expension (bool): Flag to enable data augmentation.
+    - expansion (bool): Flag to enable data augmentation.
     - factor_window (int): Factor to adjust the simulation window based on the waist.
     - delta_z (float): Step size in the Z-direction for the NLSE simulation.
     - length (float): Length of the propagation medium.
     - transmission (float): Transmission coefficient for the medium.
 
     Returns:
-    - tuple: Contains labels and values for augmented data, if `expension` is True; otherwise, 
+    - tuple: Contains labels and values for augmented data, if `expansion` is True; otherwise, 
       it returns labels and values for the generated or loaded data.
     """
     resolution_in, resolution_out = resolutions
@@ -155,7 +155,7 @@ def generate_data(
                 plt.savefig(f'{saving_path}/{data_types[data_types_index]}_{str(power_values[power_index])[:4]}p_{number_of_n2}n2_{number_of_isat}Isat.png')
                 plt.close()
 
-    if expension:
+    if expansion:
 
         print("---- EXPEND ----")
         for power in power_values:
@@ -163,26 +163,26 @@ def generate_data(
             E = np.load(file)
 
             noise = 0.01
-            expension_factor = data_augmentation(number_of_n2, number_of_isat, power, E, noise, saving_path)
+            expansion_factor = data_augmentation(number_of_n2, number_of_isat, power, E, noise, saving_path)
 
-        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
+        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
+        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
 
-        n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-        isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
+        n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
+        isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
 
         values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
         labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
         
         return labels_augmented_single, values_augmented_single
     else:
-        if expended:
-            expension_factor = 33
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
+        if expanded:
+            expansion_factor = 33
+            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
+            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
 
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
+            n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
+            isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
 
             values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
             labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
