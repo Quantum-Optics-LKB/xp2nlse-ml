@@ -44,7 +44,6 @@ def test_model_classification(totalloader, net, classes, device):
         for images, n2_labels, isat_labels in totalloader:
             # Process original images
             images = images
-            power_labels = power_labels
             n2_labels = n2_labels
             isat_labels = isat_labels
 

@@ -4,6 +4,8 @@
 import argparse
 
 from engine.generate_data_for_training import generate_data
+from engine.finder import lauch_training
+from engine.use import get_parameters
 
 parser = argparse.ArgumentParser(description='')
 
@@ -12,7 +14,11 @@ parser.add_argument('--device', type=int, default=0,
 
 parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN",
                     help='Directory path for saving output files.')
-parser.add_argument('--image_path', type=str, default=None,
+parser.add_argument('--input_image_path', type=str, default=None,
+                    help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
+parser.add_argument('--exp_image_path', type=str, default=None,
+                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field.npy')
+parser.add_argument('--output_image_path', type=str, default=None,
                     help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
 
 parser.add_argument('--resolution_in', type=int, default=512,
@@ -26,7 +32,6 @@ parser.add_argument('--number_of_power', type=int, default=10,
                     help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
-
 
 parser.add_argument('--visualize', action='store_true',
                     help='Enable visualization.')
@@ -57,22 +62,32 @@ parser.add_argument('--accumulator', type=int, default=2,
 parser.add_argument('--num_epochs', type=int, default=60,
                     help='Number of epochs')
 
+parser.add_argument('--use', action='store_true',
+                    help='Find your parameters')
+
 # Parse the arguments
 args = parser.parse_args()
 
 # Set the default for image_path if not specified
-if args.image_path is None:
-    args.image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
+if args.input_image_path is None:
+    args.input_image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
+
+if args.exp_image_path is None:
+    args.exp_image_path = f'{args.saving_path}/exp_data/field.npy'
 
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
 
-labels, values = generate_data(args.saving_path, args.image_path, resolutions, numbers, 
+labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
                                 args.generate, args.visualize,args.expended, args.expension, args.factor_window, args.delta_z, args.length, 
                                         args.trans, args.device)
 
 if args.training:
     print("-- TRAINING --")
-    from engine.finder import lauch_training
     lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator, args.device)
+
+if args.use:
+    print("-- COMPUTING PARAMETERS --")
+    get_parameters(args.exp_image_path, args.saving_path, args.resolution_out, numbers, args.device)
+
