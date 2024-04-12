@@ -3,7 +3,6 @@
 # @author: Louis Rossignol
 
 import matplotlib.pyplot as plt
-from cycler import cycler
 import numpy as np
 
 def plotter(
@@ -31,15 +30,6 @@ def plotter(
       used in the file name to provide context about the simulation or model configuration.
     - number_of_puiss (int): Specifies the number of power levels (puissances) considered, also used 
       in the file naming to give further context.
-
-    This function sets up a matplotlib plot with a dark theme, custom color cycles for lines, and then plots 
-    the training and validation losses. It labels the axes, adds a title, a legend, and finally saves the 
-    plot to the specified path with a name that incorporates the resolution, n2, and power level details.
-
-    Note:
-    - The function does not return any value.
-    - It is assumed that the necessary directories already exist at the specified path.
-    - The color and style settings are configured for a dark theme; these can be adjusted as per requirements.
     """
     
     plt.figure(figsize=(10, 6))
