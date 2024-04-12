@@ -41,28 +41,22 @@ def plotter(
     - It is assumed that the necessary directories already exist at the specified path.
     - The color and style settings are configured for a dark theme; these can be adjusted as per requirements.
     """
-    # for dark theme
-    plt.style.use('dark_background')
-    plt.rcParams['figure.facecolor'] = "#00000080"
-    plt.rcParams['axes.facecolor'] = "#00000080"
-    plt.rcParams['savefig.facecolor'] = "#00000080"
-    # plt.rcParams['savefig.transparent'] = True
-    plt.rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.sans-serif'] = ['Liberation Sans']
-    # for plots
-    tab_colors = ['tab:blue', 'tab:orange', 'forestgreen', 'tab:red', 'tab:purple', 'tab:brown',
-                'tab:pink', 'tab:gray', 'tab:olive', 'teal']
-    fills = ['lightsteelblue', 'navajowhite', 'darkseagreen', 'lightcoral', 'violet', 'indianred',
-            'lavenderblush', 'lightgray', 'darkkhaki', 'darkturquoise']
-    edges = tab_colors
-    custom_cycler = (cycler(color=tab_colors)) + \
-        (cycler(markeredgecolor=edges))+(cycler(markerfacecolor=fills))
-    plt.rc('axes', prop_cycle=custom_cycler)
-    plt.plot(y_train, label="Training Loss")
-    plt.plot(y_val, label="Validation Loss")
+    
+    plt.figure(figsize=(10, 6))
+
+    # Set font to DejaVu Serif
+    plt.rcParams['font.family'] = 'DejaVu Serif'
+    plt.rcParams['font.size'] = 12
+
+    plt.plot(y_train, label="Training Loss", marker='^', linestyle='-', color='blue', mfc='lightblue', mec='indigo', markersize=10, mew=2)
+
+    plt.plot(y_val, label="Validation Loss", marker='^', linestyle='-', color='orange', mfc='#FFEDA0', mec='darkorange', markersize=10, mew=2)
+
+    plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
-    plt.title("Losses")
+    plt.title("Training and Validation Losses")
     plt.legend()
     plt.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_puiss{number_of_puiss}_2D.png")
     plt.close()

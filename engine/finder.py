@@ -7,7 +7,7 @@ import sys
 from tqdm import tqdm
 import torch
 import numpy as np
-from engine.loss_plot_2D import plotter
+from engine.loss_plot import plotter
 from engine.test import count_parameters_pandas, test_model_classification
 from engine.data_prep_for_training import data_split, data_treatment
 from engine.training import network_training

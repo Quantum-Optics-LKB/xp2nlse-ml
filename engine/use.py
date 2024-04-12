@@ -49,7 +49,7 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
     
     for power_index in tqdm(range(number_of_power), position=4,desc="Iteration", leave=False):
 
-        cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_power=number_of_power, class_isat=number_of_isat)
+        cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_isat=number_of_isat)
         cnn = cnn.to(device)
         cnn.load_state_dict(torch.load(f'{saving_path}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth'))
 
