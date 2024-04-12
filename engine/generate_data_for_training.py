@@ -104,8 +104,6 @@ def generate_data(
         visualize: bool, 
         expended: bool,
         expension: bool,
-        single_power: bool, 
-        multiple_power: bool, 
         factor_window: int, 
         delta_z: float, 
         length: float, 
@@ -123,8 +121,6 @@ def generate_data(
     - generate (bool): Flag to enable data generation.
     - visualize (bool): Flag to enable visualization of generated data.
     - expension (bool): Flag to enable data augmentation.
-    - single_power (bool): Flag to indicate single power data generation.
-    - multiple_power (bool): Flag to indicate multiple power levels data generation.
     - factor_window (int): Factor to adjust the simulation window based on the waist.
     - delta_z (float): Step size in the Z-direction for the NLSE simulation.
     - length (float): Length of the propagation medium.
@@ -162,228 +158,107 @@ def generate_data(
     else:
         E_clean = np.load(f"{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all.npy")
 
-    if single_power:
+    N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
+    N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
 
-        N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
-        N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
-
-        n2_values_all_single = N2_values_single.flatten()
-        isat_values_all_single = ISAT_values_single.flatten()
+    n2_values_all_single = N2_values_single.flatten()
+    isat_values_all_single = ISAT_values_single.flatten()
 
 
-        n2_labels_all_single = N2_labels_single.reshape((number_of_n2*number_of_isat,))
-        isat_labels_all_single = ISAT_labels_single.reshape((number_of_n2*number_of_isat,))
+    n2_labels_all_single = N2_labels_single.reshape((number_of_n2*number_of_isat,))
+    isat_labels_all_single = ISAT_labels_single.reshape((number_of_n2*number_of_isat,))
 
-        values_all_single = (n2_values_all_single, isat_values_all_single)
-        labels_all_single = (n2_labels_all_single, isat_labels_all_single)
+    values_all_single = (n2_values_all_single, isat_values_all_single)
+    labels_all_single = (n2_labels_all_single, isat_labels_all_single)
     
-    if multiple_power:
 
-        N2_values_multiple, POWER_values_multiple, ISAT_values_multiple = np.meshgrid(n2_values,power_values, isat_values,indexing='ij') 
-        N2_labels_multiple, POWER_labels_multiple, ISAT_labels_multiple = np.meshgrid(n2_labels, power_labels, isat_labels,indexing='ij')
+    N2_values_multiple, POWER_values_multiple, ISAT_values_multiple = np.meshgrid(n2_values,power_values, isat_values,indexing='ij') 
+    N2_labels_multiple, POWER_labels_multiple, ISAT_labels_multiple = np.meshgrid(n2_labels, power_labels, isat_labels,indexing='ij')
 
-        power_values_all_multiple = POWER_values_multiple.flatten()
-        n2_values_all_multiple = N2_values_multiple.flatten()
-        isat_values_all_multiple = ISAT_values_multiple.flatten()
+    power_values_all_multiple = POWER_values_multiple.flatten()
+    n2_values_all_multiple = N2_values_multiple.flatten()
+    isat_values_all_multiple = ISAT_values_multiple.flatten()
 
-        power_labels_all_multiple = POWER_labels_multiple.flatten()
-        n2_labels_all_multiple = N2_labels_multiple.flatten()
-        isat_labels_all_multiple = ISAT_labels_multiple.flatten()
+    power_labels_all_multiple = POWER_labels_multiple.flatten()
+    n2_labels_all_multiple = N2_labels_multiple.flatten()
+    isat_labels_all_multiple = ISAT_labels_multiple.flatten()
 
-        values_all_multiple = (n2_values_all_multiple, power_values_all_multiple, isat_values_all_multiple)
-        labels_all_multiple = (n2_labels_all_multiple, power_labels_all_multiple, isat_labels_all_multiple)
+    values_all_multiple = (n2_values_all_multiple, power_values_all_multiple, isat_values_all_multiple)
+    labels_all_multiple = (n2_labels_all_multiple, power_labels_all_multiple, isat_labels_all_multiple)
 
-        if visualize:
-            print("---- VISUALIZE ----")
+    if visualize:
+        print("---- VISUALIZE ----")
 
-            data_types = ["amp", "pha", "pha_unwrap"]
-            cmap_types = ["viridis", "twilight_shifted", "viridis"]
+        data_types = ["amp", "pha", "pha_unwrap"]
+        cmap_types = ["viridis", "twilight_shifted", "viridis"]
 
-            for data_types_index in range(len(data_types)):
+        for data_types_index in range(len(data_types)):
+            
+            for power_index in range(number_of_power):
+                counter = 0
+                E_power = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[power_index])[:4]}_amp_pha_pha_unwrap.npy')
+
+                if number_of_isat > number_of_n2:
+                    fig, axs = plt.subplots(number_of_isat,number_of_n2, figsize=(number_of_isat*5, number_of_n2*5))
+                else:
+                    fig, axs = plt.subplots(number_of_n2, number_of_isat, figsize=(number_of_n2*5, number_of_isat*5))
                 
-                for power_index in range(number_of_power):
-                    counter = 0
-                    E_power = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[power_index])[:4]}_amp_pha_pha_unwrap.npy')
-
-                    if number_of_isat > number_of_n2:
-                        fig, axs = plt.subplots(number_of_isat,number_of_n2, figsize=(number_of_isat*5, number_of_n2*5))
-                    else:
-                        fig, axs = plt.subplots(number_of_n2, number_of_isat, figsize=(number_of_n2*5, number_of_isat*5))
-                    
-                    for n2_index in range(number_of_n2):
-                        for isat_index in range(number_of_isat):
-                            if number_of_isat == 1 and number_of_n2 == 1:
-                                axs.imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                                axs.set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_multiple[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_multiple[counter]])}')
-                                plt.axis('off')
-                            elif number_of_isat == 1:
-                                axs[n2_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                                axs[n2_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_multiple[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_multiple[counter]])}')
-                                plt.axis('off')
-                            elif number_of_n2 == 1:
-                                axs[isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                                axs[isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_multiple[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_multiple[counter]])}')
-                                plt.axis('off')
-                            else:
-                                axs[n2_index, isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                                axs[n2_index, isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_multiple[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_multiple [counter]])}')
-                                plt.axis('off')
-                            counter += 1
-                    plt.tight_layout()
-                    plt.savefig(f'{saving_path}/{data_types[data_types_index]}_{str(power_values[power_index])[:4]}p_{number_of_n2}n2_{number_of_isat}Isat.png')
-                    plt.close()
+                for n2_index in range(number_of_n2):
+                    for isat_index in range(number_of_isat):
+                        if number_of_isat == 1 and number_of_n2 == 1:
+                            axs.imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
+                            axs.set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
+                            plt.axis('off')
+                        elif number_of_isat == 1:
+                            axs[n2_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
+                            axs[n2_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
+                            plt.axis('off')
+                        elif number_of_n2 == 1:
+                            axs[isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
+                            axs[isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
+                            plt.axis('off')
+                        else:
+                            axs[n2_index, isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
+                            axs[n2_index, isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
+                            plt.axis('off')
+                        counter += 1
+                plt.tight_layout()
+                plt.savefig(f'{saving_path}/{data_types[data_types_index]}_{str(power_values[power_index])[:4]}p_{number_of_n2}n2_{number_of_isat}Isat.png')
+                plt.close()
 
     if expension:
 
-        if multiple_power and single_power:
-            print("---- EXPEND MULTIPLE----")
+        print("---- EXPEND ----")
+        for power in power_values:
+            file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
+            E = np.load(file)
+
             noise = 0.01
-            power = 0
-            E_expend_multiple, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
-            
-            power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
-            n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
-            isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
+            E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
 
-            power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
-            n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
-            isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
+        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
 
-            values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
-            labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
+        n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+        isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
 
-
-            for power in power_values:
-                print("---- EXPEND SINGLE ----")
-                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
-                E = np.load(file)
-
-                noise = 0.01
-                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
-
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-
-            labels_augmented = (labels_augmented_single, labels_augmented_multiple)
-            values_augmented = (values_augmented_single, values_augmented_multiple)
-            
-            return labels_augmented, values_augmented
+        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
         
-        elif single_power:
-            
-            for power in power_values:
-
-                print("---- EXPEND SINGLE ----")
-                file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
-                E = np.load(file)
-
-                noise = 0.01
-                E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
-
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-
-            single_augmented = labels_augmented_single, values_augmented_single
-            
-            return single_augmented
-        
-        elif multiple_power:
-            print("---- EXPEND MULTIPLE----")
-            noise = 0.01
-            power = 0
-            E_expend_multiple, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E_clean, noise, saving_path)
-            power_labels_augmented = np.repeat(power_labels_all_multiple, expension_factor)
-            n2_labels_augmented = np.repeat(n2_labels_all_multiple, expension_factor)
-            isat_labels_augmented = np.repeat(isat_labels_all_multiple, expension_factor)
-
-            power_values_augmented = np.repeat(power_values_all_multiple, expension_factor)
-            n2_values_augmented = np.repeat(n2_values_all_multiple, expension_factor)
-            isat_values_augmented = np.repeat(isat_values_all_multiple, expension_factor)
-
-            values_augmented = (n2_values_augmented, power_values_augmented, isat_values_augmented)
-            labels_augmented = (n2_labels_augmented, power_labels_augmented, isat_labels_augmented)
-
-            multiple_augmented = labels_augmented, values_augmented
-            
-            return  multiple_augmented
+        return labels_augmented_single, values_augmented_single
     else:
         if expended:
             expension_factor = 33
-            if multiple_power and single_power:
-                power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
-                n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
-                isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
+            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
+            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
 
-                power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
-                n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
-                isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
+            n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
+            isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
 
-                values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
-                labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
+            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
             
-                n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-                isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-                n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-                isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-                values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-                labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-
-                labels_augmented = (labels_augmented_single, labels_augmented_multiple)
-                values_augmented = (values_augmented_single, values_augmented_multiple)
-
-                return labels_augmented, values_augmented
-            
-            elif multiple_power:
-                power_labels_augmented_multiple = np.repeat(power_labels_all_multiple, expension_factor)
-                n2_labels_augmented_multiple = np.repeat(n2_labels_all_multiple, expension_factor)
-                isat_labels_augmented_multiple = np.repeat(isat_labels_all_multiple, expension_factor)
-
-                power_values_augmented_multiple = np.repeat(power_values_all_multiple, expension_factor)
-                n2_values_augmented_multiple = np.repeat(n2_values_all_multiple, expension_factor)
-                isat_values_augmented_multiple = np.repeat(isat_values_all_multiple, expension_factor)
-
-                values_augmented_multiple = (n2_values_augmented_multiple, power_values_augmented_multiple, isat_values_augmented_multiple)
-                labels_augmented_multiple = (n2_labels_augmented_multiple, power_labels_augmented_multiple, isat_labels_augmented_multiple)
-
-                multiple_augmented = labels_augmented_multiple, values_augmented_multiple
-                return multiple_augmented
-            
-            elif single_power:
-                n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
-                isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)
-
-                n2_values_augmented_single = np.repeat(n2_values_all_single, expension_factor)
-                isat_values_augmented_single = np.repeat(isat_values_all_single, expension_factor)
-
-                values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-                labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-                
-                single_augmented = labels_augmented_single, values_augmented_single
-                return single_augmented
+            single_augmented = labels_augmented_single, values_augmented_single
+            return single_augmented
         else:
-            if multiple_power and single_power:
-
-                labels_all = (labels_all_single, labels_all_multiple)
-                values_all = (values_all_single, values_all_multiple)
-
-                return labels_all, values_all
-            
-            elif multiple_power:
-                return labels_all_multiple, values_all_multiple
-            
-            elif single_power:
-                return labels_all_single, values_all_single
+            return labels_all_single, values_all_single

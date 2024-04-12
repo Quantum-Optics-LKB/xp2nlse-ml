@@ -14,7 +14,7 @@ parser.add_argument('--image_path', type=str, default=None,
 
 parser.add_argument('--resolution_in', type=int, default=512,
                     help='Input resolution.')
-parser.add_argument('--resolution_out', type=int, default=256,
+parser.add_argument('--resolution_out', type=int, default=299,
                     help='Output resolution.')
 
 parser.add_argument('--number_of_n2', type=int, default=10,
@@ -34,10 +34,6 @@ parser.add_argument('--generate', action='store_true',
                     help='Enable generation.')
 parser.add_argument('--expended', action='store_true',
                     help='Add if your data was expended in a previous run')
-parser.add_argument('--single_power', action='store_true',
-                    help='Enable generation.')
-parser.add_argument('--multiple_power', action='store_true',
-                    help='Enable generation.')
 
 parser.add_argument('--delta_z', type=float, default=1e-3,
                     help='Step of the propagation of NLSE')
@@ -52,9 +48,9 @@ parser.add_argument('--training', action='store_true',
                     help='Enable training.')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='Learning rate')
-parser.add_argument('--batch_size', type=int, default=15,
+parser.add_argument('--batch_size', type=int, default=25,
                     help='Batch size')
-parser.add_argument('--accumulator', type=int, default=7,
+parser.add_argument('--accumulator', type=int, default=4,
                     help='Number of accumulation steps to allow for gradient accumulation')
 parser.add_argument('--num_epochs', type=int, default=60,
                     help='Number of epochs')
@@ -71,34 +67,10 @@ resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.image_path, resolutions, numbers, 
-                                args.is_from_image, args.generate, args.visualize,args.expended, args.expension, args.single_power,
-                                    args.multiple_power, args.factor_window, args.delta_z, args.length, 
+                                args.is_from_image, args.generate, args.visualize,args.expended, args.expension, args.factor_window, args.delta_z, args.length, 
                                         args.trans)
 
 if args.training:
     print("-- TRAINING --")
-    if args.single_power and args.multiple_power:
-        print("-- SINGLE - MULTIPLE --")
-
-        labels_all_single, labels_all_multiple = labels
-        values_all_single, values_all_multiple = values
-        
-        print("-- SINGLE --")
-        from single_power.n2_finder_resnet_single_power import lauch_training
-        lauch_training(numbers, labels_all_single, values_all_single, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
-        
-        print("-- MULTIPLE --")
-        from multiple_power.n2_finder_resnet_multiple_power import lauch_training
-        lauch_training(numbers, labels_all_multiple, values_all_multiple, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
-    
-    elif args.single_power:
-        print("-- SINGLE --")
-
-        from single_power.n2_finder_resnet_single_power import lauch_training
-        lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
-    
-    elif args.multiple_power:
-
-        print("-- MULTIPLE --")
-        from multiple_power.n2_finder_resnet_multiple_power import lauch_training
-        lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
+    from engine.finder import lauch_training
+    lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)

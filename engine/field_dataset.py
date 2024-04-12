@@ -53,8 +53,6 @@ class FieldDataset(Dataset):
     Attributes:
     - device (torch.device): The computing device where the dataset will be processed.
     - training (bool): Specifies whether the dataset is used for training, affecting data augmentation.
-    - power_labels (torch.Tensor): Tensor of power labels.
-    - power_values (torch.Tensor): Tensor of continuous power values.
     - n2_labels (torch.Tensor): Tensor of n2 labels.
     - isat_labels (torch.Tensor): Tensor of isat labels.
     - data (torch.Tensor): The main dataset containing the optical field data.
@@ -62,9 +60,7 @@ class FieldDataset(Dataset):
     Parameters:
     - data (np.ndarray): Optical field data, shaped as [num_samples, num_channels, height, width].
     - n2_labels (np.ndarray): Labels for n2 values, one for each data sample.
-    - power_labels (np.ndarray): Labels for power levels, one for each data sample.
     - isat_labels (np.ndarray): Labels for isat values, one for each data sample.
-    - power_values (np.ndarray): Continuous power values, one for each data sample.
     - training (bool): Flag to enable data augmentation if True.
     - device (torch.device): The device to perform computations on, default is CPU.
     """
@@ -72,11 +68,9 @@ class FieldDataset(Dataset):
             self, 
             data: np.ndarray, 
             n2_labels: np.ndarray, 
-            power_labels: np.ndarray, 
             isat_labels: np.ndarray,
-            power_values: np.ndarray, 
             training: bool, 
-            device=torch.device("cpu")):
+            device: torch.device = torch.device("cpu")):
         """
         Initializes the FieldDataset instance, setting up the tensors for data and labels, and preparing
         data augmentation if in training mode.
@@ -86,12 +80,8 @@ class FieldDataset(Dataset):
           to be in the format of [num_samples, num_channels, height, width].
         - n2_labels (np.ndarray): An array of labels for the nonlinear refractive index (n2), 
           with each label corresponding to a sample in the dataset.
-        - power_labels (np.ndarray): An array of categorical labels for the laser power, 
-          where each label corresponds to a sample.
         - isat_labels (np.ndarray): An array of labels for the saturation intensities (Isat),
           with each label corresponding to a sample.
-        - power_values (np.ndarray): An array of continuous values representing the power associated
-          with each sample.
         - training (bool): A boolean flag that indicates whether the dataset is being used for training.
           When True, data augmentation is applied.
         - device (torch.device): The computing device (CPU, GPU) on which the data will be processed and stored.
@@ -102,8 +92,6 @@ class FieldDataset(Dataset):
         """
         self.device = device
         self.training = training
-        self.power_labels = torch.from_numpy(power_labels).long().to(self.device)  # Convert power values to tensor and move to device
-        self.power_values = torch.from_numpy(power_values).float().to(self.device)  # Convert power values to tensor and move to device
         self.n2_labels = torch.from_numpy(n2_labels).long().to(self.device)
         self.isat_labels = torch.from_numpy(isat_labels).long().to(self.device)
         self.augmentation = get_augmentation(data.shape[-2], data.shape[-1])
@@ -141,13 +129,10 @@ class FieldDataset(Dataset):
 
         Returns:
         tuple: A tuple containing the data sample and its labels (data_item, power_value, power_label, n2_label, isat_label),
-               where `data_item` is the optical field data, `power_value` is the continuous power value, and
-               `power_label`, `n2_label`, `isat_label` are the respective labels for the sample.
+               where `data_item` is the optical field data, `n2_label`, `isat_label` are the respective labels for the sample.
         """
         data_item = self.data[idx,:,:,:]
-        power_value =self.power_values[idx]
-        power_label =self.power_labels[idx]
         n2_label = self.n2_labels[idx]
         isat_label = self.isat_labels[idx]
 
-        return  data_item, power_value, power_label, n2_label, isat_label
+        return  data_item, n2_label, isat_label

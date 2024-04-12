@@ -85,34 +85,15 @@ def data_creation(
         E_init = A[:,index_puiss, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
         out_resized_Pha = zoom(np.angle(E_init), (1, zoom_factor, zoom_factor),order=5)
-        out_resized_Pha_unwrap = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
         out_resized_Amp = zoom( np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
 
-        E = np.zeros((number_of_n2*number_of_isat,3, resolution_out, resolution_out))
+        E = np.zeros((number_of_n2*number_of_isat,2, resolution_out, resolution_out))
         E[:,0,:,:] = out_resized_Amp
         E[:,1,:,:] = out_resized_Pha
-        E[:,2,:,:] = out_resized_Pha_unwrap
         
         E = normalize_data(E).astype(np.float16)
         if not (path == None):
             np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
-        
-    E_all = np.zeros((number_of_n2*number_of_power*number_of_isat ,3 , resolution_out, resolution_out))
-    E_out = A.reshape((number_of_n2*number_of_power*number_of_isat,resolution_in, resolution_in)) 
-
-    out_resized_Pha = zoom(np.angle(E_out), (1, zoom_factor, zoom_factor),order=5)
-    out_resized_Pha_unwrap = zoom(unwrap_phase(np.angle(E_out)), (1, zoom_factor, zoom_factor),order=5)
-    out_resized_Amp = zoom( np.abs(E_out)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
-
-    E_all[:,0,:,:] = out_resized_Amp
-    E_all[:,1,:,:] = out_resized_Pha
-    E_all[:,2,:,:] = out_resized_Pha_unwrap
-    
-    E_all = normalize_data(E_all).astype(np.float16)
-    #Data saving
-    if not (path == None):
-        np.save(f'{path}/Es_w{E_all.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all', E_all)
-    return E_all
 
 def data_augmentation(
     number_of_n2: int, 

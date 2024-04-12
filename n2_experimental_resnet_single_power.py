@@ -60,7 +60,7 @@ for data_types_index in range(len(data_types)):
     for model_index in range(2, 6):
             
         if model_index == 2:
-            from single_power.model.model_resnetv2_1powers import Inception_ResNetv2
+            from single_power.model.model import Inception_ResNetv2
         elif model_index == 3:
             from single_power.model.model_resnetv3_1powers import Inception_ResNetv2
         elif model_index == 4:
