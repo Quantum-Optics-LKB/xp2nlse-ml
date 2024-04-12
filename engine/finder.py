@@ -55,7 +55,8 @@ def lauch_training(
         learning_rate: float, 
         batch_size: int, 
         num_epochs: int, 
-        accumulation_steps: int
+        accumulation_steps: int,
+        device_number: torch.device
         ) -> None:
     """
     Prepares the dataset and launches the training process for a neural network model.
@@ -76,11 +77,10 @@ def lauch_training(
     objects, and then trains the model using the `network_training` function. Results, including losses and 
     the trained model, are saved to the specified path.
     """
+    device = torch.device(f"cuda:{device_number}")
     number_of_n2, number_of_power, number_of_isat = numbers
     n2_labels, isat_labels = labels
     n2_values, isat_values = values
-    backend = "GPU"
-    device = torch.device("cuda:0")
 
     power_index = 0
     powers = np.linspace(.02, 0.5001, number_of_power)
@@ -121,26 +121,26 @@ def lauch_training(
 
         
         print("---- MODEL INITIALIZING ----")
-        cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_power,number_of_isat, Inception_ResNetv2)
+        cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_isat, Inception_ResNetv2)
         cnn = cnn.to(device)
         
         print("---- DATA TREATMENT ----")
-        train_set, validation_set, test_set = data_split(E_noisy,n2_labels, power_labels,isat_labels, power_values, 0.8, 0.1, 0.1)
+        train_set, validation_set, test_set = data_split(E_noisy,n2_labels,isat_labels, 0.8, 0.1, 0.1)
 
-        train, train_n2_label, train_power_label,train_isat_label, train_power_value = train_set
-        validation, validation_n2_label, validation_power_label, validation_isat_label, validation_power_value = validation_set
-        test, test_n2_label, test_power_label, test_isat_label, test_power_value = test_set
+        train, train_n2_label,train_isat_label = train_set
+        validation, validation_n2_label, validation_isat_label = validation_set
+        test, test_n2_label, test_isat_label = test_set
 
         training_train = True
         training_valid = False
         training_test = False
 
-        trainloader = data_treatment(train, train_n2_label, train_power_label,train_isat_label, train_power_value, batch_size, device, training_train)
-        validationloader = data_treatment(validation, validation_n2_label, validation_power_label, validation_isat_label, validation_power_value, batch_size, device, training_valid)
-        testloader = data_treatment(test, test_n2_label, test_power_label, test_isat_label, test_power_value, batch_size, device, training_test )
+        trainloader = data_treatment(train, train_n2_label,train_isat_label, batch_size, device, training_train)
+        validationloader = data_treatment(validation, validation_n2_label, validation_isat_label, batch_size, device, training_valid)
+        testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
 
         print("---- MODEL TRAINING ----")
-        loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, device, accumulation_steps, backend)
+        loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps)
 
         print("---- MODEL SAVING ----")
         torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth')
@@ -172,7 +172,7 @@ def lauch_training(
         count_parameters_pandas(cnn)
 
         print("---- MODEL TESTING ----")
-        test_model_classification(testloader, cnn, classes, device, backend)
+        test_model_classification(testloader, cnn, classes, device)
 
         sys.stdout = orig_stdout
         f.close()

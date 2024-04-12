@@ -7,6 +7,9 @@ from engine.generate_data_for_training import generate_data
 
 parser = argparse.ArgumentParser(description='')
 
+parser.add_argument('--device', type=int, default=0,
+                    help='Which GPU you are using')
+
 parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN",
                     help='Directory path for saving output files.')
 parser.add_argument('--image_path', type=str, default=None,
@@ -24,8 +27,7 @@ parser.add_argument('--number_of_power', type=int, default=10,
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
 
-parser.add_argument('--is_from_image', action='store_true',
-                    help='Whether the input is from an image.')
+
 parser.add_argument('--visualize', action='store_true',
                     help='Enable visualization.')
 parser.add_argument('--expension', action='store_true',
@@ -41,16 +43,16 @@ parser.add_argument('--trans', type=float, default=0.01,
                     help='Transmission through the cell')
 parser.add_argument('--length', type=float, default=20e-2,
                     help='Length of the cell')
-parser.add_argument('--factor_window', type=int, default=55,
+parser.add_argument('--factor_window', type=int, default=56,
                     help='Factor window that is multiplied by the waist')
 
 parser.add_argument('--training', action='store_true',
                     help='Enable training.')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='Learning rate')
-parser.add_argument('--batch_size', type=int, default=25,
+parser.add_argument('--batch_size', type=int, default=50,
                     help='Batch size')
-parser.add_argument('--accumulator', type=int, default=4,
+parser.add_argument('--accumulator', type=int, default=2,
                     help='Number of accumulation steps to allow for gradient accumulation')
 parser.add_argument('--num_epochs', type=int, default=60,
                     help='Number of epochs')
@@ -67,10 +69,10 @@ resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.image_path, resolutions, numbers, 
-                                args.is_from_image, args.generate, args.visualize,args.expended, args.expension, args.factor_window, args.delta_z, args.length, 
-                                        args.trans)
+                                args.generate, args.visualize,args.expended, args.expension, args.factor_window, args.delta_z, args.length, 
+                                        args.trans, args.device)
 
 if args.training:
     print("-- TRAINING --")
     from engine.finder import lauch_training
-    lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator)
+    lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator, args.device)

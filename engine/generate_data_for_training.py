@@ -42,7 +42,6 @@ def from_input_image(
     print("--- FIND WAIST ---")
     window = resolution_in * 5.5e-6
     waist = waist_computation(image, window, image.shape[0], image.shape[0], False)
-    print(f"WAIST = {waist}")
 
     if resolution_in != image.shape[0]:
         image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]), order=5)
@@ -53,53 +52,11 @@ def from_input_image(
 
     return input_field_tiled_n2_power_isat, waist
 
-def from_gaussian(
-        NXY: int, 
-        window: int,
-        numbers: tuple,
-        waist: float 
-        ) ->  np.ndarray:
-    """
-    Generates a 2D Gaussian beam profile across a specified meshgrid.
-
-    Parameters:
-    - NXY (int): The number of points in both the X and Y dimensions for the meshgrid.
-    - window (int): The spatial extent of the square window in which the beam is defined.
-    - numbers (tuple): A tuple containing the number of n2, power, and isat values.
-    - waist (float): The waist (radius) of the Gaussian beam, determining its spread.
-
-    Returns:
-    - np.ndarray: A complex numpy array representing the Gaussian beam profile across the
-      meshgrid, tiled according to the specified number of n2, power, and isat values.
-    """
-    number_of_n2, number_of_power, number_of_isat = numbers
-    X, delta_X = np.linspace(
-        -window / 2,
-        window / 2,
-        num=NXY,
-        endpoint=False,
-        retstep=True,
-        dtype=np.float32,
-    )
-    Y, delta_Y = np.linspace(
-        -window / 2,
-        window / 2,
-        num=NXY,
-        endpoint=False,
-        retstep=True,
-        dtype=np.float32,
-    )
-    number_of_n2, number_of_power, number_of_isat = numbers
-    XX, YY = np.meshgrid(X, Y)
-
-    return np.ones((number_of_n2,number_of_power,number_of_isat, NXY, NXY), dtype=np.complex64) * np.exp(-(XX**2 + YY**2) / (waist**2))
-
 def generate_data(
         saving_path: str, 
         image_path: str,
         resolutions: tuple,
         numbers: tuple, 
-        is_from_image: bool, 
         generate: bool, 
         visualize: bool, 
         expended: bool,
@@ -107,7 +64,8 @@ def generate_data(
         factor_window: int, 
         delta_z: float, 
         length: float, 
-        transmission: float
+        transmission: float,
+        device_number: int,
         )-> tuple:
     """
     Generates or loads data for NLSE simulation, optionally performing data augmentation and visualization.
@@ -117,7 +75,6 @@ def generate_data(
     - image_path (str): Path to an input image, if `is_from_image` is True.
     - resolutions (tuple): Tuple of input and output resolutions (resolution_in, resolution_out).
     - numbers (tuple): Tuple of the numbers of n2, power, and isat instances (number_of_n2, number_of_power, number_of_isat).
-    - is_from_image (bool): Flag to indicate whether data is generated from an image.
     - generate (bool): Flag to enable data generation.
     - visualize (bool): Flag to enable visualization of generated data.
     - expension (bool): Flag to enable data augmentation.
@@ -141,22 +98,14 @@ def generate_data(
 
     isat_values = np.linspace(1e4, 1e6, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
-
-
-    if is_from_image:
+    
+    
+    if generate:
         input_field, waist = from_input_image(image_path, number_of_power, number_of_n2, number_of_isat, resolution_in)
         window = factor_window*waist
-    else:
-        waist = 1e-4
-        window = factor_window*waist
-        input_field = from_gaussian(resolution_in, window, numbers, waist)
-
-    if generate:
-        with cp.cuda.Device(0):
+        with cp.cuda.Device(device_number):
             print("---- NLSE ----")
-            E_clean = data_creation(input_field, window, n2_values,power_values,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
-    else:
-        E_clean = np.load(f"{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all.npy")
+            data_creation(input_field, window, n2_values,power_values,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
 
     N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
     N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
@@ -164,32 +113,16 @@ def generate_data(
     n2_values_all_single = N2_values_single.flatten()
     isat_values_all_single = ISAT_values_single.flatten()
 
-
     n2_labels_all_single = N2_labels_single.reshape((number_of_n2*number_of_isat,))
     isat_labels_all_single = ISAT_labels_single.reshape((number_of_n2*number_of_isat,))
 
     values_all_single = (n2_values_all_single, isat_values_all_single)
     labels_all_single = (n2_labels_all_single, isat_labels_all_single)
-    
-
-    N2_values_multiple, POWER_values_multiple, ISAT_values_multiple = np.meshgrid(n2_values,power_values, isat_values,indexing='ij') 
-    N2_labels_multiple, POWER_labels_multiple, ISAT_labels_multiple = np.meshgrid(n2_labels, power_labels, isat_labels,indexing='ij')
-
-    power_values_all_multiple = POWER_values_multiple.flatten()
-    n2_values_all_multiple = N2_values_multiple.flatten()
-    isat_values_all_multiple = ISAT_values_multiple.flatten()
-
-    power_labels_all_multiple = POWER_labels_multiple.flatten()
-    n2_labels_all_multiple = N2_labels_multiple.flatten()
-    isat_labels_all_multiple = ISAT_labels_multiple.flatten()
-
-    values_all_multiple = (n2_values_all_multiple, power_values_all_multiple, isat_values_all_multiple)
-    labels_all_multiple = (n2_labels_all_multiple, power_labels_all_multiple, isat_labels_all_multiple)
 
     if visualize:
         print("---- VISUALIZE ----")
 
-        data_types = ["amp", "pha", "pha_unwrap"]
+        data_types = ["amp", "pha"]
         cmap_types = ["viridis", "twilight_shifted", "viridis"]
 
         for data_types_index in range(len(data_types)):
@@ -208,19 +141,15 @@ def generate_data(
                         if number_of_isat == 1 and number_of_n2 == 1:
                             axs.imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
                             axs.set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                            plt.axis('off')
                         elif number_of_isat == 1:
                             axs[n2_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
                             axs[n2_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                            plt.axis('off')
                         elif number_of_n2 == 1:
                             axs[isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
                             axs[isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                            plt.axis('off')
                         else:
                             axs[n2_index, isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
                             axs[n2_index, isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                            plt.axis('off')
                         counter += 1
                 plt.tight_layout()
                 plt.savefig(f'{saving_path}/{data_types[data_types_index]}_{str(power_values[power_index])[:4]}p_{number_of_n2}n2_{number_of_isat}Isat.png')
@@ -234,7 +163,7 @@ def generate_data(
             E = np.load(file)
 
             noise = 0.01
-            E_expend_single, expension_factor = data_augmentation(number_of_n2, number_of_power, number_of_isat, power, E, noise, saving_path)
+            expension_factor = data_augmentation(number_of_n2, number_of_isat, power, E, noise, saving_path)
 
         n2_labels_augmented_single = np.repeat(n2_labels_all_single, expension_factor)
         isat_labels_augmented_single = np.repeat(isat_labels_all_single, expension_factor)

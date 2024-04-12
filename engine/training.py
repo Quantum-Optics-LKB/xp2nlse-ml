@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import torch.optim
 
-def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, device, accumulation_steps, backend):
+def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps):
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 

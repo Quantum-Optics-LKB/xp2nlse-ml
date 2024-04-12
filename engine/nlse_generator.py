@@ -92,17 +92,15 @@ def data_creation(
         E[:,1,:,:] = out_resized_Pha
         
         E = normalize_data(E).astype(np.float16)
-        if not (path == None):
-            np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
+        np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
 
 def data_augmentation(
     number_of_n2: int, 
-    number_of_power: int,
     number_of_isat: int,
     power: int,
     E: np.ndarray,
     noise_level: float,
-    path: str = None, 
+    path: str, 
     ) -> np.ndarray:
     """
     Applies data augmentation techniques to a set of input data arrays representing optical fields. 
@@ -112,7 +110,6 @@ def data_augmentation(
 
     Parameters:
     - number_of_n2 (int): The number of different nonlinear refractive index (n2) values used in the simulation.
-    - number_of_power (int): The number of different power levels used in the simulation.
     - number_of_isat (int): The number of different saturation intensities (Isat) used in the simulation.
     - power (int): The specific power value for which the augmentation is being done. If set to 0, 
       it assumes augmentation across all power levels.
@@ -121,8 +118,7 @@ def data_augmentation(
       phase, and unwrapped phase information.
     - noise_level (float): The base level of noise to be applied. This function will also apply a 
       noise level ten times greater as part of the augmentation.
-    - path (str, optional): The file path for saving the augmented data arrays. If None, data arrays 
-      are not saved. The saved filename reflects the augmentation parameters.
+    - path (str): The file path for saving the augmented data arrays
 
     Returns:
     - np.ndarray: An augmented data array with an increased number of samples due to applied 
@@ -158,12 +154,9 @@ def data_augmentation(
                         augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)
                         index += 1
     augmented_data = normalize_data(augmented_data)
-    if not (path == None):
-        if power != 0:
-            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
-        else:
-            np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_amp_pha_pha_unwrap_all_extended', augmented_data)
-    return augmented_data, augmentation
+    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
+        
+    return augmentation
 
 def normalize_data(
         data: np.ndarray

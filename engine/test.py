@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-def test_model_classification(totalloader, net, classes, device, backend):
+def test_model_classification(totalloader, net, classes, device):
     """
     Tests the classification accuracy of a trained neural network model on a given dataset.
 
@@ -14,8 +14,6 @@ def test_model_classification(totalloader, net, classes, device, backend):
     - net (torch.nn.Module): The trained neural network model to be evaluated.
     - classes (dict): A dictionary with keys 'n2' and 'isat', where each key maps to a list of class names
       corresponding to the output predictions of the network.
-    - device (torch.device): The device on which the model and data are loaded.
-    - backend (str): Specifies the computing backend, such as "GPU" for CUDA devices.
 
     The function iterates over the test dataset to evaluate the model's performance on n2 and isat 
     classification tasks, computing overall accuracy, class-wise accuracy, average distance error 
@@ -43,22 +41,14 @@ def test_model_classification(totalloader, net, classes, device, backend):
     percentage_errors_isat = []
 
     with torch.no_grad():
-        for images, power_values, power_labels, n2_labels, isat_labels in totalloader:
+        for images, n2_labels, isat_labels in totalloader:
             # Process original images
-            if backend == "GPU":
-                images = images
-                power_labels = power_labels
-                n2_labels = n2_labels
-                isat_labels = isat_labels
-                power_values = torch.from_numpy(power_values.cpu().numpy()[:,np.newaxis]).float().to(device)
-            else:
-                images = images.to(device) 
-                power_labels = power_labels.to(device) 
-                n2_labels = n2_labels.to(device)
-                isat_labels = isat_labels.to(device)
-                power_values = torch.from_numpy(power_values.numpy()[:,np.newaxis]).float().to(device)
+            images = images
+            power_labels = power_labels
+            n2_labels = n2_labels
+            isat_labels = isat_labels
 
-            outputs_n2, outputs_isat = net(images, power_values)
+            outputs_n2, outputs_isat = net(images)
             _, predicted_n2 = torch.max(outputs_n2, 1)
             _, predicted_isat = torch.max(outputs_isat, 1)
 
