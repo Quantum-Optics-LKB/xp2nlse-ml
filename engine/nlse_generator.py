@@ -68,10 +68,10 @@ def data_creation(
     n2[:, 0, 0, 0, 0] = n2_list
 
     power =  cp.zeros((1, power_list.size ,1 ,1 ,1))
-    power[0, :, 0, 0, 0] = power_list.T
+    power[0, :, 0, 0, 0] = power_list
 
     Isat =  cp.zeros((1, 1, Isat_list.size ,1 ,1 ))
-    Isat[0, 0, :, 0, 0] = Isat_list.T
+    Isat[0, 0, :, 0, 0] = Isat_list
 
     alpha = -cp.log(trans)/L
     zoom_factor = resolution_out / resolution_in

@@ -52,9 +52,9 @@ parser.add_argument('--training', action='store_true',
                     help='Enable training.')
 parser.add_argument('--learning_rate', type=float, default=0.001,
                     help='Learning rate')
-parser.add_argument('--batch_size', type=int, default=5,
+parser.add_argument('--batch_size', type=int, default=15,
                     help='Batch size')
-parser.add_argument('--accumulator', type=int, default=20,
+parser.add_argument('--accumulator', type=int, default=7,
                     help='Number of accumulation steps to allow for gradient accumulation')
 parser.add_argument('--num_epochs', type=int, default=60,
                     help='Number of epochs')
