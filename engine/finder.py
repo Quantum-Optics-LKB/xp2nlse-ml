@@ -78,101 +78,98 @@ def lauch_training(
     the trained model, are saved to the specified path.
     """
     device = torch.device(f"cuda:{device_number}")
-    number_of_n2, number_of_power, number_of_isat = numbers
+    number_of_n2, power, number_of_isat = numbers
     n2_labels, isat_labels = labels
     n2_values, isat_values = values
 
     power_index = 0
-    powers = np.linspace(.02, 0.5001, number_of_power)
+    powers = np.array([power])
     n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
     
-    for power in tqdm(powers, position=4,desc="Iteration", leave=False):
-        power_values = np.ones(len(n2_labels))*power
-        power_labels = np.ones(len(n2_labels))*power_index
+    power_values = np.ones(len(n2_labels))*power
+    power_labels = np.ones(len(n2_labels))*power_index
 
-        power_index += 1
+    power_index += 1
+    
+    if not os.path.isdir(f"{path}/training"):
+        os.makedirs(f"{path}/training")
+    else:
+        exit()
+    new_path = f"{path}/training"
 
-        stamp = f"power{str(power)[:4]}"
-        
-        if not os.path.isdir(f"{path}/{stamp}_training"):
-            os.makedirs(f"{path}/{stamp}_training")
-        else:
-            continue
-        new_path = f"{path}/{stamp}_training"
+    orig_stdout = sys.stdout
+    f = open(f'{new_path}/testing.txt', 'a')
+    sys.stdout = f
 
-        orig_stdout = sys.stdout
-        f = open(f'{new_path}/testing.txt', 'a')
-        sys.stdout = f
+    print("---- DATA LOADING ----")
 
-        print("---- DATA LOADING ----")
+    # number_of_n2 x 1 x number_of_isat
+    file = f'{path}/Es_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended.npy'
+    E_noisy = np.load(file, 'r')[:,[0,1],:,:]
+    assert E_noisy.shape[1] == 2
 
-        # number_of_n2 x 1 x number_of_isat
-        file = f'{path}/Es_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended.npy'
-        E_noisy = np.load(file, 'r')[:,[0,1],:,:]
-        assert E_noisy.shape[1] == 2
+    assert E_noisy.shape[0] == n2_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_labels[0] is {n2_labels.shape[0]}"
+    assert E_noisy.shape[0] == power_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, power_labels[0] is {power_labels.shape[0]}"
+    assert E_noisy.shape[0] == isat_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_labels[0] is {isat_labels.shape[0]}"
+    assert E_noisy.shape[0] == n2_values.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
+    assert E_noisy.shape[0] == power_values.shape[0], f"field[0] is {E_noisy.shape[0]}, power_values[0] is {power_values.shape[0]}"
+    assert E_noisy.shape[0] == isat_values.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
 
-        assert E_noisy.shape[0] == n2_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_labels[0] is {n2_labels.shape[0]}"
-        assert E_noisy.shape[0] == power_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, power_labels[0] is {power_labels.shape[0]}"
-        assert E_noisy.shape[0] == isat_labels.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_labels[0] is {isat_labels.shape[0]}"
-        assert E_noisy.shape[0] == n2_values.shape[0], f"field[0] is {E_noisy.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
-        assert E_noisy.shape[0] == power_values.shape[0], f"field[0] is {E_noisy.shape[0]}, power_values[0] is {power_values.shape[0]}"
-        assert E_noisy.shape[0] == isat_values.shape[0], f"field[0] is {E_noisy.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
+    
+    print("---- MODEL INITIALIZING ----")
+    cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_isat, Inception_ResNetv2)
+    cnn = cnn.to(device)
+    
+    print("---- DATA TREATMENT ----")
+    train_set, validation_set, test_set = data_split(E_noisy,n2_labels,isat_labels, 0.8, 0.1, 0.1)
 
-        
-        print("---- MODEL INITIALIZING ----")
-        cnn, optimizer, criterion, scheduler = network_init(learning_rate, E_noisy.shape[1], number_of_n2,number_of_isat, Inception_ResNetv2)
-        cnn = cnn.to(device)
-        
-        print("---- DATA TREATMENT ----")
-        train_set, validation_set, test_set = data_split(E_noisy,n2_labels,isat_labels, 0.8, 0.1, 0.1)
+    train, train_n2_label,train_isat_label = train_set
+    validation, validation_n2_label, validation_isat_label = validation_set
+    test, test_n2_label, test_isat_label = test_set
 
-        train, train_n2_label,train_isat_label = train_set
-        validation, validation_n2_label, validation_isat_label = validation_set
-        test, test_n2_label, test_isat_label = test_set
+    training_train = True
+    training_valid = False
+    training_test = False
 
-        training_train = True
-        training_valid = False
-        training_test = False
+    trainloader = data_treatment(train, train_n2_label,train_isat_label, batch_size, device, training_train)
+    validationloader = data_treatment(validation, validation_n2_label, validation_isat_label, batch_size, device, training_valid)
+    testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
 
-        trainloader = data_treatment(train, train_n2_label,train_isat_label, batch_size, device, training_train)
-        validationloader = data_treatment(validation, validation_n2_label, validation_isat_label, batch_size, device, training_valid)
-        testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
+    print("---- MODEL TRAINING ----")
+    loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps)
 
-        print("---- MODEL TRAINING ----")
-        loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps)
+    print("---- MODEL SAVING ----")
+    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth')
 
-        print("---- MODEL SAVING ----")
-        torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth')
+    file_name = f"{new_path}/params.txt"
+    classes = {
+        'n2': tuple(map(str, n2)),
+        'isat' : tuple(map(str, isat))
+    }
+    with open(file_name, "a") as file:
+        file.write(f"power: {power}\n")
+        file.write(f"resolution: {resolution}\n")
+        file.write(f"batch_size: {batch_size}\n")
+        file.write(f"accumulator: {accumulation_steps}\n")
+        file.write(f"num_of_n2: {number_of_n2}\n")
+        file.write(f"num_of_power: {1}\n")
+        file.write(f"num_epochs: {num_epochs}\n")
+        file.write(f"learning rate: {learning_rate}\n")
+        file.write(f"file: {file}\n")
+        file.write(f"training_train: {training_train}\n")
+        file.write(f"training_valid: {training_valid}\n")
+        file.write(f"training_test: {training_test}\n")
+        file.write(f"model: {Inception_ResNetv2}\n")
+        file.write(f"classes: {classes}\n")
 
-        file_name = f"{new_path}/params.txt"
-        classes = {
-            'n2': tuple(map(str, n2)),
-            'isat' : tuple(map(str, isat))
-        }
-        with open(file_name, "a") as file:
-            file.write(f"power: {power}\n")
-            file.write(f"resolution: {resolution}\n")
-            file.write(f"batch_size: {batch_size}\n")
-            file.write(f"accumulator: {accumulation_steps}\n")
-            file.write(f"num_of_n2: {number_of_n2}\n")
-            file.write(f"num_of_power: {1}\n")
-            file.write(f"num_epochs: {num_epochs}\n")
-            file.write(f"learning rate: {learning_rate}\n")
-            file.write(f"file: {file}\n")
-            file.write(f"training_train: {training_train}\n")
-            file.write(f"training_valid: {training_valid}\n")
-            file.write(f"training_test: {training_test}\n")
-            file.write(f"model: {Inception_ResNetv2}\n")
-            file.write(f"classes: {classes}\n")
+    plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_isat)
 
-        plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_power)
+    print("---- MODEL ANALYSIS ----")
+    count_parameters_pandas(cnn)
 
-        print("---- MODEL ANALYSIS ----")
-        count_parameters_pandas(cnn)
+    print("---- MODEL TESTING ----")
+    test_model_classification(testloader, cnn, classes)
 
-        print("---- MODEL TESTING ----")
-        test_model_classification(testloader, cnn, classes)
-
-        sys.stdout = orig_stdout
-        f.close()
+    sys.stdout = orig_stdout
+    f.close()

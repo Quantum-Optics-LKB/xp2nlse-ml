@@ -28,7 +28,7 @@ parser.add_argument('--resolution_out', type=int, default=299,
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
-parser.add_argument('--number_of_power', type=int, default=10,
+parser.add_argument('--power', type=float, default=0.18,
                     help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
@@ -73,11 +73,11 @@ if args.input_image_path is None:
     args.input_image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
 
 if args.exp_image_path is None:
-    args.exp_image_path = f'{args.saving_path}/exp_data/field.npy'
+    args.exp_image_path = f'{args.saving_path}/exp_data/field_4.npy'
 
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out
-numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
+numbers = args.number_of_n2, args.power, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
                                 args.generate, args.visualize,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 

@@ -93,8 +93,7 @@ def generate_data(
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
 
-    power_values = np.linspace(.02, .5001, number_of_power)
-    power_labels = np.arange(0, number_of_power)
+    power_values = np.array([power])
 
     isat_values = np.linspace(1e4, 1e6, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
