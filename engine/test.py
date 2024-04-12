@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-def test_model_classification(totalloader, net, classes, device):
+def test_model_classification(totalloader, net, classes):
     """
     Tests the classification accuracy of a trained neural network model on a given dataset.
 

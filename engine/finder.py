@@ -172,7 +172,7 @@ def lauch_training(
         count_parameters_pandas(cnn)
 
         print("---- MODEL TESTING ----")
-        test_model_classification(testloader, cnn, classes, device)
+        test_model_classification(testloader, cnn, classes)
 
         sys.stdout = orig_stdout
         f.close()
