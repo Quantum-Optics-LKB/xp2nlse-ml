@@ -23,7 +23,7 @@ parser.add_argument('--output_image_path', type=str, default=None,
 
 parser.add_argument('--resolution_in', type=int, default=512,
                     help='Input resolution.')
-parser.add_argument('--resolution_out', type=int, default=299,
+parser.add_argument('--resolution_out', type=int, default=256,
                     help='Output resolution.')
 
 parser.add_argument('--number_of_n2', type=int, default=10,
