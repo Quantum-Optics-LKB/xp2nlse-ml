@@ -5,12 +5,13 @@
 import torch
 import numpy as np
 import torch.optim
+from tqdm import tqdm
 
 def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps):
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 
-    for epoch in range(num_epochs):  
+    for epoch in tqdm(range(num_epochs), position=4,desc="Epoch", leave=False):  
         running_loss = 0.0
         net.train()
 

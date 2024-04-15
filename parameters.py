@@ -84,10 +84,10 @@ labels, values = generate_data(args.saving_path, args.input_image_path, resoluti
                                         args.trans, args.device)
 
 if args.training:
-    print("-- TRAINING --")
+    print("---- TRAINING ----")
     lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator, args.device)
 
 if args.use:
-    print("-- COMPUTING PARAMETERS --")
+    print("---- COMPUTING PARAMETERS ----\n")
     get_parameters(args.exp_image_path, args.saving_path, args.resolution_out, numbers, args.device)
 

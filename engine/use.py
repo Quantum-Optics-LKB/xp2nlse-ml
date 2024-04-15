@@ -52,5 +52,5 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
         _, predicted_n2 = torch.max(outputs_n2, 1)
         _, predicted_isat = torch.max(outputs_isat, 1)
 
-    print(f"n2 = {n2[predicted_n2]}")
-    print(f"Isat = {isat[predicted_isat]}")
+    print(f"n2 = {n2[predicted_n2]:.2e} m^2/W")
+    print(f"Isat = {isat[predicted_isat]:.2e} W/m^2")

@@ -35,18 +35,18 @@ def from_input_image(
       where height and width correspond to the dimensions of the input image.
     - waist (float): An approximation of the beam waist in meters, calculated based on the input image and resolution.
     """
-    print("--- LOAD INPUT IMAGE ---")
+    print("---- LOAD INPUT IMAGE ----")
     input_tiff = Image.open(path)
     image = np.array(input_tiff, dtype=np.float32)
     
-    print("--- FIND WAIST ---")
+    print("---- FIND WAIST ----")
     window = resolution_in * 5.5e-6
     waist = waist_computation(image, window, image.shape[0], image.shape[0], False)
 
     if resolution_in != image.shape[0]:
         image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]), order=5)
 
-    print("--- PREPARE FOR NLSE ---")
+    print("---- PREPARE FOR NLSE ----")
     input_field = image + 1j * np.zeros_like(image, dtype=np.float32)
     input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_power,number_of_isat, 1,1))
 
