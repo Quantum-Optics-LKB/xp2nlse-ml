@@ -44,7 +44,7 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
 
     cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_isat=number_of_isat)
     cnn = cnn.to(device)
-    cnn.load_state_dict(torch.load(f'{saving_path}/training/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth'))
+    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth'))
 
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)

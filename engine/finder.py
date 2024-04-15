@@ -92,11 +92,11 @@ def lauch_training(
 
     power_index += 1
     
-    if not os.path.isdir(f"{path}/training"):
-        os.makedirs(f"{path}/training")
+    if not os.path.isdir(f"{path}/training_n2{number_of_n2}_isat{number_of_isat}"):
+        os.makedirs(f"{path}/training_n2{number_of_n2}_isat{number_of_isat}")
     else:
         exit()
-    new_path = f"{path}/training"
+    new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}"
 
     orig_stdout = sys.stdout
     f = open(f'{new_path}/testing.txt', 'a')
