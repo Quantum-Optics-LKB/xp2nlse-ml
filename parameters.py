@@ -17,7 +17,7 @@ parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/At
 parser.add_argument('--input_image_path', type=str, default=None,
                     help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
 parser.add_argument('--exp_image_path', type=str, default=None,
-                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field.npy')
+                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field_9.npy')
 parser.add_argument('--output_image_path', type=str, default=None,
                     help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
 
@@ -28,7 +28,7 @@ parser.add_argument('--resolution_out', type=int, default=256,
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
-parser.add_argument('--power', type=float, default=0.18,
+parser.add_argument('--power', type=float, default=0.50,
                     help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
@@ -73,7 +73,7 @@ if args.input_image_path is None:
     args.input_image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
 
 if args.exp_image_path is None:
-    args.exp_image_path = f'{args.saving_path}/exp_data/field_4.npy'
+    args.exp_image_path = f'{args.saving_path}/exp_data/field_9.npy'
 
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out

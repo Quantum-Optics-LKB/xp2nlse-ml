@@ -88,7 +88,7 @@ def generate_data(
       it returns labels and values for the generated or loaded data.
     """
     resolution_in, resolution_out = resolutions
-    number_of_n2, number_of_power, number_of_isat = numbers
+    number_of_n2, power, number_of_isat = numbers
 
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
@@ -100,7 +100,7 @@ def generate_data(
     
     
     if generate:
-        input_field, waist = from_input_image(image_path, number_of_power, number_of_n2, number_of_isat, resolution_in)
+        input_field, waist = from_input_image(image_path, 1, number_of_n2, number_of_isat, resolution_in)
         window = factor_window*waist
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
@@ -126,7 +126,7 @@ def generate_data(
 
         for data_types_index in range(len(data_types)):
             
-            for power_index in range(number_of_power):
+            for power_index in range(1):
                 counter = 0
                 E_power = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[power_index])[:4]}_amp_pha_pha_unwrap.npy')
 
