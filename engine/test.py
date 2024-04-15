@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-def test_model_classification(totalloader, net, classes):
+def test_model_classification(totalloader, net, classes, device):
     """
     Tests the classification accuracy of a trained neural network model on a given dataset.
 
@@ -43,9 +43,9 @@ def test_model_classification(totalloader, net, classes):
     with torch.no_grad():
         for images, n2_labels, isat_labels in totalloader:
             # Process original images
-            images = images
-            n2_labels = n2_labels
-            isat_labels = isat_labels
+            images = images.to(device)
+            n2_labels = n2_labels.to(device)
+            isat_labels = isat_labels.to(device)
 
             outputs_n2, outputs_isat = net(images)
             _, predicted_n2 = torch.max(outputs_n2, 1)
