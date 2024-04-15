@@ -117,7 +117,7 @@ def data_treatment(
     class is used to encapsulate the data and perform any necessary preprocessing, such as data
     augmentation if the dataset is marked for training use.
     """
-    fieldset = FieldDataset(myset, n2label, isatlabel, training, device)
+    fieldset = FieldDataset(myset, n2label, isatlabel, training)
     fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
 
     return fieldloader

@@ -137,7 +137,7 @@ def lauch_training(
     testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
 
     print("---- MODEL TRAINING ----")
-    loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps)
+    loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
 
     print("---- MODEL SAVING ----")
     torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth')

@@ -7,7 +7,7 @@ import numpy as np
 import torch.optim
 from tqdm import tqdm
 
-def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps):
+def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device):
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 
@@ -18,9 +18,9 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         
         for i, (images, n2_labels, isat_labels) in enumerate(trainloader, 0):
             
-            images = images
-            n2_labels = n2_labels
-            isat_labels = isat_labels
+            images = images.to(device)
+            n2_labels = n2_labels.to(device)
+            isat_labels = isat_labels.to(device)
             
             outputs_n2, outputs_isat = net(images)
 
@@ -48,9 +48,9 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         net.eval()  
         with torch.no_grad(): 
             for i, (images, n2_labels, isat_labels) in enumerate(validationloader, 0):
-                images = images
-                n2_labels = n2_labels
-                isat_labels = isat_labels
+                images = images.to(device)
+                n2_labels = n2_labels.to(device)
+                isat_labels = isat_labels.to(device)
 
                 # Forward pass with original images
                 outputs_n2, outputs_isat = net(images)
