@@ -8,6 +8,7 @@ import numpy as np
 import cupy as cp
 from scipy.constants import c, epsilon_0
 from scipy.ndimage import zoom
+from skimage.restoration import unwrap_phase
 from engine.noise_generator import line_noise, salt_and_pepper_noise
 
 
@@ -63,32 +64,32 @@ def data_creation(
     n2_list = cp.array(n2_values)
     Isat_list = cp.array(isat_values)
 
-    n2 =  cp.zeros((n2_list.size ,1 ,1 ,1))
-    n2[:, 0, 0, 0] = n2_list
+    n2 =  cp.zeros((n2_list.size ,1 ,1 ,1 ,1))
+    n2[:, 0, 0, 0, 0] = n2_list
 
-    power =  cp.zeros((1, power_list.size ,1 ,1))
-    power[0, :, 0, 0] = power_list
+    power =  cp.zeros((1, power_list.size ,1 ,1 ,1))
+    power[0, :, 0, 0, 0] = power_list
 
-    Isat =  cp.zeros((1, 1, Isat_list.size ,1))
-    Isat[0, 0, :, 0] = Isat_list
+    Isat =  cp.zeros((1, 1, Isat_list.size ,1 ,1 ))
+    Isat[0, 0, :, 0, 0] = Isat_list
 
     alpha = -cp.log(trans)/L
     zoom_factor = resolution_out / resolution_in
 
     #Data generation using NLSE
-    simu = NLSE.nlse_1d.NLSE_1d(alpha, power, window, n2, None, L, NX=resolution_in, Isat=Isat)
+    simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
     simu.delta_z = delta_z
     A = simu.out_field(cp.array(input_field), L, verbose=True, plot=False, normalize=True, precision="single").get()
 
     for index_puiss in range(number_of_power):
-        E_init = A[:,index_puiss, :].reshape((number_of_n2*number_of_isat, resolution_in))
+        E_init = A[:,index_puiss, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
-        out_resized_Pha = zoom(np.angle(E_init), (1, zoom_factor, zoom_factor),order=5)
-        out_resized_Amp = zoom( np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
+        out_resized_Pha = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
+        out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
 
-        E = np.zeros((number_of_n2*number_of_isat,2, resolution_out))
-        E[:,0,:] = out_resized_Amp
-        E[:,1,:] = out_resized_Pha
+        E = np.zeros((number_of_n2*number_of_isat,2, resolution_out, resolution_out))
+        E[:,0,:,:] = out_resized_Amp
+        E[:,1,:,:] = out_resized_Pha
         
         E = normalize_data(E).astype(np.float16)
         np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
@@ -137,20 +138,20 @@ def data_augmentation(
     lines = [20, 50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
-    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2]), dtype=np.float16)
+    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)
   
     for channel in range(E.shape[1]):
         index = 0
         for image_index in tqdm(range(E.shape[0]), position=4,desc="Iteration", leave=False):
-            image_at_channel = E[image_index,channel,:]
-            augmented_data[index,channel ,:] = image_at_channel
+            image_at_channel = E[image_index,channel,:,:]
+            augmented_data[index,channel ,:, :] = image_at_channel
             index += 1  
             for noise in noises:
-                augmented_data[index,channel ,:] = salt_and_pepper_noise(image_at_channel, noise)
+                augmented_data[index,channel ,:, :] = salt_and_pepper_noise(image_at_channel, noise)
                 index += 1
                 for angle in angles:
                     for num_lines in lines:
-                        augmented_data[index,channel ,:] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)
+                        augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)
                         index += 1
     augmented_data = normalize_data(augmented_data)
     np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
@@ -182,8 +183,8 @@ def normalize_data(
     datasets with varying ranges of values across samples or channels.
     """
     
-    min_vals = np.min(data, axis=2, keepdims=True)
-    max_vals = np.max(data, axis=2, keepdims=True)
+    min_vals = np.min(data, axis=(2, 3), keepdims=True)
+    max_vals = np.max(data, axis=(2, 3), keepdims=True)
 
     normalized_data = (data - min_vals) / (max_vals - min_vals)
 
