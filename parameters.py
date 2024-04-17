@@ -42,7 +42,7 @@ parser.add_argument('--generate', action='store_true',
 parser.add_argument('--expanded', action='store_true',
                     help='Add if your data was expanded in a previous run')
 
-parser.add_argument('--delta_z', type=float, default=1e-3,
+parser.add_argument('--delta_z', type=float, default=1e-4,
                     help='Step of the propagation of NLSE')
 parser.add_argument('--trans', type=float, default=0.01,
                     help='Transmission through the cell')
