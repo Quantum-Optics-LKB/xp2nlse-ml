@@ -84,8 +84,8 @@ def data_creation(
     for index_puiss in range(number_of_power):
         E_init = A[:,index_puiss, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
-        out_resized_Pha = zoom(np.angle(E_init), (1, zoom_factor, zoom_factor),order=5)
-        out_resized_Amp = zoom( np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
+        out_resized_Pha = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
+        out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
 
         E = np.zeros((number_of_n2*number_of_isat,2, resolution_out, resolution_out))
         E[:,0,:,:] = out_resized_Amp

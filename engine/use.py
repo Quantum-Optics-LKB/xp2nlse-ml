@@ -7,6 +7,7 @@ import numpy as np
 from scipy.ndimage import zoom
 from engine.nlse_generator import normalize_data
 from engine.model import Inception_ResNetv2
+from skimage.restoration import unwrap_phase
 
 def reshape_resize(E, resolution_out):
     if E.shape[2] != E.shape[1]:
@@ -25,7 +26,7 @@ def reshape_resize(E, resolution_out):
 def formatting(E_resized, resolution_out):
     E_formatted = np.zeros((E_resized.shape[0], 2, resolution_out, resolution_out))
     E_formatted[:,0,:,:] = np.abs(E_resized)**2
-    E_formatted[:,1,:,:] = np.angle(E_resized)
+    E_formatted[:,1,:,:] = unwrap_phase(np.angle(E_resized))
     E_formatted = normalize_data(E_formatted)
 
     return E_formatted
