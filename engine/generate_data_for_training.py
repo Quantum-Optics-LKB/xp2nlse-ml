@@ -58,7 +58,6 @@ def generate_data(
         resolutions: tuple,
         numbers: tuple, 
         generate: bool, 
-        visualize: bool, 
         expanded: bool,
         expansion: bool,
         factor_window: int, 
@@ -76,7 +75,6 @@ def generate_data(
     - resolutions (tuple): Tuple of input and output resolutions (resolution_in, resolution_out).
     - numbers (tuple): Tuple of the numbers of n2, power, and isat instances (number_of_n2, number_of_power, number_of_isat).
     - generate (bool): Flag to enable data generation.
-    - visualize (bool): Flag to enable visualization of generated data.
     - expansion (bool): Flag to enable data augmentation.
     - factor_window (int): Factor to adjust the simulation window based on the waist.
     - delta_z (float): Step size in the Z-direction for the NLSE simulation.
@@ -88,12 +86,13 @@ def generate_data(
       it returns labels and values for the generated or loaded data.
     """
     resolution_in, resolution_out = resolutions
-    number_of_n2, power, number_of_isat = numbers
+    number_of_n2, number_of_power, number_of_isat = numbers
 
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
 
-    power_values = np.array([power])
+    power_values = np.linspace(0.02, 0.5001, number_of_n2)
+    power_labels = np.arange(0, number_of_power)
 
     isat_values = np.linspace(1e4, 1e6, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
@@ -118,51 +117,14 @@ def generate_data(
     values_all_single = (n2_values_all_single, isat_values_all_single)
     labels_all_single = (n2_labels_all_single, isat_labels_all_single)
 
-    if visualize:
-        print("---- VISUALIZE ----")
-
-        data_types = ["amp", "pha"]
-        cmap_types = ["viridis", "twilight_shifted", "viridis"]
-
-        for data_types_index in range(len(data_types)):
-            
-            for power_index in range(1):
-                counter = 0
-                E_power = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[power_index])[:4]}_amp_pha_pha_unwrap.npy')
-
-                if number_of_isat > number_of_n2:
-                    fig, axs = plt.subplots(number_of_isat,number_of_n2, figsize=(number_of_isat*5, number_of_n2*5))
-                else:
-                    fig, axs = plt.subplots(number_of_n2, number_of_isat, figsize=(number_of_n2*5, number_of_isat*5))
-                
-                for n2_index in range(number_of_n2):
-                    for isat_index in range(number_of_isat):
-                        if number_of_isat == 1 and number_of_n2 == 1:
-                            axs.imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                            axs.set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                        elif number_of_isat == 1:
-                            axs[n2_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                            axs[n2_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                        elif number_of_n2 == 1:
-                            axs[isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                            axs[isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                        else:
-                            axs[n2_index, isat_index].imshow(E_power[counter, data_types_index,:, :], cmap=cmap_types[data_types_index])
-                            axs[n2_index, isat_index].set_title(f'power={power_values[power_index]}, n2={n2_values[n2_labels_all_single[counter]]}, Isat={"{:e}".format(isat_values[isat_labels_all_single[counter]])}')
-                        counter += 1
-                plt.tight_layout()
-                plt.savefig(f'{saving_path}/{data_types[data_types_index]}_{str(power_values[power_index])[:4]}p_{number_of_n2}n2_{number_of_isat}Isat.png')
-                plt.close()
-
     if expansion:
 
         print("---- EXPEND ----")
-        for power in power_values:
-            file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap.npy'
-            E = np.load(file)
+        file = f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.npy'
+        E = np.load(file)
 
-            noise = 0.01
-            expansion_factor = data_augmentation(number_of_n2, number_of_isat, power, E, noise, saving_path)
+        noise = 0.01
+        expansion_factor = data_augmentation(number_of_n2, number_of_isat, number_of_power, E, noise, saving_path)
 
         n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
         isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)

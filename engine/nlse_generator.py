@@ -81,23 +81,26 @@ def data_creation(
     simu.delta_z = delta_z
     A = simu.out_field(cp.array(input_field), L, verbose=True, plot=False, normalize=True, precision="single").get()
 
+    E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out))
+    
+    power_channels_index = 0
     for index_puiss in range(number_of_power):
-        E_init = A[:,index_puiss, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
+      E_init = A[:,index_puiss, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
-        out_resized_Pha = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
-        out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
+      out_resized_Pha = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
+      out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
 
-        E = np.zeros((number_of_n2*number_of_isat,2, resolution_out, resolution_out))
-        E[:,0,:,:] = out_resized_Amp
-        E[:,1,:,:] = out_resized_Pha
+      E[:,power_channels_index,:,:] = out_resized_Amp
+      E[:,power_channels_index + 1,:,:] = out_resized_Pha
+
+      power_channels_index += 2
         
-        E = normalize_data(E).astype(np.float16)
-        np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power_values[index_puiss])[:4]}_amp_pha_pha_unwrap', E)
+    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', normalize_data(E, number_of_power))
 
 def data_augmentation(
     number_of_n2: int, 
     number_of_isat: int,
-    power: int,
+    number_of_power: int,
     E: np.ndarray,
     noise_level: float,
     path: str, 
@@ -111,8 +114,7 @@ def data_augmentation(
     Parameters:
     - number_of_n2 (int): The number of different nonlinear refractive index (n2) values used in the simulation.
     - number_of_isat (int): The number of different saturation intensities (Isat) used in the simulation.
-    - power (int): The specific power value for which the augmentation is being done. If set to 0, 
-      it assumes augmentation across all power levels.
+    - number_of_power (int): he number of different power (power) used in the simulation
     - E (np.ndarray): The input data array to be augmented. Expected shape is 
       [n2*power*Isat, channels, resolution, resolution], where channels typically include amplitude, 
       phase, and unwrapped phase information.
@@ -153,13 +155,15 @@ def data_augmentation(
                     for num_lines in lines:
                         augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)
                         index += 1
-    augmented_data = normalize_data(augmented_data)
-    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{1}_at{str(power)[:4]}_amp_pha_pha_unwrap_extended', augmented_data)
+                        
+    augmented_data = normalize_data(augmented_data, number_of_power)
+    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data)
         
     return augmentation
 
 def normalize_data(
-        data: np.ndarray
+        data: np.ndarray,
+        number_of_power: int
         ) -> np.ndarray:
     """
     Normalizes the data in each channel of a multi-channel dataset to a range of [0, 1]. 
@@ -182,11 +186,27 @@ def normalize_data(
     each channel of each data sample is independently normalized, making it suitable for diverse 
     datasets with varying ranges of values across samples or channels.
     """
-    
-    min_vals = np.min(data, axis=(2, 3), keepdims=True)
-    max_vals = np.max(data, axis=(2, 3), keepdims=True)
 
-    normalized_data = (data - min_vals) / (max_vals - min_vals)
+
+    even_indices = np.arange(0, number_of_power*2, 2)
+    data_even = data[:, even_indices, :, :]
+
+    odd_indices = np.arange(1, number_of_power*2, 2)
+    data_odd = data[:, odd_indices, :, :]
+
+    min_even = np.min(data_even, axis=(1, 2, 3), keepdims=True)
+    max_even = np.max(data_even, axis=(1, 2, 3), keepdims=True)
+    normalized_data_even = (data_even - min_even) / (max_even - min_even)
+
+    min_odd = np.min(data_odd, axis=(1, 2, 3), keepdims=True)
+    max_odd = np.max(data_odd, axis=(1, 2, 3), keepdims=True)
+    normalized_data_odd = (data_odd - min_odd) / (max_odd - min_odd)
+
+    normalized_data = np.empty_like(data)
+
+    normalized_data[:, even_indices, :, :] = normalized_data_even
+
+    normalized_data[:, odd_indices, :, :] = normalized_data_odd
 
     normalized_data = normalized_data.astype(np.float16)
 

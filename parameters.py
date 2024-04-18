@@ -28,13 +28,11 @@ parser.add_argument('--resolution_out', type=int, default=256,
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
-parser.add_argument('--power', type=float, default=0.50,
+parser.add_argument('--number_of_power', type=float, default=10,
                     help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
 
-parser.add_argument('--visualize', action='store_true',
-                    help='Enable visualization.')
 parser.add_argument('--expansion', action='store_true',
                     help='Enable expansion.')
 parser.add_argument('--generate', action='store_true',
@@ -73,14 +71,14 @@ if args.input_image_path is None:
     args.input_image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
 
 if args.exp_image_path is None:
-    args.exp_image_path = f'{args.saving_path}/exp_data/field_9.npy'
+    args.exp_image_path = f'{args.saving_path}/exp_data/field.npy'
 
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out
-numbers = args.number_of_n2, args.power, args.number_of_isat
+numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
-                                args.generate, args.visualize,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 
+                                args.generate,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 
                                         args.trans, args.device)
 
 if args.training:
