@@ -28,7 +28,7 @@ parser.add_argument('--resolution_out', type=int, default=256,
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
-parser.add_argument('--number_of_power', type=float, default=10,
+parser.add_argument('--number_of_power', type=int, default=10,
                     help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')

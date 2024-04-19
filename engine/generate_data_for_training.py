@@ -48,7 +48,7 @@ def from_input_image(
 
     print("---- PREPARE FOR NLSE ----")
     input_field = image + 1j * np.zeros_like(image, dtype=np.float32)
-    input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_power,number_of_isat, 1,1))
+    input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,1,number_of_isat, 1,1))
 
     return input_field_tiled_n2_power_isat, waist
 
@@ -91,7 +91,7 @@ def generate_data(
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
 
-    power_values = np.linspace(0.02, 0.5001, number_of_n2)
+    power_values = np.linspace(0.02, 0.5001, number_of_power)
     power_labels = np.arange(0, number_of_power)
 
     isat_values = np.linspace(1e4, 1e6, number_of_isat)
