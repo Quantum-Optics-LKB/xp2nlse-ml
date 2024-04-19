@@ -88,4 +88,3 @@ if args.training:
 if args.use:
     print("---- COMPUTING PARAMETERS ----\n")
     get_parameters(args.exp_image_path, args.saving_path, args.resolution_out, numbers, args.device)
-

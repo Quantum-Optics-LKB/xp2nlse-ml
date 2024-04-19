@@ -155,7 +155,7 @@ def data_augmentation(
                     for num_lines in lines:
                         augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle).astype(np.float16)
                         index += 1
-
+    print(augmented_data.shape)
     print("---- NORMALIZE ----")              
     augmented_data = normalize_data(augmented_data, number_of_power)
     np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data)
