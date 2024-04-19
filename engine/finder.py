@@ -131,7 +131,7 @@ def lauch_training(
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
 
     print("---- MODEL SAVING ----")
-    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth')
+    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth')
 
     file_name = f"{new_path}/params.txt"
     classes = {

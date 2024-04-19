@@ -10,9 +10,9 @@ from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
 def reshape_resize(E, resolution_out):
-    if E.shape[2] != E.shape[1]:
-        cut = (E.shape[2] - E.shape[1])//2
-        E_reshape = E[:,0,:,cut:E.shape[2] - cut]
+    if E.shape[2] != E.shape[3]:
+        cut = (E.shape[3] - E.shape[2])//2
+        E_reshape = E[:,0,:,cut:E.shape[3] - cut]
     else:
         E_reshape = E
     
@@ -23,16 +23,24 @@ def reshape_resize(E, resolution_out):
     
     return E_resized
 
-def formatting(E_resized, resolution_out):
-    E_formatted = np.zeros((E_resized.shape[0], 2, resolution_out, resolution_out))
-    E_formatted[:,0,:,:] = np.abs(E_resized)**2
-    E_formatted[:,1,:,:] = unwrap_phase(np.angle(E_resized))
-    E_formatted = normalize_data(E_formatted)
+def formatting(E_resized, resolution_out, number_of_power):
+    E_formatted = np.zeros((1, 2*number_of_power, resolution_out, resolution_out))
 
+    even_indices = np.arange(0, number_of_power*2, 2)
+    data_even = np.abs(E_resized)**2
+
+    odd_indices = np.arange(1, number_of_power*2, 2)
+    data_odd = unwrap_phase(np.angle(E_resized))
+
+    E_formatted[0, even_indices, :, :] = data_even
+
+    E_formatted[0, odd_indices, :, :] = data_odd
+
+    E_formatted = normalize_data(E_formatted, number_of_power)
     return E_formatted
 
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number):
-    number_of_n2, power, number_of_isat = numbers
+    number_of_n2, number_of_power, number_of_isat = numbers
 
     n2 = np.linspace(-1e-11, -1e-10, number_of_n2)
     isat = np.linspace(1e4, 1e6, number_of_isat)
@@ -41,11 +49,11 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
     
     E_experiment = np.load(exp_path)
     E_resized = reshape_resize(E_experiment, resolution_out)
-    E = formatting(E_resized, resolution_out)
+    E = formatting(E_resized, resolution_out, number_of_power)
 
     cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_isat=number_of_isat)
     cnn = cnn.to(device)
-    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{1}.pth'))
+    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth'))
 
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
