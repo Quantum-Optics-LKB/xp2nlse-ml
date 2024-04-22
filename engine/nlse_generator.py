@@ -135,9 +135,9 @@ def data_augmentation(
     set of line densities. If a save path is provided, the augmented dataset is saved using numpy's 
     .npy format, with filenames that reflect the simulation and augmentation parameters.
     """
-    angles = np.linspace(0, 90, 5)
+    angles = np.linspace(0, 90, 4)
     noises = [noise_level, noise_level*10] 
-    lines = [20, 50, 100]
+    lines = [50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
     augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)

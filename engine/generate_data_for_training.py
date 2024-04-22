@@ -138,7 +138,7 @@ def generate_data(
         return labels_augmented_single, values_augmented_single
     else:
         if expanded:
-            expansion_factor = 33
+            expansion_factor = 19
             n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
             isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
 

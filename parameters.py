@@ -17,7 +17,7 @@ parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/At
 parser.add_argument('--input_image_path', type=str, default=None,
                     help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
 parser.add_argument('--exp_image_path', type=str, default=None,
-                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field_9.npy')
+                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field.npy')
 parser.add_argument('--output_image_path', type=str, default=None,
                     help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
 
