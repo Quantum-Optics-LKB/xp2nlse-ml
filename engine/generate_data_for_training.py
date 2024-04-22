@@ -86,13 +86,12 @@ def generate_data(
       it returns labels and values for the generated or loaded data.
     """
     resolution_in, resolution_out = resolutions
-    number_of_n2, number_of_power, number_of_isat = numbers
+    number_of_n2, power_alpha, number_of_isat = numbers
 
+    power_values, alpha_values = power_alpha
+    number_of_power = len(power_values)
     n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
-
-    power_values = np.linspace(0.02, 0.5001, number_of_power)
-    power_labels = np.arange(0, number_of_power)
 
     isat_values = np.linspace(1e4, 1e6, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
@@ -103,7 +102,7 @@ def generate_data(
         window = factor_window*waist
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
-            data_creation(input_field, window, n2_values,power_values,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
+            data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
 
     N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
     N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
@@ -138,7 +137,7 @@ def generate_data(
         return labels_augmented_single, values_augmented_single
     else:
         if expanded:
-            expansion_factor = 19
+            expansion_factor = 33
             n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
             isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
 

@@ -16,7 +16,7 @@ def data_creation(
     input_field: np.ndarray,
     window: float,
     n2_values: np.ndarray,
-    power_values: np.ndarray,
+    power_alpha: tuple,
     isat_values: np.ndarray,
     resolution_in: int,
     resolution_out: int,
@@ -56,6 +56,7 @@ def data_creation(
     """
     
     #NLSE parameters
+    power_values, alpha_values = power_alpha
     number_of_power = len(power_values)
     number_of_n2 = len(n2_values)
     number_of_isat = len(isat_values)
@@ -72,7 +73,6 @@ def data_creation(
     Isat =  cp.zeros((1, 1, Isat_list.size ,1 ,1 ))
     Isat[0, 0, :, 0, 0] = Isat_list
 
-    alpha = -cp.log(trans)/L
     zoom_factor = resolution_out / resolution_in
 
     #Data generation using NLSE
@@ -81,13 +81,14 @@ def data_creation(
     power_channels_index = 0
     for index_puiss in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
       power[0, :, 0, 0, 0] = cp.array([power_list[index_puiss]])
+      alpha = alpha_values[index_puiss]
     
       simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
       simu.delta_z = delta_z
       A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").get()
       E_init = A[:,0, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
-      out_resized_Pha = zoom(unwrap_phase(np.angle(E_init)), (1, zoom_factor, zoom_factor),order=5)
+      out_resized_Pha = zoom(unwrap_phase(np.angle(E_init), rng=0), (1, zoom_factor, zoom_factor),order=5)
       out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
 
       E[:,power_channels_index,:,:] = out_resized_Amp
@@ -135,9 +136,9 @@ def data_augmentation(
     set of line densities. If a save path is provided, the augmented dataset is saved using numpy's 
     .npy format, with filenames that reflect the simulation and augmentation parameters.
     """
-    angles = np.linspace(0, 90, 4)
+    angles = np.linspace(0, 90, 5)
     noises = [noise_level, noise_level*10] 
-    lines = [50, 100]
+    lines = [20, 50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
     augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)
@@ -203,12 +204,10 @@ def normalize_data(
     max_odd = np.max(data_odd, axis=(1, 2, 3), keepdims=True)
     normalized_data_odd = (data_odd - min_odd) / (max_odd - min_odd)
 
-    normalized_data = np.empty_like(data)
+    data[:, even_indices, :, :] = normalized_data_even
 
-    normalized_data[:, even_indices, :, :] = normalized_data_even
+    data[:, odd_indices, :, :] = normalized_data_odd
 
-    normalized_data[:, odd_indices, :, :] = normalized_data_odd
+    data = data.astype(np.float16)
 
-    normalized_data = normalized_data.astype(np.float16)
-
-    return normalized_data
+    return data

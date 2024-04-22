@@ -30,8 +30,8 @@ def formatting(E_resized, resolution_out, number_of_power):
     data_even = np.abs(E_resized)**2
 
     odd_indices = np.arange(1, number_of_power*2, 2)
-    data_odd = unwrap_phase(np.angle(E_resized))
-
+    data_odd = np.angle(E_resized)
+    
     E_formatted[0, even_indices, :, :] = data_even
 
     E_formatted[0, odd_indices, :, :] = data_odd

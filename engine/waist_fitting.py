@@ -100,7 +100,7 @@ def waist_computation(
     XX, YY = np.meshgrid(X, Y)
     XY_ravel =  np.vstack((XX.ravel(), YY.ravel()))
     field_ravel = field.ravel()
-    sigma_opt, _ = curve_fit(gaussian, XY_ravel, field_ravel,p0=[1e-3, 1, 0, 0] )
+    sigma_opt, _ = curve_fit(gaussian, XY_ravel, field_ravel,p0=[5e-4, 1, 0, 0] )
 
     sigma_waist = sigma_opt[0]
 
@@ -108,6 +108,6 @@ def waist_computation(
         E = np.ones((NX, NY), dtype=np.float32) * np.exp(-(XX**2 + YY**2) / (sigma_waist**2))
         plt.title(f"waist = {sigma_waist}")
         plt.imshow(E)
-        plt.savefig(f"{path}/gaussian_fitting.png")
+        plt.savefig(f"gaussian_fitting.png")
         plt.close()
     return sigma_waist

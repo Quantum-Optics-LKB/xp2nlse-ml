@@ -3,6 +3,8 @@
 # @author: Louis Rossignol
 import argparse
 
+import numpy as np
+
 from engine.generate_data_for_training import generate_data
 from engine.finder import lauch_training
 from engine.use import get_parameters
@@ -14,12 +16,14 @@ parser.add_argument('--device', type=int, default=0,
 
 parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN",
                     help='Directory path for saving output files.')
-parser.add_argument('--input_image_path', type=str, default=None,
-                    help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
-parser.add_argument('--exp_image_path', type=str, default=None,
-                    help='Path to the experiment image file. Default is <saving_path>/exp_data/field.npy')
-parser.add_argument('--output_image_path', type=str, default=None,
-                    help='Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff')
+parser.add_argument('--input_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input.tiff",
+                    help='Path to the input image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input.tiff')
+parser.add_argument('--input_power_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/laser_settings.npy",
+                    help='Path to the powers. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/laser_settings.npy')
+parser.add_argument('--input_alpha_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy",
+                    help='Path to the alpha. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy')
+parser.add_argument('--exp_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy",
+                    help='Path to the experiment image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy')
 
 parser.add_argument('--resolution_in', type=int, default=512,
                     help='Input resolution.')
@@ -28,8 +32,6 @@ parser.add_argument('--resolution_out', type=int, default=256,
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
-parser.add_argument('--number_of_power', type=int, default=10,
-                    help='Number of different power')
 parser.add_argument('--number_of_isat', type=int, default=10,
                     help='Number of different Isat')
 
@@ -67,15 +69,14 @@ parser.add_argument('--use', action='store_true',
 args = parser.parse_args()
 
 # Set the default for image_path if not specified
-if args.input_image_path is None:
-    args.input_image_path = f'{args.saving_path}/exp_data/input_beam.tiff'
 
-if args.exp_image_path is None:
-    args.exp_image_path = f'{args.saving_path}/exp_data/field.npy'
+powers = np.load(args.input_power_path)
+alpha = np.load(args.input_alpha_path)
 
+power_alpha = powers, alpha
 # You can now use args to access the values of the arguments
 resolutions = args.resolution_in, args.resolution_out
-numbers = args.number_of_n2, args.number_of_power, args.number_of_isat
+numbers = args.number_of_n2, power_alpha, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
                                 args.generate,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 
