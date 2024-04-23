@@ -104,10 +104,18 @@ def waist_computation(
 
     sigma_waist = sigma_opt[0]
 
+    R = np.hypot(XX, YY)
+    field[R > sigma_waist] = 0
+
     if plot:
         E = np.ones((NX, NY), dtype=np.float32) * np.exp(-(XX**2 + YY**2) / (sigma_waist**2))
         plt.title(f"waist = {sigma_waist}")
         plt.imshow(E)
         plt.savefig(f"gaussian_fitting.png")
         plt.close()
-    return sigma_waist
+
+        plt.title(f"waist = {sigma_waist}")
+        plt.imshow(field)
+        plt.savefig(f"gaussian_pinhole.png")
+        plt.close()
+    return field, sigma_waist

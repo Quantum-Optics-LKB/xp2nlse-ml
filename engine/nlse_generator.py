@@ -79,10 +79,10 @@ def data_creation(
     E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out))
 
     power_channels_index = 0
-    for index_puiss in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
+    for index_puiss in tqdm([19], position=4,desc="Power", leave=False):
       power[0, :, 0, 0, 0] = cp.array([power_list[index_puiss]])
       alpha = alpha_values[index_puiss]
-    
+
       simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
       simu.delta_z = delta_z
       A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").get()

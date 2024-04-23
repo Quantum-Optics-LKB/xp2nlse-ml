@@ -37,20 +37,28 @@ def from_input_image(
     """
     print("---- LOAD INPUT IMAGE ----")
     input_tiff = Image.open(path)
-    image = np.array(input_tiff, dtype=np.float32)
-    
+    image = np.array(input_tiff, dtype=np.float64)
+    image = np.sqrt(image)
+    image = (image - np.min(image))/(np.max(image) - np.min(image))
+
+
     print("---- FIND WAIST ----")
-    window = resolution_in * 5.5e-6
-    waist = waist_computation(image, window, image.shape[0], image.shape[0], False)
+    window =  image.shape[0] * 5.5e-6
+    pin_field, waist = waist_computation(image, window, image.shape[0], image.shape[0], False)
 
-    if resolution_in != image.shape[0]:
-        image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]), order=5)
+    if resolution_in != pin_field.shape[0]:
+        pin_field = zoom(pin_field, (resolution_in/pin_field.shape[0],resolution_in/pin_field.shape[1]), order=5)
 
+    image = pin_field + 1j * 0
     print("---- PREPARE FOR NLSE ----")
-    input_field = image + 1j * np.zeros_like(image, dtype=np.float32)
-    input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,1,number_of_isat, 1,1))
+    input_field = image.astype(np.complex64)
+    input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,1,number_of_isat, 1,1)).astype(np.complex64)
 
-    return input_field_tiled_n2_power_isat, waist
+    im = plt.imshow(input_field_tiled_n2_power_isat[0, 0, 0, :,:].real)
+    plt.colorbar(im)
+    plt.savefig("3.png")
+    plt.close()
+    return input_field_tiled_n2_power_isat, window
 
 def generate_data(
         saving_path: str, 
@@ -90,16 +98,16 @@ def generate_data(
 
     power_values, alpha_values = power_alpha
     number_of_power = len(power_values)
-    n2_values = np.linspace(-1e-11, -1e-10, number_of_n2)
+    n2_values = np.linspace(-1e-11, -1e-8, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
 
-    isat_values = np.linspace(1e4, 1e6, number_of_isat)
+    isat_values = np.linspace(1e2, 1e4, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
     
     
     if generate:
-        input_field, waist = from_input_image(image_path, 1, number_of_n2, number_of_isat, resolution_in)
-        window = factor_window*waist
+        input_field, waist= from_input_image(image_path, 1, number_of_n2, number_of_isat, resolution_in)
+        window = factor_window*np.abs(waist)
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
             data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
