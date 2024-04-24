@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-from NLSE import NLSE
+import NLSE
 from tqdm import tqdm
 import numpy as np
 import cupy as cp
@@ -21,7 +21,6 @@ def data_creation(
     resolution_in: int,
     resolution_out: int,
     delta_z:float,
-    trans: float,
     L: float,
     path: str = None,
     ) -> np.ndarray:
@@ -40,7 +39,6 @@ def data_creation(
     - resolution_in (int): The resolution of the input field (assumed to be square).
     - resolution_out (int): The desired resolution of the output fields (assumed to be square).
     - delta_z (float): The step size in meters for the simulation propagation.
-    - trans (float): The transmission coefficient for the medium.
     - L (float): The total propagation distance in meters.
     - path (str, optional): The file path for saving the output arrays. If None, arrays are not saved.
 
@@ -65,13 +63,12 @@ def data_creation(
     n2_list = cp.array(n2_values)
     Isat_list = cp.array(isat_values)
 
-    n2 =  cp.zeros((n2_list.size ,1 ,1 ,1 ,1))
-    n2[:, 0, 0, 0, 0] = n2_list
+    n2 =  cp.zeros((n2_list.size ,1 ,1 ,1))
+    n2[:, 0, 0, 0] = n2_list
 
-    power =  cp.zeros((1, 1 ,1 ,1 ,1))
 
-    Isat =  cp.zeros((1, 1, Isat_list.size ,1 ,1 ))
-    Isat[0, 0, :, 0, 0] = Isat_list
+    Isat =  cp.zeros((1, Isat_list.size ,1 ,1 ))
+    Isat[0, :, 0, 0] = Isat_list
 
     zoom_factor = resolution_out / resolution_in
 
@@ -79,14 +76,14 @@ def data_creation(
     E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out))
 
     power_channels_index = 0
-    for index_puiss in tqdm([19], position=4,desc="Power", leave=False):
-      power[0, :, 0, 0, 0] = cp.array([power_list[index_puiss]])
-      alpha = alpha_values[index_puiss]
+    for index_power in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
+      power = power_list[index_power]
+      alpha = alpha_values[index_power]
 
       simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
       simu.delta_z = delta_z
       A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").get()
-      E_init = A[:,0, :, :, :].reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
+      E_init = A.reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
       out_resized_Pha = zoom(unwrap_phase(np.angle(E_init), rng=0), (1, zoom_factor, zoom_factor),order=5)
       out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)

@@ -45,13 +45,13 @@ def gaussian(xy, sigma, A, x_0, y_0 ):
     x, y = xy
     return A * np.exp(-(((x-x_0)**2 + (y-y_0)**2) / (sigma**2)))
 
-def waist_computation(
+def pinhole(
     field: np.ndarray,
     window: float, 
     NX: int, 
     NY: int, 
     plot: bool, 
-    path: str = None
+    pinsize: float,
     ) -> float:
     """
     Computes the waist of a beam by fitting a simplified 2D Gaussian function to a given field. 
@@ -105,7 +105,7 @@ def waist_computation(
     sigma_waist = sigma_opt[0]
 
     R = np.hypot(XX, YY)
-    field[R > sigma_waist] = 0
+    field[R > pinsize*sigma_waist] = 0
 
     if plot:
         E = np.ones((NX, NY), dtype=np.float32) * np.exp(-(XX**2 + YY**2) / (sigma_waist**2))
@@ -118,4 +118,4 @@ def waist_computation(
         plt.imshow(field)
         plt.savefig(f"gaussian_pinhole.png")
         plt.close()
-    return field, sigma_waist
+    return field

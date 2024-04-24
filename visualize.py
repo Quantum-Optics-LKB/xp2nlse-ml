@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import zoom
 
+from engine.waist_fitting import pinhole
+
 # Example dimensions
 Nn2 = 2
 NIsat = 2
 Npower = 20
 
-n2_values = np.linspace(-1e-11, -1e-8, Nn2)
+n2_values = np.linspace(-1e-11, -1e-9, Nn2)
 n2_labels = np.arange(0, Nn2)
 
 isat_values = np.linspace(1e4, 1e6, NIsat)
@@ -75,46 +77,40 @@ odd_indices = np.arange(1, Npower*2, 2)
 data_odd = data[:, odd_indices, :, :]
 # Plotting
 
-for threshold in [ 0]:
+for power in range(Npower):
+    fig, axes = plt.subplots(Nn2, NIsat, figsize=(Nn2*5, NIsat*5))
 
-    for power in range(Npower):
-        fig, axes = plt.subplots(Nn2, NIsat, figsize=(Nn2*5, NIsat*5))
+    index_n2_isat = 0
 
-        index_n2_isat = 0
+    for i in range(Nn2):
+        for j in range(NIsat):
+            ax = axes[i, j] if Nn2 * NIsat > 1 else axes
+            density = np.copy(data_even[index_n2_isat, power, :,:])
+            im = ax.imshow(density, cmap='viridis')
+            plt.colorbar(im, ax=ax)
+            ax.axis('off')
+            ax.set_title(f'n2 = {n2_values_all_single[index_n2_isat]:2e}\n Isat =  {isat_values_all_single[index_n2_isat]:2e}')
+            index_n2_isat += 1
 
-        for i in range(Nn2):
-            for j in range(NIsat):
-                ax = axes[i, j] if Nn2 * NIsat > 1 else axes
-                density = np.copy(data_even[index_n2_isat, power, :,:])
-                threshold_value = threshold * np.max(density)
-                # density[density <= threshold_value] = 0
-                im = ax.imshow(density, cmap='viridis')
-                plt.colorbar(im, ax=ax)
-                ax.axis('off')
-                ax.set_title(f'n2 = {n2_values_all_single[index_n2_isat]:2e}\n Isat =  {isat_values_all_single[index_n2_isat]:2e}')
-                index_n2_isat += 1
+    plt.tight_layout()
+    plt.savefig(f"/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/Density_w256_n2{Nn2}_isat{NIsat}_power{Npower}_{power}.png")
+    plt.close()
 
-        plt.tight_layout()
-        plt.savefig(f"/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/Density_w256_n2{Nn2}_isat{NIsat}_power{Npower}_{power}_filter{threshold}.png")
-        plt.close()
+    fig, axes = plt.subplots(Nn2, NIsat, figsize=(Nn2*5, NIsat*5))
 
-        fig, axes = plt.subplots(Nn2, NIsat, figsize=(Nn2*5, NIsat*5))
+    index_n2_isat = 0
 
-        index_n2_isat = 0
+    for i in range(Nn2):
+        for j in range(NIsat):
+            ax = axes[i, j] if Nn2 * NIsat > 1 else axes
+            density = np.copy(data_even[index_n2_isat, power, :,:])
+            phase = np.copy(data_odd[index_n2_isat, power, :,:])
+            im = ax.imshow(phase, cmap='viridis')
+            plt.colorbar(im, ax=ax )
+            ax.axis('off')
+            ax.set_title(f'n2 = {n2_values_all_single[index_n2_isat]:2e}\n Isat =  {isat_values_all_single[index_n2_isat]:2e}')
+            index_n2_isat += 1
 
-        for i in range(Nn2):
-            for j in range(NIsat):
-                ax = axes[i, j] if Nn2 * NIsat > 1 else axes
-                density = np.copy(data_even[index_n2_isat, power, :,:])
-                threshold_value = threshold * np.max(density)
-                phase = np.copy(data_odd[index_n2_isat, power, :,:])
-                # phase[density <= threshold_value] = 0
-                im = ax.imshow(phase, cmap='viridis')
-                plt.colorbar(im, ax=ax )
-                ax.axis('off')
-                ax.set_title(f'n2 = {n2_values_all_single[index_n2_isat]:2e}\n Isat =  {isat_values_all_single[index_n2_isat]:2e}')
-                index_n2_isat += 1
-
-        plt.tight_layout()
-        plt.savefig(f"/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/Phase_w256_n2{Nn2}_isat{NIsat}_power{Npower}_{power}_filter{threshold}.png")
-        plt.close()
+    plt.tight_layout()
+    plt.savefig(f"/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/Phase_w256_n2{Nn2}_isat{NIsat}_power{Npower}_{power}.png")
+    plt.close()

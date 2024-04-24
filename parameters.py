@@ -16,8 +16,8 @@ parser.add_argument('--device', type=int, default=0,
 
 parser.add_argument('--saving_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN",
                     help='Directory path for saving output files.')
-parser.add_argument('--input_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input.tiff",
-                    help='Path to the input image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input.tiff')
+parser.add_argument('--input_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input_beam.npy",
+                    help='Path to the input image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/input_beam.npy')
 parser.add_argument('--input_power_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/laser_settings.npy",
                     help='Path to the powers. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/laser_settings.npy')
 parser.add_argument('--input_alpha_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy",
@@ -25,10 +25,12 @@ parser.add_argument('--input_alpha_path', type=str, default="/home/louis/LEON/DA
 parser.add_argument('--exp_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy",
                     help='Path to the experiment image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy')
 
-parser.add_argument('--resolution_in', type=int, default=512,
+parser.add_argument('--resolution_in', type=int, default=2048,
                     help='Input resolution.')
 parser.add_argument('--resolution_out', type=int, default=256,
                     help='Output resolution.')
+parser.add_argument('--pin_size', type=float, default=2,
+                    help='Size of pinhole')
 
 parser.add_argument('--number_of_n2', type=int, default=10,
                     help='Number of different n2')
@@ -44,12 +46,8 @@ parser.add_argument('--expanded', action='store_true',
 
 parser.add_argument('--delta_z', type=float, default=1e-4,
                     help='Step of the propagation of NLSE')
-parser.add_argument('--trans', type=float, default=0.01,
-                    help='Transmission through the cell')
 parser.add_argument('--length', type=float, default=20e-2,
                     help='Length of the cell')
-parser.add_argument('--factor_window', type=int, default=56,
-                    help='Factor window that is multiplied by the waist')
 
 parser.add_argument('--training', action='store_true',
                     help='Enable training.')
@@ -79,8 +77,8 @@ resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, power_alpha, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
-                                args.generate,args.expanded, args.expansion, args.factor_window, args.delta_z, args.length, 
-                                        args.trans, args.device)
+                                args.generate,args.expanded, args.expansion, args.delta_z, args.length, 
+                                         args.device, args.pin_size)
 
 if args.training:
     print("---- TRAINING ----")

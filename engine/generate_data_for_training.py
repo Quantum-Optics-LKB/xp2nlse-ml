@@ -7,15 +7,15 @@ import numpy as np
 import cupy as cp
 from engine.nlse_generator import data_creation, data_augmentation
 from PIL import Image
-from engine.waist_fitting import waist_computation
+from engine.waist_fitting import pinhole
 from scipy.ndimage import zoom
 
 def from_input_image(
         path: str,
-        number_of_power: int,
         number_of_n2: int,
         number_of_isat: int,
-        resolution_in: int
+        resolution_in: int,
+        pinsize: float
         ) -> np.ndarray:
     """
     Loads an input image from the specified path and prepares it for nonlinear Schrödinger equation (NLSE) analysis by
@@ -24,40 +24,37 @@ def from_input_image(
 
     Parameters:
     - path (str): The file path to the input image. Currently supports TIFF format. Assumed to be square image
-    - number_of_power (int): The number of different power levels for which the input field will be tiled.
     - number_of_n2 (int): The number of different nonlinear refractive index (n2) values for tiling.
     - number_of_isat (int): The number of different saturation intensities (Isat) for tiling.
-    - resolution_in (float): The spatial resolution of the input image in meters per pixel.
+    - pinsize (float): size of the pinhole
 
     Returns:
-    - input_field_tiled_n2_power_isat (np.ndarray): A 5D numpy array of the tiled input field adjusted for different
-      n2, power, and Isat values. The array shape is (number_of_n2, number_of_power, number_of_isat, height, width),
+    - input_field_tiled_n2_power_isat (np.ndarray): A 4D numpy array of the tiled input field adjusted for different
+      n2, and Isat values. The array shape is (number_of_n2, number_of_isat, height, width),
       where height and width correspond to the dimensions of the input image.
     - waist (float): An approximation of the beam waist in meters, calculated based on the input image and resolution.
     """
     print("---- LOAD INPUT IMAGE ----")
-    input_tiff = Image.open(path)
-    image = np.array(input_tiff, dtype=np.float64)
-    image = np.sqrt(image)
+    if path.endswith(".npy"):
+        image = np.load(path).astype(np.float32)
+    else:
+        input_tiff = Image.open(path)
+        image = np.array(input_tiff, dtype=np.float32)
     image = (image - np.min(image))/(np.max(image) - np.min(image))
+    image = np.sqrt(image)
+    resolution_image = image.shape[0]
+
+    if resolution_in != image.shape[0]:
+        image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]))
+
+    print("---- PINHOLE ----")
+    window =   resolution_image * 5.5e-6
+    image = pinhole(image, window, image.shape[0], image.shape[0], False,pinsize)
 
 
-    print("---- FIND WAIST ----")
-    window =  image.shape[0] * 5.5e-6
-    pin_field, waist = waist_computation(image, window, image.shape[0], image.shape[0], False)
-
-    if resolution_in != pin_field.shape[0]:
-        pin_field = zoom(pin_field, (resolution_in/pin_field.shape[0],resolution_in/pin_field.shape[1]), order=5)
-
-    image = pin_field + 1j * 0
+    image = image + 1j * 0
     print("---- PREPARE FOR NLSE ----")
-    input_field = image.astype(np.complex64)
-    input_field_tiled_n2_power_isat = np.tile(input_field[np.newaxis,np.newaxis, np.newaxis, :,:], (number_of_n2,1,number_of_isat, 1,1)).astype(np.complex64)
-
-    im = plt.imshow(input_field_tiled_n2_power_isat[0, 0, 0, :,:].real)
-    plt.colorbar(im)
-    plt.savefig("3.png")
-    plt.close()
+    input_field_tiled_n2_power_isat = np.tile(image[np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_isat, 1,1))
     return input_field_tiled_n2_power_isat, window
 
 def generate_data(
@@ -68,11 +65,10 @@ def generate_data(
         generate: bool, 
         expanded: bool,
         expansion: bool,
-        factor_window: int, 
         delta_z: float, 
         length: float, 
-        transmission: float,
         device_number: int,
+        pinsize: float,
         )-> tuple:
     """
     Generates or loads data for NLSE simulation, optionally performing data augmentation and visualization.
@@ -84,10 +80,9 @@ def generate_data(
     - numbers (tuple): Tuple of the numbers of n2, power, and isat instances (number_of_n2, number_of_power, number_of_isat).
     - generate (bool): Flag to enable data generation.
     - expansion (bool): Flag to enable data augmentation.
-    - factor_window (int): Factor to adjust the simulation window based on the waist.
     - delta_z (float): Step size in the Z-direction for the NLSE simulation.
     - length (float): Length of the propagation medium.
-    - transmission (float): Transmission coefficient for the medium.
+    - pinsize (float): size of pinhole
 
     Returns:
     - tuple: Contains labels and values for augmented data, if `expansion` is True; otherwise, 
@@ -98,19 +93,18 @@ def generate_data(
 
     power_values, alpha_values = power_alpha
     number_of_power = len(power_values)
-    n2_values = np.linspace(-1e-11, -1e-8, number_of_n2)
+    n2_values = np.linspace(-1e-11, -1e-9, number_of_n2)
     n2_labels = np.arange(0, number_of_n2)
 
-    isat_values = np.linspace(1e2, 1e4, number_of_isat)
+    isat_values = np.linspace(1e4, 1e6, number_of_isat)
     isat_labels = np.arange(0, number_of_isat)
     
     
     if generate:
-        input_field, waist= from_input_image(image_path, 1, number_of_n2, number_of_isat, resolution_in)
-        window = factor_window*np.abs(waist)
+        input_field, window = from_input_image(image_path, number_of_n2, number_of_isat,resolution_in ,pinsize)
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
-            data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z,transmission, length,saving_path)
+            data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z, length,saving_path)
 
     N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
     N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
