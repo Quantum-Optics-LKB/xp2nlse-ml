@@ -63,7 +63,6 @@ def generate_data(
         resolutions: tuple,
         numbers: tuple, 
         generate: bool, 
-        expanded: bool,
         expansion: bool,
         delta_z: float, 
         length: float, 
@@ -115,9 +114,6 @@ def generate_data(
     n2_labels_all_single = N2_labels_single.reshape((number_of_n2*number_of_isat,))
     isat_labels_all_single = ISAT_labels_single.reshape((number_of_n2*number_of_isat,))
 
-    values_all_single = (n2_values_all_single, isat_values_all_single)
-    labels_all_single = (n2_labels_all_single, isat_labels_all_single)
-
     if expansion:
 
         print("---- EXPEND ----")
@@ -138,18 +134,16 @@ def generate_data(
         
         return labels_augmented_single, values_augmented_single
     else:
-        if expanded:
-            expansion_factor = 33
-            n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
-            isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
+        expansion_factor = 33
+        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
+        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
 
-            n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
-            isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
+        n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
+        isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
 
-            values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-            labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-            
-            single_augmented = labels_augmented_single, values_augmented_single
-            return single_augmented
-        else:
-            return labels_all_single, values_all_single
+        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
+        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+        
+        single_augmented = labels_augmented_single, values_augmented_single
+        return single_augmented
+        

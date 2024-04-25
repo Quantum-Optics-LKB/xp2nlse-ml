@@ -42,7 +42,7 @@ def formatting(E_resized, resolution_out, number_of_power):
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number):
     number_of_n2, number_of_power, number_of_isat = numbers
 
-    n2 = np.linspace(-1e-11, -1e-10, number_of_n2)
+    n2 = np.linspace(-1e-11, -1e-9, number_of_n2)
     isat = np.linspace(1e4, 1e6, number_of_isat)
 
     device = torch.device(f"cuda:{device_number}")

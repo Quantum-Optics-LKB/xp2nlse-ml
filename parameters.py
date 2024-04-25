@@ -25,7 +25,7 @@ parser.add_argument('--input_alpha_path', type=str, default="/home/louis/LEON/DA
 parser.add_argument('--exp_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy",
                     help='Path to the experiment image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy')
 
-parser.add_argument('--resolution_in', type=int, default=2048,
+parser.add_argument('--resolution_in', type=int, default=1024,
                     help='Input resolution.')
 parser.add_argument('--resolution_out', type=int, default=256,
                     help='Output resolution.')
@@ -41,8 +41,6 @@ parser.add_argument('--expansion', action='store_true',
                     help='Enable expansion.')
 parser.add_argument('--generate', action='store_true',
                     help='Enable generation.')
-parser.add_argument('--expanded', action='store_true',
-                    help='Add if your data was expanded in a previous run')
 
 parser.add_argument('--delta_z', type=float, default=1e-4,
                     help='Step of the propagation of NLSE')
@@ -72,12 +70,12 @@ powers = np.load(args.input_power_path)
 alpha = np.load(args.input_alpha_path)
 
 power_alpha = powers, alpha
-# You can now use args to access the values of the arguments
+
 resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, power_alpha, args.number_of_isat
 
 labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
-                                args.generate,args.expanded, args.expansion, args.delta_z, args.length, 
+                                args.generate, args.expansion, args.delta_z, args.length, 
                                          args.device, args.pin_size)
 
 if args.training:

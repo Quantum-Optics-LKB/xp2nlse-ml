@@ -70,7 +70,8 @@ def data_creation(
     Isat =  cp.zeros((1, Isat_list.size ,1 ,1 ))
     Isat[0, :, 0, 0] = Isat_list
 
-    zoom_factor = resolution_out / resolution_in
+    crop = resolution_in//4
+    zoom_factor = resolution_out / (resolution_in//2)
 
     #Data generation using NLSE
     E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out))
@@ -83,10 +84,13 @@ def data_creation(
       simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
       simu.delta_z = delta_z
       A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").get()
+
       E_init = A.reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
 
-      out_resized_Pha = zoom(unwrap_phase(np.angle(E_init), rng=0), (1, zoom_factor, zoom_factor),order=5)
-      out_resized_Amp = zoom(np.abs(E_init)**2 * c * epsilon_0 / 2, (1, zoom_factor, zoom_factor),order=5)
+      phase = unwrap_phase(np.angle(E_init), rng=0)
+      out_resized_Pha = zoom(phase[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5)
+      density = np.abs(E_init)**2 * c * epsilon_0 / 2
+      out_resized_Amp = zoom(density[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5)
 
       E[:,power_channels_index,:,:] = out_resized_Amp
       E[:,power_channels_index + 1,:,:] = out_resized_Pha
@@ -155,14 +159,13 @@ def data_augmentation(
                         index += 1
     print(augmented_data.shape)
     print("---- NORMALIZE ----")              
-    augmented_data = normalize_data(augmented_data, number_of_power)
+    augmented_data = normalize_data(augmented_data)
     np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data)
         
     return augmentation
 
 def normalize_data(
         data: np.ndarray,
-        number_of_power: int
         ) -> np.ndarray:
     """
     Normalizes the data in each channel of a multi-channel dataset to a range of [0, 1]. 
@@ -187,24 +190,11 @@ def normalize_data(
     """
 
 
-    even_indices = np.arange(0, number_of_power*2, 2)
-    data_even = data[:, even_indices, :, :]
+    min_vals = np.min(data, axis=(2, 3), keepdims=True)
+    max_vals = np.max(data, axis=(2, 3), keepdims=True)
 
-    odd_indices = np.arange(1, number_of_power*2, 2)
-    data_odd = data[:, odd_indices, :, :]
+    normalized_data = (data - min_vals) / (max_vals - min_vals)
 
-    min_even = np.min(data_even, axis=(1, 2, 3), keepdims=True)
-    max_even = np.max(data_even, axis=(1, 2, 3), keepdims=True)
-    normalized_data_even = (data_even - min_even) / (max_even - min_even)
+    normalized_data = normalized_data.astype(np.float16)
 
-    min_odd = np.min(data_odd, axis=(1, 2, 3), keepdims=True)
-    max_odd = np.max(data_odd, axis=(1, 2, 3), keepdims=True)
-    normalized_data_odd = (data_odd - min_odd) / (max_odd - min_odd)
-
-    data[:, even_indices, :, :] = normalized_data_even
-
-    data[:, odd_indices, :, :] = normalized_data_odd
-
-    data = data.astype(np.float16)
-
-    return data
+    return normalized_data

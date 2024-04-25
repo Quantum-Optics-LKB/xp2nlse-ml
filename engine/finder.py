@@ -78,7 +78,9 @@ def lauch_training(
     the trained model, are saved to the specified path.
     """
     device = torch.device(f"cuda:{device_number}")
-    number_of_n2, number_of_power, number_of_isat = numbers
+    number_of_n2, power_alpha, number_of_isat = numbers
+    power_values, alpha_values = power_alpha
+    number_of_power = len(power_values)
     n2_labels, isat_labels = labels
     n2_values, isat_values = values
 
@@ -98,7 +100,7 @@ def lauch_training(
 
     print("---- DATA LOADING ----")
 
-    # number_of_n2 x number_of_isat, number_of_power * 2 * resolution * resolution
+    # number_of_n2 x number_of_isat, number_of_power * 2, resolution * resolution
     file = f'{path}/Es_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended.npy'
     E = np.load(file, 'r')
     assert E.shape[1] == 2*number_of_power
