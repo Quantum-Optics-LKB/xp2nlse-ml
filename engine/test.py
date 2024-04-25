@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 import numpy as np
-import pandas as pd
 import torch
 
 def test_model_classification(totalloader, net, classes, device):
@@ -141,7 +140,5 @@ def count_parameters_pandas(model):
         data.append([name, params])
         total_params += params
 
-    df = pd.DataFrame(data, columns=["Modules", "Parameters"])
-    print(df)
     print(f"Total Trainable Params: {total_params}")
     return total_params

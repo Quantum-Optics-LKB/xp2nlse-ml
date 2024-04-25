@@ -36,10 +36,10 @@ def from_input_image(
     """
     print("---- LOAD INPUT IMAGE ----")
     if path.endswith(".npy"):
-        image = np.load(path).astype(np.float32)
+        image = np.load(path)
     else:
         input_tiff = Image.open(path)
-        image = np.array(input_tiff, dtype=np.float32)
+        image = np.array(input_tiff, dtype=np.float64)
     image = (image - np.min(image))/(np.max(image) - np.min(image))
     image = np.sqrt(image)
     resolution_image = image.shape[0]

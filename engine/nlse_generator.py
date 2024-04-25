@@ -97,7 +97,7 @@ def data_creation(
       power_channels_index += 2
     
     print("---- NORMALIZE ----")              
-    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', normalize_data(E, number_of_power))
+    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', normalize_data(E))
 
 def data_augmentation(
     number_of_n2: int, 
@@ -157,10 +157,8 @@ def data_augmentation(
                     for num_lines in lines:
                         augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle).astype(np.float16)
                         index += 1
-    print(augmented_data.shape)
     print("---- NORMALIZE ----")              
-    augmented_data = normalize_data(augmented_data)
-    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data)
+    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', normalize_data(augmented_data))
         
     return augmentation
 
@@ -195,6 +193,4 @@ def normalize_data(
 
     normalized_data = (data - min_vals) / (max_vals - min_vals)
 
-    normalized_data = normalized_data.astype(np.float16)
-
-    return normalized_data
+    return normalized_data.astype(np.float16)

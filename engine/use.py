@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-import pandas as pd
 import torch
 import numpy as np
 from scipy.ndimage import zoom
