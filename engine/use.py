@@ -35,11 +35,13 @@ def formatting(E_resized, resolution_out, number_of_power):
 
     E_formatted[0, odd_indices, :, :] = data_odd
 
-    E_formatted = normalize_data(E_formatted, number_of_power)
+    E_formatted = normalize_data(E_formatted)
     return E_formatted
 
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number):
-    number_of_n2, number_of_power, number_of_isat = numbers
+    number_of_n2, power_alpha, number_of_isat = numbers
+    power_values, alpha_values = power_alpha
+    number_of_power = len(power_values)
 
     n2 = np.linspace(-1e-11, -1e-9, number_of_n2)
     isat = np.linspace(1e4, 1e6, number_of_isat)
