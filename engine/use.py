@@ -7,6 +7,8 @@ from scipy.ndimage import zoom
 from engine.nlse_generator import normalize_data
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
+import torch.nn as nn
+
 
 def reshape_resize(E, resolution_out):
     if E.shape[2] != E.shape[3]:
@@ -29,7 +31,7 @@ def formatting(E_resized, resolution_out, number_of_power):
     data_even = np.abs(E_resized)**2
 
     odd_indices = np.arange(1, number_of_power*2, 2)
-    data_odd = np.angle(E_resized)
+    data_odd = unwrap_phase(np.angle(E_resized))
     
     E_formatted[0, even_indices, :, :] = data_even
 
@@ -53,7 +55,7 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
     E = formatting(E_resized, resolution_out, number_of_power)
 
     cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_isat=number_of_isat)
-    cnn = cnn.to(device)
+    cnn = nn.DataParallel(cnn, device_ids=[0, 1])
     cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth'))
 
     with torch.no_grad():

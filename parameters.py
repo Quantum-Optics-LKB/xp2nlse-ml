@@ -23,7 +23,7 @@ parser.add_argument('--input_power_path', type=str, default="/home/louis/LEON/DA
 parser.add_argument('--input_alpha_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy",
                     help='Path to the alpha. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy')
 parser.add_argument('--exp_image_path', type=str, default="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy",
-                    help='Path to the experiment image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy')
+                    help='Path to the experiment image file. Default is /home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191652_time_flat/field.npy')
 
 parser.add_argument('--resolution_in', type=int, default=1024,
                     help='Input resolution.')
@@ -74,13 +74,13 @@ power_alpha = powers, alpha
 resolutions = args.resolution_in, args.resolution_out
 numbers = args.number_of_n2, power_alpha, args.number_of_isat
 
-labels, values = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
-                                args.generate, args.expansion, args.delta_z, args.length, 
+labels, values, E = generate_data(args.saving_path, args.input_image_path, resolutions, numbers, 
+                                args.generate, args.expansion,args.training, args.delta_z, args.length, 
                                          args.device, args.pin_size)
 
 if args.training:
     print("---- TRAINING ----")
-    lauch_training(numbers, labels, values, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator, args.device)
+    lauch_training(numbers, labels, values,E, args.saving_path, args.resolution_out, args.learning_rate, args.batch_size, args.num_epochs, args.accumulator, args.device)
 
 if args.use:
     print("---- COMPUTING PARAMETERS ----\n")

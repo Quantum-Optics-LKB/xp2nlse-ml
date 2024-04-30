@@ -3,7 +3,9 @@
 # @author: Louis Rossignol
 
 import numpy as np
+from numba import njit
 
+@njit
 def salt_and_pepper_noise(
         data: np.ndarray,
         noise_level: float
@@ -30,6 +32,7 @@ def salt_and_pepper_noise(
     noisy_data[salt_pepper == 1] = np.max(data)  # salt (white)
     return noisy_data
 
+@njit
 def line_noise(
         image: np.ndarray,
         num_lines: int, 
@@ -68,27 +71,3 @@ def line_noise(
     noisy_image = image + lines_pattern
     
     return noisy_image
-
-def gaussian_noise(
-    data: np.ndarray, 
-    noise_level: float
-    ) -> np.ndarray:
-    """
-    Adds Gaussian noise to the given data.
-
-    This function generates noise following a Gaussian distribution centered at zero with a 
-    standard deviation defined by the noise level. The noise is added to the original data, 
-    producing a noisy version of the input dataset.
-
-    Parameters:
-        data (np.ndarray): The original dataset to which noise will be added. This can be 
-                           an array of any shape.
-        noise_level (float): The standard deviation of the Gaussian noise to be added. 
-                             This determines the level of noise.
-
-    Returns:
-        np.ndarray: The dataset with added Gaussian noise.
-    """
-    
-    noisy_data = data.real + np.random.normal(0, noise_level, data.shape) + 1j * (data.imag + np.random.normal(0, noise_level, data.shape))
-    return noisy_data.astype(np.complex64)

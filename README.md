@@ -27,7 +27,6 @@ Ensure you have Python 3.x installed. This project requires the following extern
 - **SciPy**
 - **CuPy**
 - **Pillow**
-- **Pandas**
 - **PyTorch**
 - **Albumentations**
 - **Skimage**

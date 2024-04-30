@@ -55,32 +55,16 @@ def data_split(
     np.random.seed(0)
     indices = np.arange(E.shape[0])
     np.random.shuffle(indices)
-        
-    input = E[indices,:,:,:]
-    n2label = n2_labels[indices]
-    isatlabel = isat_labels[indices]
     
     # Calculate split indices
     train_index = int(len(indices) * train_ratio)
     validation_index = int(len(indices) * (train_ratio + validation_ratio))
-    
-    # Split the datasets
-    train = input[:train_index]
-    validation = input[train_index:validation_index]
-    test = input[validation_index:]
-    
-    train_n2_label = n2label[:train_index]
-    validation_n2_label = n2label[train_index:validation_index]
-    test_n2_label = n2label[validation_index:]
 
-    train_isat_label = isatlabel[:train_index]
-    validation_isat_label = isatlabel[train_index:validation_index]
-    test_isat_label = isatlabel[validation_index:]
-
-    train = (train, train_n2_label,train_isat_label)
-    validation = (validation, validation_n2_label, validation_isat_label)
-    test = (test, test_n2_label, test_isat_label)
-    return train, validation, test
+    training_indices = indices[:train_index]
+    validation_indices = indices[train_index:validation_index]
+    test_indices = indices[validation_index:]
+    
+    return (E[training_indices], n2_labels[training_indices],isat_labels[training_indices]), (E[validation_indices], n2_labels[validation_indices],isat_labels[validation_indices]),(E[test_indices], n2_labels[test_indices],isat_labels[test_indices])
 
 def data_treatment(
         myset: np.ndarray, 

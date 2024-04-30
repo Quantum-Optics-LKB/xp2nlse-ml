@@ -1,0 +1,17 @@
+tau model
+10 by 10
+n2 = -8.90e-10 m^2/W
+Isat = 5.60e+05 W/m^2
+
+15 by 15
+n2 = -9.29e-10 m^2/W
+Isat = 2.93e+05 W/m^2
+
+2D model
+10 by 10
+n2 = -8.90e-10 m^2/W
+Isat = 1.20e+05 W/m^2
+
+15 by 15
+n2 = -9.29e-10 m^2/W
+Isat = 9.29e+05 W/m^2

@@ -10,7 +10,7 @@ from scipy.constants import c, epsilon_0
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
 from engine.noise_generator import line_noise, salt_and_pepper_noise
-
+from numba import njit, prange
 
 def data_creation(
     input_field: np.ndarray,
@@ -74,7 +74,7 @@ def data_creation(
     zoom_factor = resolution_out / (resolution_in//2)
 
     #Data generation using NLSE
-    E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out))
+    E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out), dtype=np.float16)
 
     power_channels_index = 0
     for index_power in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
@@ -83,22 +83,16 @@ def data_creation(
 
       simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
       simu.delta_z = delta_z
-      A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").get()
+      A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").reshape((number_of_n2*number_of_isat, resolution_in, resolution_in)).get()
 
-      E_init = A.reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
-
-      phase = unwrap_phase(np.angle(E_init), rng=0)
-      out_resized_Pha = zoom(phase[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5)
-      density = np.abs(E_init)**2 * c * epsilon_0 / 2
-      out_resized_Amp = zoom(density[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5)
-
-      E[:,power_channels_index,:,:] = out_resized_Amp
-      E[:,power_channels_index + 1,:,:] = out_resized_Pha
+      E[:,power_channels_index,:,:] = zoom(normalize_data(np.abs(A)**2 * c * epsilon_0 / 2)[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5).astype(np.float16)
+      E[:,power_channels_index + 1,:,:] = zoom(normalize_data(unwrap_phase(np.angle(A), rng=0))[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5).astype(np.float16) 
       power_channels_index += 2
     
-    print("---- NORMALIZE ----")              
-    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', normalize_data(E))
+    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', E)
+    return E
 
+@njit(parallel=True)
 def data_augmentation(
     number_of_n2: int, 
     number_of_isat: int,
@@ -142,26 +136,26 @@ def data_augmentation(
     lines = [20, 50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
-    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)
-  
-    for channel in tqdm(range(E.shape[1]), position=4,desc="Iteration", leave=False):
+    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
+
+    for channel in prange(E.shape[1]):
         index = 0
-        for image_index in range(E.shape[0]):
-            image_at_channel = E[image_index,channel,:,:].astype(np.float16)
-            augmented_data[index,channel ,:, :] = image_at_channel.astype(np.float16)
+        for image_index in prange(E.shape[0]):
+            image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
+            augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
             index += 1  
             for noise in noises:
-                augmented_data[index,channel ,:, :] = salt_and_pepper_noise(image_at_channel, noise).astype(np.float16)
+                augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
                 index += 1
                 for angle in angles:
                     for num_lines in lines:
-                        augmented_data[index,channel ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle).astype(np.float16)
+                        augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
                         index += 1
-    print("---- NORMALIZE ----")              
-    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', normalize_data(augmented_data))
-        
-    return augmentation
 
+    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data.astype(np.float16))
+    return augmentation, augmented_data
+
+@njit
 def normalize_data(
         data: np.ndarray,
         ) -> np.ndarray:
@@ -187,10 +181,9 @@ def normalize_data(
     datasets with varying ranges of values across samples or channels.
     """
 
-
-    min_vals = np.min(data, axis=(2, 3), keepdims=True)
-    max_vals = np.max(data, axis=(2, 3), keepdims=True)
-
-    normalized_data = (data - min_vals) / (max_vals - min_vals)
-
-    return normalized_data.astype(np.float16)
+    min_vals = np.min(data, axis=(-2, -1), keepdims=True)
+    max_vals = np.max(data, axis=(-2, -1), keepdims=True)
+    
+    data -= min_vals
+    data /= max_vals - min_vals
+    return data

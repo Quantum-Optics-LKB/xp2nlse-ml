@@ -4,7 +4,6 @@
 
 import os
 import sys
-from tqdm import tqdm
 import torch
 import numpy as np
 from engine.loss_plot import plotter
@@ -50,6 +49,7 @@ def lauch_training(
         numbers: tuple, 
         labels: tuple, 
         values: tuple, 
+        E: np.ndarray,
         path: str, 
         resolution: int, 
         learning_rate: float, 
@@ -86,7 +86,7 @@ def lauch_training(
 
     n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
-    
+
     new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}"
 
     if not os.path.isdir(new_path):
@@ -99,17 +99,12 @@ def lauch_training(
     sys.stdout = f
 
     print("---- DATA LOADING ----")
-
-    # number_of_n2 x number_of_isat, number_of_power * 2, resolution * resolution
-    file = f'{path}/Es_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended.npy'
-    E = np.load(file, 'r')
     assert E.shape[1] == 2*number_of_power
     assert E.shape[0] == n2_labels.shape[0], f"field[0] is {E.shape[0]}, n2_labels[0] is {n2_labels.shape[0]}"
     assert E.shape[0] == isat_labels.shape[0], f"field[0] is {E.shape[0]}, isat_labels[0] is {isat_labels.shape[0]}"
     assert E.shape[0] == n2_values.shape[0], f"field[0] is {E.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
     assert E.shape[0] == isat_values.shape[0], f"field[0] is {E.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
 
-    
     print("---- MODEL INITIALIZING ----")
     cnn, optimizer, criterion, scheduler = network_init(learning_rate, E.shape[1], number_of_n2,number_of_isat, Inception_ResNetv2)
     cnn = cnn.to(device)
@@ -131,7 +126,8 @@ def lauch_training(
 
     print("---- MODEL TRAINING ----")
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
-
+    cnn = nn.DataParallel(cnn, device_ids=[0, 1])
+    
     print("---- MODEL SAVING ----")
     torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth')
 
