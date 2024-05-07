@@ -15,7 +15,7 @@ input_power_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_
 input_alpha_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat_real/alpha.npy"
 exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/04191653_time_flat/field.npy"
 
-device = 0
+device = 1
 resolution_in=1024
 resolution_out=256
 pin_size=2

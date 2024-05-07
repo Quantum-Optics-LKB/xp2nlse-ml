@@ -40,19 +40,23 @@ def from_input_image(
     else:
         input_tiff = Image.open(path)
         image = np.array(input_tiff, dtype=np.float32)
-    image = (image - np.min(image))/(np.max(image) - np.min(image))
-    image = np.sqrt(image)
+    min_image = np.min(image)
+    max_image = np.max(image)
+    image -= min_image
+    image /= max_image - min_image 
+    np.sqrt(image, out=image)
+
     resolution_image = image.shape[0]
 
     if resolution_in != image.shape[0]:
         image = zoom(image, (resolution_in/image.shape[0],resolution_in/image.shape[1]))
 
     print("---- PINHOLE ----")
-    window =   resolution_image * 5.5e-6
+    window =  resolution_image * 5.5e-6
     image = pinhole(image, window, image.shape[0], image.shape[0], False,pinsize)
 
 
-    image = image + 1j * 0
+    image += 1j * 0
     print("---- PREPARE FOR NLSE ----")
     input_field_tiled_n2_power_isat = np.tile(image[np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_isat, 1,1))
     return input_field_tiled_n2_power_isat, window
@@ -102,13 +106,14 @@ def generate_data(
     N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
     N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
 
-    n2_values_all_single = N2_values_single.flatten()
-    isat_values_all_single = ISAT_values_single.flatten()
+    n2_values_all_single = N2_values_single.reshape(-1)
+    isat_values_all_single = ISAT_values_single.reshape(-1)
 
-    n2_labels_all_single = N2_labels_single.flatten()
-    isat_labels_all_single = ISAT_labels_single.flatten()
+    n2_labels_all_single = N2_labels_single.reshape(-1)
+    isat_labels_all_single = ISAT_labels_single.reshape(-1)
     
     if generate and expansion:
+        
         input_field, window = from_input_image(image_path, number_of_n2, number_of_isat,resolution_in ,pinsize)
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")

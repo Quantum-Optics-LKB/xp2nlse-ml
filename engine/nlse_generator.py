@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import NLSE
+import NLSE.NLSE.nlse as nlse
+# from NLSE import NLSE.nlse as nlse
 from tqdm import tqdm
 import numpy as np
 import cupy as cp
@@ -15,9 +16,9 @@ from numba import njit, prange
 def data_creation(
     input_field: np.ndarray,
     window: float,
-    n2_values: np.ndarray,
+    n2: np.ndarray,
     power_alpha: tuple,
-    isat_values: np.ndarray,
+    Isat: np.ndarray,
     resolution_in: int,
     resolution_out: int,
     delta_z:float,
@@ -54,39 +55,42 @@ def data_creation(
     """
     
     #NLSE parameters
-    power_values, alpha_values = power_alpha
-    number_of_power = len(power_values)
-    number_of_n2 = len(n2_values)
-    number_of_isat = len(isat_values)
+    power, alpha = power_alpha
+    number_of_power = len(power)
+    number_of_n2 = len(n2)
+    number_of_isat = len(Isat)
 
-    power_list = cp.array(power_values)
-    n2_list = cp.array(n2_values)
-    Isat_list = cp.array(isat_values)
+    power = cp.asarray(power)
+    n2 = cp.asarray(n2)
+    Isat = cp.asarray(Isat)
 
-    n2 =  cp.zeros((n2_list.size ,1 ,1 ,1))
-    n2[:, 0, 0, 0] = n2_list
-
-
-    Isat =  cp.zeros((1, Isat_list.size ,1 ,1 ))
-    Isat[0, :, 0, 0] = Isat_list
+    n2 = n2[:, cp.newaxis, cp.newaxis, cp.newaxis]
+    Isat = Isat[cp.newaxis, :, cp.newaxis, cp.newaxis]
 
     crop = resolution_in//4
     zoom_factor = resolution_out / (resolution_in//2)
 
     #Data generation using NLSE
     E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out), dtype=np.float16)
+    simu = nlse.NLSE(0, 0, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
+    simu.delta_z = delta_z
+    input_field = cp.asarray(input_field)
 
     power_channels_index = 0
     for index_power in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
-      power = power_list[index_power]
-      alpha = alpha_values[index_power]
 
-      simu = NLSE.nlse.NLSE(alpha, power, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
-      simu.delta_z = delta_z
-      A = simu.out_field(cp.array(input_field), L, verbose=False, plot=False, normalize=True, precision="single").reshape((number_of_n2*number_of_isat, resolution_in, resolution_in)).get()
-
-      E[:,power_channels_index,:,:] = zoom(normalize_data(np.abs(A)**2 * c * epsilon_0 / 2)[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5).astype(np.float16)
-      E[:,power_channels_index + 1,:,:] = zoom(normalize_data(unwrap_phase(np.angle(A), rng=0))[:,crop:resolution_in - crop, crop:resolution_in - crop], (1, zoom_factor, zoom_factor),order=5).astype(np.float16) 
+      simu.puiss = power[index_power]
+      simu.alpha = alpha[index_power]
+      with cp.cuda.using_allocator(None):
+        A = simu.out_field(input_field, L, verbose=False, plot=False, normalize=True, precision="single").reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
+        A_numpy = A.get()
+        del A
+      
+      density = normalize_data(np.abs(A_numpy)**2 * c * epsilon_0 / 2)[:,crop:resolution_in - crop, crop:resolution_in - crop]
+      phase = normalize_data(unwrap_phase(np.angle(A_numpy), rng=0))[:,crop:resolution_in - crop, crop:resolution_in - crop]
+      
+      E[:,power_channels_index,:,:] = zoom(density, (1, zoom_factor, zoom_factor),order=5).astype(np.float16)
+      E[:,power_channels_index + 1,:,:] = zoom(phase, (1, zoom_factor, zoom_factor),order=5).astype(np.float16) 
       power_channels_index += 2
     
     np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', E)
@@ -155,7 +159,6 @@ def data_augmentation(
     np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data.astype(np.float16))
     return augmentation, augmented_data
 
-@njit
 def normalize_data(
         data: np.ndarray,
         ) -> np.ndarray:

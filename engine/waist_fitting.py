@@ -103,7 +103,6 @@ def pinhole(
     sigma_opt, _ = curve_fit(gaussian, XY_ravel, field_ravel,p0=[5e-4, 1, 0, 0] )
 
     sigma_waist = sigma_opt[0]
-
     R = np.hypot(XX, YY)
     field[R > pinsize*sigma_waist] = 0
 
