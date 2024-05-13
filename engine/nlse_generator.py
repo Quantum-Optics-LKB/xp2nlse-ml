@@ -11,14 +11,11 @@ from scipy.constants import c, epsilon_0
 from scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
 from engine.noise_generator import line_noise, salt_and_pepper_noise
-from numba import njit, prange
 
 def data_creation(
     input_field: np.ndarray,
     window: float,
-    n2: np.ndarray,
-    power_alpha: tuple,
-    Isat: np.ndarray,
+    numbers: tuple,
     resolution_in: int,
     resolution_out: int,
     delta_z:float,
@@ -55,39 +52,40 @@ def data_creation(
     """
     
     #NLSE parameters
-    power, alpha = power_alpha
-    number_of_power = len(power)
-    number_of_n2 = len(n2)
-    number_of_isat = len(Isat)
+    n2, powers, alpha, isat = numbers
 
-    power = cp.asarray(power)
+    number_of_power = len(powers)
+    number_of_n2 = len(n2)
+    number_of_isat = len(isat)
+
+    powers = cp.asarray(powers)
     n2 = cp.asarray(n2)
-    Isat = cp.asarray(Isat)
+    isat = cp.asarray(isat)
 
     n2 = n2[:, cp.newaxis, cp.newaxis, cp.newaxis]
-    Isat = Isat[cp.newaxis, :, cp.newaxis, cp.newaxis]
+    isat = isat[cp.newaxis, :, cp.newaxis, cp.newaxis]
 
     crop = resolution_in//4
     zoom_factor = resolution_out / (resolution_in//2)
 
     #Data generation using NLSE
     E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out), dtype=np.float16)
-    simu = nlse.NLSE(0, 0, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=Isat)
+    simu = nlse.NLSE(0, 0, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=isat)
     simu.delta_z = delta_z
     input_field = cp.asarray(input_field)
 
     power_channels_index = 0
     for index_power in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
 
-      simu.puiss = power[index_power]
+      simu.puiss = powers[index_power]
       simu.alpha = alpha[index_power]
-      with cp.cuda.using_allocator(None):
-        A = simu.out_field(input_field, L, verbose=False, plot=False, normalize=True, precision="single").reshape((number_of_n2*number_of_isat, resolution_in, resolution_in))
-        A_numpy = A.get()
-        del A
+      A = simu.out_field(input_field, L, verbose=False, plot=False, normalize=True, precision="single")
+      A =  A.reshape((number_of_n2*number_of_isat, resolution_in, resolution_in)).get()
       
-      density = normalize_data(np.abs(A_numpy)**2 * c * epsilon_0 / 2)[:,crop:resolution_in - crop, crop:resolution_in - crop]
-      phase = normalize_data(unwrap_phase(np.angle(A_numpy), rng=0))[:,crop:resolution_in - crop, crop:resolution_in - crop]
+      density = np.abs(A)**2 * c * epsilon_0 / 2
+      density = normalize_data(density)[:,crop:resolution_in - crop, crop:resolution_in - crop]
+      phase = unwrap_phase(np.angle(A), rng=0)
+      phase = normalize_data(phase)[:,crop:resolution_in - crop, crop:resolution_in - crop]
       
       E[:,power_channels_index,:,:] = zoom(density, (1, zoom_factor, zoom_factor),order=5).astype(np.float16)
       E[:,power_channels_index + 1,:,:] = zoom(phase, (1, zoom_factor, zoom_factor),order=5).astype(np.float16) 
@@ -96,7 +94,6 @@ def data_creation(
     np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', E)
     return E
 
-@njit(parallel=True)
 def data_augmentation(
     number_of_n2: int, 
     number_of_isat: int,
@@ -142,9 +139,9 @@ def data_augmentation(
 
     augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
 
-    for channel in prange(E.shape[1]):
+    for channel in range(E.shape[1]):
         index = 0
-        for image_index in prange(E.shape[0]):
+        for image_index in range(E.shape[0]):
             image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
             augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
             index += 1  
@@ -187,6 +184,6 @@ def normalize_data(
     min_vals = np.min(data, axis=(-2, -1), keepdims=True)
     max_vals = np.max(data, axis=(-2, -1), keepdims=True)
     
-    data -= min_vals
-    data /= max_vals - min_vals
+    np.subtract(data, min_vals, out=data)
+    np.divide(data, max_vals - min_vals, out=data)
     return data

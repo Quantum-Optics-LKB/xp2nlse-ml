@@ -7,7 +7,6 @@ from scipy.ndimage import zoom
 from engine.nlse_generator import normalize_data
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
-import torch.nn as nn
 
 
 def reshape_resize(E, resolution_out):
@@ -31,7 +30,7 @@ def formatting(E_resized, resolution_out, number_of_power):
     data_even = np.abs(E_resized)**2
 
     odd_indices = np.arange(1, number_of_power*2, 2)
-    data_odd = unwrap_phase(np.angle(E_resized))
+    data_odd = unwrap_phase(np.angle(E_resized), rng=0)
     
     E_formatted[0, even_indices, :, :] = data_even
 
@@ -41,12 +40,16 @@ def formatting(E_resized, resolution_out, number_of_power):
     return E_formatted
 
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number):
-    number_of_n2, power_alpha, number_of_isat = numbers
-    power_values, alpha_values = power_alpha
-    number_of_power = len(power_values)
+    n2, powers, alpha, isat = numbers
+    
+    number_of_power = len(powers)
+    number_of_n2 = len(n2)
+    number_of_isat = len(isat)
 
-    n2 = np.linspace(-1e-11, -1e-9, number_of_n2)
-    isat = np.linspace(1e4, 1e6, number_of_isat)
+    min_n2 = n2.min()
+    max_n2 = n2.max()
+    min_isat = isat.min()
+    max_isat = isat.max()
 
     device = torch.device(f"cuda:{device_number}")
     
@@ -54,15 +57,12 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
     E_resized = reshape_resize(E_experiment, resolution_out)
     E = formatting(E_resized, resolution_out, number_of_power)
 
-    cnn = Inception_ResNetv2(in_channels=E.shape[1], class_n2=number_of_n2, class_isat=number_of_isat)
-    cnn = nn.DataParallel(cnn, device_ids=[0, 1])
+    cnn = Inception_ResNetv2(in_channels=E.shape[1])
+    cnn.to(device)
     cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth'))
-
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
         outputs_n2, outputs_isat = cnn(images)
-        _, predicted_n2 = torch.max(outputs_n2, 1)
-        _, predicted_isat = torch.max(outputs_isat, 1)
 
-    print(f"n2 = {n2[predicted_n2]:.2e} m^2/W")
-    print(f"Isat = {isat[predicted_isat]:.2e} W/m^2")
+    print(f"n2 = {outputs_n2[0,0]*(max_n2 - min_n2) + min_n2:.2e} m^2/W")
+    print(f"Isat = {outputs_isat[0,0]*(max_isat - min_isat) + min_isat:.2e} W/m^2")

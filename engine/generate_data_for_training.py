@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-from matplotlib import pyplot as plt
 import numpy as np
 import cupy as cp
 from engine.nlse_generator import data_creation, data_augmentation
@@ -56,7 +55,7 @@ def from_input_image(
     image = pinhole(image, window, image.shape[0], image.shape[0], False,pinsize)
 
 
-    image += 1j * 0
+    image = image + 1j * 0
     print("---- PREPARE FOR NLSE ----")
     input_field_tiled_n2_power_isat = np.tile(image[np.newaxis, np.newaxis, :,:], (number_of_n2,number_of_isat, 1,1))
     return input_field_tiled_n2_power_isat, window
@@ -93,55 +92,42 @@ def generate_data(
       it returns labels and values for the generated or loaded data.
     """
     resolution_in, resolution_out = resolutions
-    number_of_n2, power_alpha, number_of_isat = numbers
+    n2, powers, alpha, isat = numbers
 
-    power_values, alpha_values = power_alpha
-    number_of_power = len(power_values)
-    n2_values = np.linspace(-1e-11, -1e-9, number_of_n2)
-    n2_labels = np.arange(0, number_of_n2)
+    number_of_power = len(powers)
+    number_of_n2 = len(n2)
+    number_of_isat = len(isat)
 
-    isat_values = np.linspace(1e4, 1e6, number_of_isat)
-    isat_labels = np.arange(0, number_of_isat)
+    N2_single, ISAT_single = np.meshgrid(n2, isat) 
 
-    N2_values_single, ISAT_values_single = np.meshgrid(n2_values, isat_values,) 
-    N2_labels_single, ISAT_labels_single = np.meshgrid(n2_labels, isat_labels)
-
-    n2_values_all_single = N2_values_single.reshape(-1)
-    isat_values_all_single = ISAT_values_single.reshape(-1)
-
-    n2_labels_all_single = N2_labels_single.reshape(-1)
-    isat_labels_all_single = ISAT_labels_single.reshape(-1)
+    n2_all_single = N2_single.reshape(-1)
+    isat_all_single = ISAT_single.reshape(-1)
     
     if generate and expansion:
         
         input_field, window = from_input_image(image_path, number_of_n2, number_of_isat,resolution_in ,pinsize)
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
-            E = data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z, length,saving_path)
+            E = data_creation(input_field, window, numbers, resolution_in,resolution_out, delta_z, length,saving_path)
 
         noise = 0.01
         expansion_factor, E_augmented = data_augmentation(number_of_n2, number_of_isat, number_of_power, E, noise, saving_path)
 
-        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
-        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
+        n2_augmented_single = np.repeat(n2_all_single, expansion_factor)
+        isat_augmented_single = np.repeat(isat_all_single, expansion_factor)
 
-        n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
-        isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
-
-        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+        values_augmented_single = (n2_augmented_single, isat_augmented_single)        
         
-        return labels_augmented_single, values_augmented_single, E_augmented
+        return values_augmented_single, E_augmented
     
     elif generate:
         input_field, window = from_input_image(image_path, number_of_n2, number_of_isat,resolution_in ,pinsize)
         with cp.cuda.Device(device_number):
             print("---- NLSE ----")
-            E = data_creation(input_field, window, n2_values,power_alpha,isat_values, resolution_in,resolution_out, delta_z, length,saving_path)
+            E = data_creation(input_field, window, numbers, resolution_in,resolution_out, delta_z, length,saving_path)
 
-        values_single = (n2_values_all_single, isat_values_all_single)
-        labels_single = (n2_labels_all_single, isat_labels_all_single)
-        return labels_single, values_single, E
+        values_single = (n2_all_single, isat_all_single)
+        return values_single, E
     elif expansion:
 
         print("---- EXPEND ----")
@@ -151,31 +137,20 @@ def generate_data(
         noise = 0.01
         expansion_factor, E_augmented = data_augmentation(number_of_n2, number_of_isat, number_of_power, E, noise, saving_path)
 
-        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
-        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
+        n2_augmented_single = np.repeat(n2_all_single, expansion_factor)
+        isat_augmented_single = np.repeat(isat_all_single, expansion_factor)
 
-        n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
-        isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
-
-        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
+        values_augmented_single = (n2_augmented_single, isat_augmented_single)
         
-        return labels_augmented_single, values_augmented_single, E
+        return values_augmented_single, E
     
     elif training:
-        expansion_factor = 33
-        n2_labels_augmented_single = np.repeat(n2_labels_all_single, expansion_factor)
-        isat_labels_augmented_single = np.repeat(isat_labels_all_single, expansion_factor)
-
-        n2_values_augmented_single = np.repeat(n2_values_all_single, expansion_factor)
-        isat_values_augmented_single = np.repeat(isat_values_all_single, expansion_factor)
-
-        values_augmented_single = (n2_values_augmented_single, isat_values_augmented_single)
-        labels_augmented_single = (n2_labels_augmented_single, isat_labels_augmented_single)
-        E = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended.npy')
-        return labels_augmented_single, values_augmented_single, E
+        
+        E = np.load(f'{saving_path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.npy')
+        values_single = (n2_all_single, isat_all_single)
+        return values_single, E
+    
     else:
-        values_single = (n2_values_all_single, isat_values_all_single)
-        labels_single = (n2_labels_all_single, isat_labels_all_single)
+        values_single = (n2_all_single, isat_all_single)
         E = np.zeros((number_of_isat*number_of_n2,2*number_of_power,resolution_out, resolution_out), dtype=np.float16)
-        return labels_single, values_single, E
+        return values_single, E

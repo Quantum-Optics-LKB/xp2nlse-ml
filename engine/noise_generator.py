@@ -3,9 +3,7 @@
 # @author: Louis Rossignol
 
 import numpy as np
-from numba import njit
 
-@njit
 def salt_and_pepper_noise(
         data: np.ndarray,
         noise_level: float
@@ -32,7 +30,6 @@ def salt_and_pepper_noise(
     noisy_data[salt_pepper == 1] = np.max(data)  # salt (white)
     return noisy_data
 
-@njit
 def line_noise(
         image: np.ndarray,
         num_lines: int, 

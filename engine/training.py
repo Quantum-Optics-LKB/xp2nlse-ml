@@ -11,60 +11,52 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 
-    for epoch in tqdm(range(num_epochs), position=4,desc="Epoch", leave=False):  
+    for epoch in tqdm(range(num_epochs), position=4, desc="Epoch", leave=False):  
         running_loss = 0.0
         net.train()
-
         
-        for i, (images, n2_labels, isat_labels) in enumerate(trainloader, 0):
+        for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):
             
             images = images.to(device)
-            n2_labels = n2_labels.to(device)
-            isat_labels = isat_labels.to(device)
+            n2_values = n2_values.to(device)
+            isat_values = isat_values.to(device)
             
+            optimizer.zero_grad()  # Clearing gradients at the beginning of processing each batch
             outputs_n2, outputs_isat = net(images)
 
-            loss_n2 = criterion(outputs_n2, n2_labels)
-            loss_isat = criterion(outputs_isat, isat_labels)
-            loss_n2.backward(retain_graph = True)
-            loss_isat.backward(retain_graph = True)
+            loss_n2 = criterion(outputs_n2, n2_values)
+            loss_isat = criterion(outputs_isat, isat_values)
+            loss_n2.backward(retain_graph=True)
+            loss_isat.backward()
 
-            if accumulation_steps == 0:
+            if (i + 1) % accumulation_steps == 0 or accumulation_steps == 1:
                 optimizer.step()
-            else:
-                if (i + 1) % accumulation_steps == 0:
-                    for param in net.parameters():
-                        param.grad /= accumulation_steps
+                optimizer.zero_grad()  # Clear gradients after updating weights
 
-                    optimizer.step()
-
-                    for param in net.parameters():
-                        param.grad.zero_()
-            
             running_loss += loss_n2.item() + loss_isat.item()
         
         # Validation loop
         val_running_loss = 0.0
-        net.eval()  
+        net.eval()
         with torch.no_grad(): 
-            for i, (images, n2_labels, isat_labels) in enumerate(validationloader, 0):
+            for images, n2_values, isat_values in validationloader:
                 images = images.to(device)
-                n2_labels = n2_labels.to(device)
-                isat_labels = isat_labels.to(device)
+                n2_values = n2_values.to(device)
+                isat_values = isat_values.to(device)
 
-                # Forward pass with original images
                 outputs_n2, outputs_isat = net(images)
-
-                loss_n2 = criterion(outputs_n2, n2_labels)
-                loss_isat = criterion(outputs_isat, isat_labels)
+                loss_n2 = criterion(outputs_n2, n2_values)
+                loss_isat = criterion(outputs_isat, isat_values)
                 
                 val_running_loss += loss_n2.item() + loss_isat.item()
 
-        scheduler.step(val_running_loss / len(validationloader))
+        avg_val_loss = val_running_loss / len(validationloader)
+        scheduler.step(avg_val_loss)
 
-        print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(trainloader)}, Validation Loss: {val_running_loss / len(validationloader)}')
+        current_lr = scheduler.get_last_lr()  # Get current learning rate after update
+        print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(trainloader):.4f}, Validation Loss: {avg_val_loss:.4f}, Current LR: {current_lr[0]}')
 
         loss_list[epoch] = running_loss / len(trainloader)
-        val_loss_list[epoch] = val_running_loss / len(validationloader)
+        val_loss_list[epoch] = avg_val_loss
     
     return loss_list, val_loss_list, net

@@ -7,7 +7,7 @@ import sys
 import torch
 import numpy as np
 from engine.loss_plot import plotter
-from engine.test import count_parameters_pandas, test_model_classification
+from engine.test import count_parameters_pandas, test_model
 from engine.data_prep_for_training import data_split, data_treatment
 from engine.training import network_training
 import torch.nn as nn
@@ -17,8 +17,6 @@ from engine.model import Inception_ResNetv2
 def network_init(
         learning_rate: float, 
         channels: int, 
-        class_n2: int, 
-        class_isat: int, 
         model: torch.nn.Module
         ) -> tuple:
     """
@@ -27,8 +25,6 @@ def network_init(
     Parameters:
     - learning_rate (float): The initial learning rate for the optimizer.
     - channels (int): The number of channels in the input data.
-    - class_n2 (int): The number of classes for n2 predictions.
-    - class_isat (int): The number of classes for isat predictions.
     - model (torch.nn.Module class): The neural network model class to be initialized.
 
     Returns:
@@ -37,17 +33,16 @@ def network_init(
     - criterion (torch.nn.Module): The CrossEntropyLoss criterion for the model's output.
     - scheduler (torch.optim.lr_scheduler): A ReduceLROnPlateau learning rate scheduler.
     """
-    cnn = model(channels, class_isat, class_n2)
+    cnn = model(channels)
     weight_decay = 1e-5
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min')
 
     return cnn, optimizer, criterion, scheduler
 
 def lauch_training(
         numbers: tuple, 
-        labels: tuple, 
         values: tuple, 
         E: np.ndarray,
         path: str, 
@@ -63,7 +58,6 @@ def lauch_training(
 
     Parameters:
     - numbers (tuple): A tuple containing the numbers of n2, power, and isat instances.
-    - labels (tuple): A tuple containing n2 labels, power labels, and isat labels arrays.
     - values (tuple): A tuple containing n2 values, power values, and isat values arrays.
     - path (str): The path where training outputs will be saved.
     - resolution (int): The resolution of the input data.
@@ -78,12 +72,15 @@ def lauch_training(
     the trained model, are saved to the specified path.
     """
     device = torch.device(f"cuda:{device_number}")
-    number_of_n2, power_alpha, number_of_isat = numbers
-    power_values, alpha_values = power_alpha
-    number_of_power = len(power_values)
-    n2_labels, isat_labels = labels
+    n2, powers, alpha, isat = numbers
+
+    number_of_power = len(powers)
+    number_of_n2 = len(n2)
+    number_of_isat = len(isat)
     n2_values, isat_values = values
 
+    n2_values_normalized = (n2_values - np.min(n2_values))/(np.max(n2_values)- np.min(n2_values))
+    isat_values_normalized = (isat_values - np.min(isat_values))/(np.max(isat_values) - np.min(isat_values))
     n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
     isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
 
@@ -100,17 +97,15 @@ def lauch_training(
 
     print("---- DATA LOADING ----")
     assert E.shape[1] == 2*number_of_power
-    assert E.shape[0] == n2_labels.shape[0], f"field[0] is {E.shape[0]}, n2_labels[0] is {n2_labels.shape[0]}"
-    assert E.shape[0] == isat_labels.shape[0], f"field[0] is {E.shape[0]}, isat_labels[0] is {isat_labels.shape[0]}"
     assert E.shape[0] == n2_values.shape[0], f"field[0] is {E.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
     assert E.shape[0] == isat_values.shape[0], f"field[0] is {E.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
 
     print("---- MODEL INITIALIZING ----")
-    cnn, optimizer, criterion, scheduler = network_init(learning_rate, E.shape[1], number_of_n2,number_of_isat, Inception_ResNetv2)
+    cnn, optimizer, criterion, scheduler = network_init(learning_rate, E.shape[1], Inception_ResNetv2)
     cnn = cnn.to(device)
     
     print("---- DATA TREATMENT ----")
-    train_set, validation_set, test_set = data_split(E,n2_labels,isat_labels, 0.8, 0.1, 0.1)
+    train_set, validation_set, test_set = data_split(E,n2_values_normalized,isat_values_normalized, 0.8, 0.1, 0.1)
 
     train, train_n2_label,train_isat_label = train_set
     validation, validation_n2_label, validation_isat_label = validation_set
@@ -126,7 +121,6 @@ def lauch_training(
 
     print("---- MODEL TRAINING ----")
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
-    cnn = nn.DataParallel(cnn, device_ids=[0, 1])
     
     print("---- MODEL SAVING ----")
     torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth')
@@ -158,7 +152,7 @@ def lauch_training(
     count_parameters_pandas(cnn)
 
     print("---- MODEL TESTING ----")
-    test_model_classification(testloader, cnn, classes, device)
+    test_model(testloader, cnn, device)
 
     sys.stdout = orig_stdout
     f.close()
