@@ -2,102 +2,108 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import NLSE.NLSE.nlse as nlse
-# from NLSE import NLSE.nlse as nlse
-from tqdm import tqdm
+import NLSE.nlse as nlse
 import numpy as np
 import cupy as cp
 from scipy.constants import c, epsilon_0
-from scipy.ndimage import zoom
+import gc
+from cupyx.scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
 from engine.noise_generator import line_noise, salt_and_pepper_noise
 
+
+def add_model_noise(beam, poisson_noise_lam, normal_noise_sigma):
+        
+    poisson_noise = np.random.poisson(lam=poisson_noise_lam, size=(beam.shape))*poisson_noise_lam*0.75
+    normal_noise = np.random.normal(0, normal_noise_sigma, (beam.shape))
+
+    total_noise = normal_noise + poisson_noise
+    noisy_beam = np.real(beam) + total_noise + 1j * (np.imag(beam) + total_noise)
+
+    noisy_beam = normalize_data(noisy_beam)
+
+    noisy_beam = noisy_beam.astype(np.complex64)
+    return noisy_beam
+
 def data_creation(
-    input_field: np.ndarray,
-    window: float,
     numbers: tuple,
-    resolution_in: int,
-    resolution_out: int,
-    delta_z:float,
-    L: float,
-    path: str = None,
+    cameras: tuple,
+    delta_z: float, 
+    length: float,
+    saving_path: str,
     ) -> np.ndarray:
-    """
-    Simulates the nonlinear Schrödinger equation (NLSE package) propagation of an input field over a distance L, 
-    considering various nonlinear refractive index (n2), power, and saturation intensity (Isat) values. 
-    It generates and optionally saves the output field's amplitude and phase (both wrapped and unwrapped) 
-    at a specified resolution.
-
-    Parameters:
-    - input_field (np.ndarray): The input optical field as a 2D numpy array.
-    - window (float): The spatial extent of the simulation window in meters.
-    - n2_values (np.ndarray): An array of nonlinear refractive index (n2) values to simulate.
-    - power_values (np.ndarray): An array of optical power values to simulate.
-    - isat_values (np.ndarray): An array of saturation intensities (Isat) to simulate.
-    - resolution_in (int): The resolution of the input field (assumed to be square).
-    - resolution_out (int): The desired resolution of the output fields (assumed to be square).
-    - delta_z (float): The step size in meters for the simulation propagation.
-    - L (float): The total propagation distance in meters.
-    - path (str, optional): The file path for saving the output arrays. If None, arrays are not saved.
-
-    Returns:
-    - np.ndarray: A 4D numpy array containing the simulation results for all combinations of n2, power, 
-      and Isat values. The dimensions are [n2*power*Isat, 3, resolution_out, resolution_out], where 
-      the second dimension corresponds to the output amplitude, phase, and unwrapped phase fields.
-
-    This function uses GPU acceleration (via CuPy) for NLSE simulation and post-processing. It calculates 
-    the nonlinear propagation using specified parameters, then resizes the output to the desired resolution, 
-    and normalizes the data. If a path is provided, it saves the output arrays in the specified directory 
-    with a naming convention that reflects the simulation parameters.
-    """
     
     #NLSE parameters
-    n2, powers, alpha, isat = numbers
+    n2, in_power, alpha, isat, waist, nl_length = numbers
+    resolution_in, window_in, window_out, resolution_training = cameras
 
-    number_of_power = len(powers)
+    crop = int(0.5*(window_in - window_out)*resolution_in/window_in)
+  
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
 
-    powers = cp.asarray(powers)
     n2 = cp.asarray(n2)
     isat = cp.asarray(isat)
 
     n2 = n2[:, cp.newaxis, cp.newaxis, cp.newaxis]
     isat = isat[cp.newaxis, :, cp.newaxis, cp.newaxis]
 
-    crop = resolution_in//4
-    zoom_factor = resolution_out / (resolution_in//2)
-
-    #Data generation using NLSE
-    E = np.zeros((number_of_n2*number_of_isat,2*number_of_power, resolution_out, resolution_out), dtype=np.float16)
-    simu = nlse.NLSE(0, 0, window, n2, None, L, NX=resolution_in, NY=resolution_in, Isat=isat)
-    simu.delta_z = delta_z
-    input_field = cp.asarray(input_field)
-
-    power_channels_index = 0
-    for index_power in tqdm(range(number_of_power), position=4,desc="Power", leave=False):
-
-      simu.puiss = powers[index_power]
-      simu.alpha = alpha[index_power]
-      A = simu.out_field(input_field, L, verbose=False, plot=False, normalize=True, precision="single")
-      A =  A.reshape((number_of_n2*number_of_isat, resolution_in, resolution_in)).get()
-      
-      density = np.abs(A)**2 * c * epsilon_0 / 2
-      density = normalize_data(density)[:,crop:resolution_in - crop, crop:resolution_in - crop]
-      phase = unwrap_phase(np.angle(A), rng=0)
-      phase = normalize_data(phase)[:,crop:resolution_in - crop, crop:resolution_in - crop]
-      
-      E[:,power_channels_index,:,:] = zoom(density, (1, zoom_factor, zoom_factor),order=5).astype(np.float16)
-      E[:,power_channels_index + 1,:,:] = zoom(phase, (1, zoom_factor, zoom_factor),order=5).astype(np.float16) 
-      power_channels_index += 2
+    simu = nlse.NLSE(power=in_power, alpha=alpha, window=window_in, n2=n2, 
+                     V=None, L=length, NX=resolution_in, NY=resolution_in, 
+                     Isat=isat, nl_length=nl_length)
     
-    np.save(f'{path}/Es_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}', E)
+    simu.nl_profile =  simu.nl_profile[np.newaxis, np.newaxis, :,:]
+    simu.delta_z = delta_z
+
+    beam = np.ones((number_of_n2, number_of_isat, simu.NX, simu.NY), dtype=np.complex64)*np.exp(-(simu.XX**2 + simu.YY**2) / waist**2)
+    poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
+    beam = add_model_noise(beam, poisson_noise_lam, normal_noise_sigma)
+    beam = cp.asarray(beam)
+
+    A_gpu = simu.out_field(beam, z=length, verbose=True, plot=False, normalize=True, precision="single")
+    A = A_gpu.reshape((number_of_n2*number_of_isat, simu.NX, simu.NY)).get()
+    
+    E = np.zeros((number_of_n2*number_of_isat,3, resolution_training, resolution_training), dtype=np.float16)
+
+    del A_gpu
+      
+    density = np.abs(A)**2 * c * epsilon_0 / 2
+    phase = np.angle(A)
+    uphase = unwrap_phase(phase)
+      
+    density = density[:,crop:-crop,crop:-crop]
+    phase = phase[:,crop:-crop,crop:-crop] 
+    uphase = uphase[:,crop:-crop,crop:-crop] 
+    
+
+    zoom_factor = resolution_training / phase.shape[-1]
+    density_cp = zoom(cp.asarray(density), (1, zoom_factor, zoom_factor),order=3)
+    density = normalize_data(density_cp.get()).astype(np.float16)  
+
+    phase_cp = zoom(cp.asarray(phase), (1, zoom_factor, zoom_factor),order=3)
+    phase = normalize_data(phase_cp.get()).astype(np.float16)
+
+    uphase_cp = zoom(cp.asarray(uphase), (1, zoom_factor, zoom_factor),order=3)
+    uphase = normalize_data(uphase_cp.get()).astype(np.float16)
+
+    del density_cp
+    del phase_cp
+    del uphase_cp
+
+    gc.collect()
+    cp.get_default_memory_pool().free_all_blocks()
+
+    E[:,0,:,:] = density
+    E[:,1,:,:] = phase
+    E[:,2,:,:] = uphase
+
+    np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
     return E
 
 def data_augmentation(
     number_of_n2: int, 
     number_of_isat: int,
-    number_of_power: int,
+    in_power: float,
     E: np.ndarray,
     noise_level: float,
     path: str, 
@@ -153,7 +159,7 @@ def data_augmentation(
                         augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
                         index += 1
 
-    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}_extended', augmented_data.astype(np.float16))
+    np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended', augmented_data.astype(np.float16))
     return augmentation, augmented_data
 
 def normalize_data(
@@ -179,11 +185,7 @@ def normalize_data(
     and is often a prerequisite step for machine learning model inputs. This function ensures that 
     each channel of each data sample is independently normalized, making it suitable for diverse 
     datasets with varying ranges of values across samples or channels.
-    """
-
-    min_vals = np.min(data, axis=(-2, -1), keepdims=True)
-    max_vals = np.max(data, axis=(-2, -1), keepdims=True)
-    
-    np.subtract(data, min_vals, out=data)
-    np.divide(data, max_vals - min_vals, out=data)
+    """    
+    data -= np.min(data, axis=(-2, -1), keepdims=True)
+    data /= np.max(data, axis=(-2, -1), keepdims=True)
     return data

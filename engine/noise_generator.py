@@ -4,31 +4,39 @@
 
 import numpy as np
 
-def salt_and_pepper_noise(
-        data: np.ndarray,
-        noise_level: float
-        ) -> np.ndarray:
-    """
-    Adds salt and pepper noise to the given data.
+# def salt_and_pepper_noise(
+#         data: np.ndarray,
+#         noise_level: float
+#         ) -> np.ndarray:
+#     """
+#     Adds salt and pepper noise to the given data.
 
-    This function randomly flips some pixels of the image to either black (0) or white (1) to 
-    create the 'salt and pepper' effect. The number of pixels affected is determined by the 
-    noise level.
+#     This function randomly flips some pixels of the image to either black (0) or white (1) to 
+#     create the 'salt and pepper' effect. The number of pixels affected is determined by the 
+#     noise level.
 
-    Parameters:
-        data (np.ndarray): The original dataset to which noise will be added. The data is 
-                           expected to be an array of images.
-        noise_level (float): A proportion between 0 and 1 indicating the percentage of 
-                             pixels in the image to be affected by noise.
+#     Parameters:
+#         data (np.ndarray): The original dataset to which noise will be added. The data is 
+#                            expected to be an array of images.
+#         noise_level (float): A proportion between 0 and 1 indicating the percentage of 
+#                              pixels in the image to be affected by noise.
 
-    Returns:
-        np.ndarray: The dataset with added salt and pepper noise.
-    """
-    noisy_data = np.copy(data)
-    salt_pepper = np.random.choice([0, 1, 2], data.shape, p=[noise_level/2, noise_level/2, 1-noise_level])
-    noisy_data[salt_pepper == 0] = 0  # pepper (black)
-    noisy_data[salt_pepper == 1] = np.max(data)  # salt (white)
-    return noisy_data
+#     Returns:
+#         np.ndarray: The dataset with added salt and pepper noise.
+#     """
+#     noisy_data = np.copy(data)
+#     salt_pepper = np.random.choice([0, 1, 2], data.shape, p=[noise_level/2, noise_level/2, 1-noise_level])
+#     noisy_data[salt_pepper == 0] = 0  # pepper (black)
+#     noisy_data[salt_pepper == 1] = np.max(data)  # salt (white)
+#     return noisy_data
+
+def salt_and_pepper_noise(image, noise_level):
+    # Function to add salt and pepper noise to an image
+    noisy = image.copy()
+    probs = np.random.rand(*image.shape)
+    noisy[probs < noise_level / 2] = 0
+    noisy[probs > 1 - noise_level / 2] = 100*np.max(image)
+    return noisy
 
 def line_noise(
         image: np.ndarray,

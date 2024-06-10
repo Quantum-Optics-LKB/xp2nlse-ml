@@ -9,20 +9,6 @@ from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
 
-def reshape_resize(E, resolution_out):
-    if E.shape[2] != E.shape[3]:
-        cut = (E.shape[3] - E.shape[2])//2
-        E_reshape = E[:,0,:,cut:E.shape[3] - cut]
-    else:
-        E_reshape = E
-    
-    if resolution_out != E_reshape.shape[1]:
-        E_resized = zoom(E_reshape, (1, resolution_out/E_reshape.shape[1],resolution_out/E_reshape.shape[2]), order=3)
-    else:
-        E_resized = E_reshape
-    
-    return E_resized
-
 def formatting(E_resized, resolution_out, number_of_power):
     E_formatted = np.zeros((1, 2*number_of_power, resolution_out, resolution_out))
 
@@ -40,9 +26,8 @@ def formatting(E_resized, resolution_out, number_of_power):
     return E_formatted
 
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number):
-    n2, powers, alpha, isat = numbers
+    n2, in_power, alpha, isat, waist, nl_length = numbers
     
-    number_of_power = len(powers)
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
 
@@ -53,13 +38,11 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
 
     device = torch.device(f"cuda:{device_number}")
     
-    E_experiment = np.load(exp_path)
-    E_resized = reshape_resize(E_experiment, resolution_out)
-    E = formatting(E_resized, resolution_out, number_of_power)
+    E = zoom(np.load(exp_path), (1, 1, 256/3008, 256/3008))
 
     cnn = Inception_ResNetv2(in_channels=E.shape[1])
     cnn.to(device)
-    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{number_of_power}.pth'))
+    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth'))
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
         outputs_n2, outputs_isat = cnn(images)

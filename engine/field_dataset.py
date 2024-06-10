@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import random
 from torch.utils.data import Dataset
 import torch
 import numpy as np
@@ -35,10 +36,12 @@ def get_augmentation(
         augmentation_pipeline = get_augmentation(256, 256)
         augmented_image = augmentation_pipeline(image=image)['image']
     """
+    shift = random.uniform(0.01,0.05)
     return A.Compose([
-        A.GaussianBlur(blur_limit=(3, 11), p=1),
-        A.MotionBlur(blur_limit=(3, 11), p=1),
-        A.GlassBlur(sigma=0.1, max_delta=4, iterations=2, p=1),
+        A.MotionBlur(blur_limit=1001,  p=0.5),
+        A.GlassBlur(sigma=.5, max_delta=1, iterations=500, p=0.5),
+        A.ShiftScaleRotate(shift_limit=shift, scale_limit=0, rotate_limit=0, p=0.2),  # Shift without scale or rotation
+        A.Resize(height=original_height, width=original_width, p=1)
     ])
 
 class FieldDataset(Dataset):
@@ -93,21 +96,21 @@ class FieldDataset(Dataset):
         self.isat_values = torch.from_numpy(isat_values).float().to(self.device).unsqueeze(1)
         self.augmentation = get_augmentation(data.shape[-2], data.shape[-1])
         self.data = torch.from_numpy(data).float().to(self.device)
-
+        
         if self.training:
-            # Split channels for amplitude and phase
-            for i in range(data.shape[0]):
-                if self.device.type == 'cpu':
-                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float32) # Replace with your actual amplitude channels
-                    # Apply augmentations
-                    augmented = self.augmentation(image=channels)['image']
-                    self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
-                else:
-                    channels = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).cpu().numpy().astype(np.float32)  # Replace with your actual amplitude channels
-                    # Apply augmentations
-                    augmented = self.augmentation(image=channels)['image']
-                    self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
-    
+          for i in range(data.shape[0]):
+            augmented = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float32)
+            channels_density = torch.from_numpy(data)[i,0, :, :].numpy().astype(np.float32)
+            channels_phase = torch.from_numpy(data)[i,1, :, :].numpy().astype(np.float32)
+            channels_uphase = torch.from_numpy(data)[i,2, :, :].numpy().astype(np.float32)
+
+            channels_albu = np.stack([channels_density, channels_uphase], axis=-1)
+            augmented[:,:,0] = channels_albu[:,:,0]
+            augmented[:,:,1] = channels_phase
+            augmented[:,:,2] = channels_albu[:,:,1]
+
+            self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
+
     def __len__(self) -> int:
         """
         Returns the number of samples in the dataset.
