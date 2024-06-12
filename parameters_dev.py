@@ -19,8 +19,8 @@ out_pixel_size = 3.76e-6
 window_out = out_pixel_size * smallest_out_res
 resolution_training = 256
 
-number_of_n2 = 10
-number_of_isat = 5
+number_of_n2 = 50
+number_of_isat = 50
 n2 = -np.logspace(-10, -8, number_of_n2) #m/W^2
 isat = np.logspace(4, 6, number_of_isat) #W/m^2
 
@@ -32,22 +32,22 @@ alpha = 22 #m^-1
 waist = 2.3e-3 #m
 nl_length = 100e-6 #m
 
-expansion=True
-generate=True
-training=True
-learning_rate=0.1
+expansion= False
+generate= False
+training= True
+learning_rate=0.01
 batch_size=50
 accumulator=2
-num_epochs=60
+num_epochs=100
 
-use=True
+use= True
+plot_generate_compare = True
 
 cameras = resolution_in, window_in, window_out, resolution_training
-numbers = n2, in_power, alpha, isat, waist, nl_length
+numbers = n2, in_power, alpha, isat, waist, nl_length, delta_z, length
 
 values, E = generate_data(saving_path, resolution_training, numbers, 
-                                generate, expansion, delta_z, length, 
-                                         device, cameras)
+                                generate, expansion, device, cameras)
 
 if training:
     print("---- TRAINING ----")
@@ -55,4 +55,4 @@ if training:
 
 if use:
     print("---- COMPUTING PARAMETERS ----\n")
-    get_parameters(exp_image_path, saving_path, resolution_training, numbers, device)
+    get_parameters(exp_image_path, saving_path, resolution_training, numbers, device, cameras, plot_generate_compare)

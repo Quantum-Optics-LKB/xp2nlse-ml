@@ -12,13 +12,11 @@ def generate_data(
         numbers: tuple, 
         generate: bool,
         expansion: bool,
-        delta_z: float,
-        length: float, 
         device: int, 
         cameras: tuple
         )-> tuple:
     
-    n2, in_power, alpha, isat, waist, nl_length = numbers
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
 
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
@@ -32,7 +30,7 @@ def generate_data(
     if generate:
         with cp.cuda.Device(device):
             print("---- NLSE ----")
-            E = data_creation(numbers, cameras, delta_z, length ,saving_path)
+            E = data_creation(numbers, cameras ,saving_path)
     else:
         file = f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.npy'
         E = np.load(file)

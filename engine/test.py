@@ -43,10 +43,10 @@ def test_model(totalloader, net, device):
     average_mae_n2 = mae_n2 / total
     average_mae_isat = mae_isat / total
 
-    print(f"Average MSE for 'n2': {average_mse_n2:.2f}")
-    print(f"Average MSE for 'isat': {average_mse_isat:.2f}")
-    print(f"Average MAE for 'n2': {average_mae_n2:.2f}")
-    print(f"Average MAE for 'isat': {average_mae_isat:.2f}")
+    print(f"Average MSE for 'n2': {average_mse_n2:.4f}")
+    print(f"Average MSE for 'isat': {average_mse_isat:.4f}")
+    print(f"Average MAE for 'n2': {average_mae_n2:.4f}")
+    print(f"Average MAE for 'isat': {average_mae_isat:.4f}")
 
 def count_parameters_pandas(model):
     """

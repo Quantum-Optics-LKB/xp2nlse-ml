@@ -25,7 +25,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     puiss_str = r"$p$"
     puiss_u = r"$W$"
     
-    fig_density, axes_density = plt.subplots(Nn2, Nisat, figsize=(50,50))
+    fig_density, axes_density = plt.subplots(Nn2, Nisat, figsize=(500,500))
     fig_density.suptitle(f'Density Channels - {puiss_str} = {power:.2e} {puiss_u}')
 
     for n in range(Nn2):
@@ -41,7 +41,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     plt.close(fig_density) 
 
     # Plot phase channels for the current power value
-    fig_phase, axes_phase = plt.subplots(Nn2, Nisat, figsize=(50,50))
+    fig_phase, axes_phase = plt.subplots(Nn2, Nisat, figsize=(500, 500))
     fig_phase.suptitle(f'Phase Channels - {puiss_str} = {power:.2e} {puiss_u}')
 
     for n in range(Nn2):
@@ -57,7 +57,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     plt.close(fig_phase)
 
     #Plot phase channels for the current power value
-    fig_phase, axes_phase = plt.subplots(Nn2, Nisat, figsize=(50,50))
+    fig_phase, axes_phase = plt.subplots(Nn2, Nisat, figsize=(500,500))
     fig_phase.suptitle(f'Unwrap Phase Channels - {puiss_str} = {power:.2e} {puiss_u}')
 
     for n in range(Nn2):
@@ -72,7 +72,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     plt.savefig(f'{path}unwrap_phase_power_{power}.png')
     plt.close(fig_phase)
 power = 1.05
-number_of_n2, number_of_isat = 10, 5
+number_of_n2, number_of_isat = 50, 50
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/"
 data = np.load(f"{path}Es_w256_n2{number_of_n2}_isat{number_of_isat}_power{power:.2f}.npy")
 

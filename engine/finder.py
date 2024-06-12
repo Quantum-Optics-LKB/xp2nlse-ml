@@ -72,22 +72,21 @@ def lauch_training(
     the trained model, are saved to the specified path.
     """
     device = torch.device(f"cuda:{device_number}")
-    n2, in_power, alpha, isat, waist, nl_length = numbers
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
 
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
     n2_values, isat_values = values
-
-    n2_values_normalized = (n2_values - np.min(n2_values))/(np.max(n2_values)- np.min(n2_values))
-    isat_values_normalized = (isat_values - np.min(isat_values))/(np.max(isat_values) - np.min(isat_values))
-    n2 = np.linspace(np.max(n2_values), np.min(n2_values), number_of_n2)
-    isat = np.linspace(np.min(isat_values), np.max(isat_values), number_of_isat)
+    
+    n2_values_normalized = n2_values/np.min(n2_values)
+    isat_values_normalized = isat_values/np.max(isat_values)
 
     new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}"
 
     if not os.path.isdir(new_path):
         os.makedirs(new_path)
     else:
+        print("You already trained on this data set")
         exit()
     
     orig_stdout = sys.stdout
