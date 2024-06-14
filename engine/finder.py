@@ -6,6 +6,7 @@ import os
 import sys
 import torch
 import numpy as np
+import gc
 from engine.loss_plot import plotter
 from engine.test import count_parameters_pandas, test_model
 from engine.data_prep_for_training import data_split, data_treatment
@@ -105,6 +106,9 @@ def lauch_training(
     print("---- DATA TREATMENT ----")
     train_set, validation_set, test_set = data_split(E,n2_values_normalized,isat_values_normalized, 0.8, 0.1, 0.1)
 
+    del E
+    gc.collect()
+
     train, train_n2_label,train_isat_label = train_set
     validation, validation_n2_label, validation_isat_label = validation_set
     test, test_n2_label, test_isat_label = test_set
@@ -116,6 +120,19 @@ def lauch_training(
     trainloader = data_treatment(train, train_n2_label,train_isat_label, batch_size, device, training_train)
     validationloader = data_treatment(validation, validation_n2_label, validation_isat_label, batch_size, device, training_valid)
     testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
+
+    del train
+    del train_n2_label
+    del train_isat_label
+
+    del validation
+    del validation_n2_label
+    del validation_isat_label
+
+    del test
+    del test_n2_label
+    del test_isat_label
+    gc.collect()
 
     print("---- MODEL TRAINING ----")
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)

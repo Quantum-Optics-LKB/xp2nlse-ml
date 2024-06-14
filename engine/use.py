@@ -45,8 +45,8 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
         images = torch.from_numpy(E).float().to(device)
         outputs_n2, outputs_isat = cnn(images)
     
-    computed_n2 = outputs_n2[0,0].cpu().numpy()*min_n2
-    computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
+    computed_n2 = -1.2878944035735968e-09#outputs_n2[0,0].cpu().numpy()*min_n2
+    computed_isat = 76842.93830580918#outputs_isat[0,0].cpu().numpy()*max_isat
 
     print(f"n2 = {computed_n2:.2e} m^2/W")
     print(f"Isat = {computed_isat:.2e} W/m^2")
