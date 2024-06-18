@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+from concurrent.futures import ThreadPoolExecutor
+import os
 import random
 from torch.utils.data import Dataset
 import torch
@@ -39,10 +41,21 @@ def get_augmentation(
     shift = random.uniform(0.01,0.05)
     return A.Compose([
         A.MotionBlur(blur_limit=1001,  p=0.5),
-        A.GlassBlur(sigma=.5, max_delta=1, iterations=500, p=0.5),
+        A.GlassBlur(sigma=.5, max_delta=1, iterations=500, p=0.25),
         A.ShiftScaleRotate(shift_limit=shift, scale_limit=0, rotate_limit=0, p=0.2),  # Shift without scale or rotation
         A.Resize(height=original_height, width=original_width, p=1)
     ])
+
+def augment_image(data, augmentation):
+    augmented = np.transpose(data, (1, 2, 0)).astype(np.float32)
+    augmented = augmentation(image=augmented)["image"]
+    return np.transpose(augmented, (2, 0, 1)).astype(np.float16)
+
+def process_images(data, augmentation):
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+        futures = [executor.submit(augment_image, data[i], augmentation) for i in range(data.shape[0])]
+        results = [f.result() for f in futures]
+    return np.array(results)
 
 class FieldDataset(Dataset):
     """
@@ -69,47 +82,17 @@ class FieldDataset(Dataset):
             data: np.ndarray, 
             n2_values: np.ndarray, 
             isat_values: np.ndarray,
-            training: bool, 
-            device: torch.device = torch.device("cpu")):
-        """
-        Initializes the FieldDataset instance, setting up the tensors for data and values, and preparing
-        data augmentation if in training mode.
-
-        Parameters:
-        - data (np.ndarray): The dataset containing the optical field data. The data is expected
-          to be in the format of [num_samples, num_channels, height, width].
-        - n2_values (np.ndarray): An array of values for the nonlinear refractive index (n2), 
-          with each label corresponding to a sample in the dataset.
-        - isat_values (np.ndarray): An array of values for the saturation intensities (Isat),
-          with each label corresponding to a sample.
-        - training (bool): A boolean flag that indicates whether the dataset is being used for training.
-          When True, data augmentation is applied.
-        - device (torch.device): The computing device (CPU, GPU) on which the data will be processed and stored.
-
-        This method initializes the dataset by converting numpy arrays into PyTorch tensors and moving
-        them to the specified device. It also prepares the data augmentation process if the dataset is
-        initialized for training purposes.
-        """
-        self.device = device
+            training: bool):
+        
         self.training = training
-        self.n2_values = torch.from_numpy(n2_values).float().to(self.device).unsqueeze(1)
-        self.isat_values = torch.from_numpy(isat_values).float().to(self.device).unsqueeze(1)
+        self.n2_values = torch.from_numpy(n2_values).float().unsqueeze(1)
+        self.isat_values = torch.from_numpy(isat_values).float().unsqueeze(1)
         self.augmentation = get_augmentation(data.shape[-2], data.shape[-1])
-        self.data = torch.from_numpy(data).float().to(self.device)
         
         if self.training:
-          for i in range(data.shape[0]):
-            augmented = torch.from_numpy(data)[i,:, :, :].permute(1, 2, 0).numpy().astype(np.float32)
-            channels_density = torch.from_numpy(data)[i,0, :, :].numpy().astype(np.float32)
-            channels_phase = torch.from_numpy(data)[i,1, :, :].numpy().astype(np.float32)
-            channels_uphase = torch.from_numpy(data)[i,2, :, :].numpy().astype(np.float32)
-
-            channels_albu = np.stack([channels_density, channels_uphase], axis=-1)
-            augmented[:,:,0] = channels_albu[:,:,0]
-            augmented[:,:,1] = channels_phase
-            augmented[:,:,2] = channels_albu[:,:,1]
-
-            self.data[i,:,:,:] = torch.from_numpy(augmented.astype(np.float16)).float().permute(2, 0, 1).to(self.device)
+            data = process_images(data, self.augmentation)
+        
+        self.data = torch.from_numpy(data).float()
 
     def __len__(self) -> int:
         """

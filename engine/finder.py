@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import gc
 import os
 import sys
 import torch
 import numpy as np
-import gc
 from engine.loss_plot import plotter
 from engine.test import count_parameters_pandas, test_model
 from engine.data_prep_for_training import data_split, data_treatment
@@ -42,59 +42,30 @@ def network_init(
 
     return cnn, optimizer, criterion, scheduler
 
-def lauch_training(
-        numbers: tuple, 
-        values: tuple, 
+def prep_training(
+        nlse_settings: tuple, 
+        labels: tuple, 
         E: np.ndarray,
         path: str, 
-        resolution: int, 
         learning_rate: float, 
         batch_size: int, 
         num_epochs: int, 
         accumulation_steps: int,
         device_number: torch.device
-        ) -> None:
-    """
-    Prepares the dataset and launches the training process for a neural network model.
-
-    Parameters:
-    - numbers (tuple): A tuple containing the numbers of n2, power, and isat instances.
-    - values (tuple): A tuple containing n2 values, power values, and isat values arrays.
-    - path (str): The path where training outputs will be saved.
-    - resolution (int): The resolution of the input data.
-    - learning_rate (float): The learning rate for the optimizer.
-    - batch_size (int): The size of batches for training.
-    - num_epochs (int): The number of training epochs.
-    - accumulation_steps (int): The number of steps to accumulate gradients before an optimizer step.
-
-    This function iterates over different power values and model configurations to train multiple models. 
-    For each model and power configuration, it initializes the model, splits the dataset, prepares DataLoader
-    objects, and then trains the model using the `network_training` function. Results, including losses and 
-    the trained model, are saved to the specified path.
-    """
+        ) -> tuple:
+    
     device = torch.device(f"cuda:{device_number}")
-    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
 
-    number_of_n2 = len(n2)
-    number_of_isat = len(isat)
-    n2_values, isat_values = values
+    number_of_n2, n2_values, number_of_isat, isat_values = labels
     
     n2_values_normalized = n2_values/np.min(n2_values)
     isat_values_normalized = isat_values/np.max(isat_values)
 
     new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}"
 
-    if not os.path.isdir(new_path):
-        os.makedirs(new_path)
-    else:
-        print("You already trained on this data set")
-        exit()
-    
-    orig_stdout = sys.stdout
-    f = open(f'{new_path}/testing.txt', 'a')
-    sys.stdout = f
+    os.makedirs(new_path, exist_ok=True)
 
-    print("---- DATA LOADING ----")
     assert E.shape[1] == 3
     assert E.shape[0] == n2_values.shape[0], f"field[0] is {E.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
     assert E.shape[0] == isat_values.shape[0], f"field[0] is {E.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
@@ -104,35 +75,29 @@ def lauch_training(
     cnn = cnn.to(device)
     
     print("---- DATA TREATMENT ----")
-    train_set, validation_set, test_set = data_split(E,n2_values_normalized,isat_values_normalized, 0.8, 0.1, 0.1)
-
-    del E
-    gc.collect()
-
-    train, train_n2_label,train_isat_label = train_set
-    validation, validation_n2_label, validation_isat_label = validation_set
-    test, test_n2_label, test_isat_label = test_set
+    train, validation, test = data_split(E, n2_values_normalized, isat_values_normalized, 0.8, 0.1, 0.1)
 
     training_train = True
     training_valid = False
     training_test = False
 
-    trainloader = data_treatment(train, train_n2_label,train_isat_label, batch_size, device, training_train)
-    validationloader = data_treatment(validation, validation_n2_label, validation_isat_label, batch_size, device, training_valid)
-    testloader = data_treatment(test, test_n2_label, test_isat_label, batch_size, device, training_test )
+    trainloader = data_treatment(train, batch_size, training_train)
+    validationloader = data_treatment(validation, batch_size, training_valid)
+    testloader = data_treatment(test, batch_size, training_test )
 
-    del train
-    del train_n2_label
-    del train_isat_label
+    model_settings = cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device
 
-    del validation
-    del validation_n2_label
-    del validation_isat_label
+    return trainloader, validationloader, testloader, model_settings, new_path
 
-    del test
-    del test_n2_label
-    del test_isat_label
-    gc.collect()
+def launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution, labels):
+
+    number_of_n2, n2_values, number_of_isat, isat_values = labels
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
+    cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device = model_settings
+
+    orig_stdout = sys.stdout
+    f = open(f'{new_path}/testing.txt', 'a')
+    sys.stdout = f
 
     print("---- MODEL TRAINING ----")
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
@@ -147,17 +112,12 @@ def lauch_training(
     }
     with open(file_name, "a") as file:
         file.write(f"resolution: {resolution}\n")
-        file.write(f"batch_size: {batch_size}\n")
         file.write(f"accumulator: {accumulation_steps}\n")
         file.write(f"num_of_n2: {number_of_n2}\n")
         file.write(f"in_power: {in_power}\n")
         file.write(f"num_of_isat: {number_of_isat}\n")
         file.write(f"num_epochs: {num_epochs}\n")
-        file.write(f"learning rate: {learning_rate}\n")
         file.write(f"file: {file}\n")
-        file.write(f"training_train: {training_train}\n")
-        file.write(f"training_valid: {training_valid}\n")
-        file.write(f"training_test: {training_test}\n")
         file.write(f"model: {Inception_ResNetv2}\n")
         file.write(f"classes: {classes}\n")
 

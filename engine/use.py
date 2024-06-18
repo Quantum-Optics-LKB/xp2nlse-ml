@@ -5,10 +5,9 @@ from matplotlib import pyplot as plt
 import torch
 import numpy as np
 from scipy.ndimage import zoom
+from engine.generate_augment import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
-from engine.nlse_generator import data_creation
-
 
 def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number, cameras, plot_generate_compare):
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
@@ -45,8 +44,10 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
         images = torch.from_numpy(E).float().to(device)
         outputs_n2, outputs_isat = cnn(images)
     
-    computed_n2 = -1.2878944035735968e-09#outputs_n2[0,0].cpu().numpy()*min_n2
-    computed_isat = 76842.93830580918#outputs_isat[0,0].cpu().numpy()*max_isat
+    computed_n2 = outputs_n2[0,0].cpu().numpy()*min_n2
+    computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
+    # computed_n2 = -1.2878944035735968e-09#outputs_n2[0,0].cpu().numpy()*min_n2
+    # computed_isat = 76842.93830580918#outputs_isat[0,0].cpu().numpy()*max_isat
 
     print(f"n2 = {computed_n2:.2e} m^2/W")
     print(f"Isat = {computed_isat:.2e} W/m^2")
@@ -62,7 +63,7 @@ def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number
         puiss_u = r"$W$"
 
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
-        E = data_creation(numbers, cameras, saving_path)
+        E = data_creation(numbers, cameras)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
         fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2:.2e} {n2_u}, {isat_str} = {computed_isat:.2e} {isat_u}')
         

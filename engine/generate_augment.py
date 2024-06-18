@@ -18,9 +18,8 @@ def add_model_noise(beam, poisson_noise_lam, normal_noise_sigma):
     normal_noise = np.random.normal(0, normal_noise_sigma, (beam.shape))
 
     total_noise = normal_noise + poisson_noise
-    noisy_beam = np.real(beam) + total_noise + 1j * (np.imag(beam) + total_noise)
+    noisy_beam = np.real(beam) + total_noise + 1j * np.imag(beam)
 
-    noisy_beam = normalize_data(noisy_beam)
 
     noisy_beam = noisy_beam.astype(np.complex64)
     return noisy_beam
@@ -28,11 +27,10 @@ def add_model_noise(beam, poisson_noise_lam, normal_noise_sigma):
 def data_creation(
     numbers: tuple,
     cameras: tuple,
-    saving_path: str,
+    saving_path: str = "",
     ) -> np.ndarray:
     
     print("---- NLSE ----")
-    #NLSE parameters
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
     resolution_in, window_in, window_out, resolution_training = cameras
 
@@ -59,8 +57,8 @@ def data_creation(
     
 
     beam = np.ones((number_of_isat, resolution_in, resolution_in), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / waist**2)
-    # poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
-    # beam = add_model_noise(beam, poisson_noise_lam, normal_noise_sigma)
+    poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
+    beam = add_model_noise(beam, poisson_noise_lam, normal_noise_sigma)
     E = np.zeros((number_of_n2*number_of_isat,3, resolution_training, resolution_training), dtype=np.float16)
       
 
@@ -69,9 +67,10 @@ def data_creation(
       simu = NLSE(power=in_power, alpha=alpha, window=window_in, n2=n2_value, 
                      V=None, L=length, NX=resolution_in, NY=resolution_in, 
                      Isat=isat, nl_length=nl_length)
-      simu.nl_profile =  simu.nl_profile[np.newaxis, :,:]
+      
+      if nl_length != 0:
+        simu.nl_profile =  simu.nl_profile[np.newaxis, :,:]
       simu.delta_z = delta_z
-      simu.n2 = n2_value
       A = simu.out_field(beam, z=length, verbose=True, plot=False, normalize=True, precision="single")
     
       density = np.abs(A)**2 * c * epsilon_0 / 2
@@ -105,8 +104,8 @@ def data_creation(
       E[start_index:end_index,1,:,:] = phase
       E[start_index:end_index,2,:,:] = uphase
     
-
-    np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
+    if saving_path != "":
+        np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
     return E
 
 def generate_labels(
@@ -119,7 +118,7 @@ def generate_labels(
     n2_labels = N2_labels.reshape(-1)
     isat_labels = ISAT_labels.reshape(-1)
 
-    labels = (n2_labels, isat_labels)
+    labels = (len(n2), n2_labels, len(isat), isat_labels)
     return labels
 
 def data_augmentation(
@@ -130,10 +129,7 @@ def data_augmentation(
     labels: tuple,
     ) -> np.ndarray:
 
-    n2_labels, isat_labels = labels
-
-    number_of_n2 = len(n2_labels)
-    number_of_isat = len(isat_labels)
+    number_of_n2, n2_labels, number_of_isat, isat_labels = labels
 
     angles = np.linspace(0, 90, 5)
     noises = [0.01, 0.1] 
@@ -143,7 +139,7 @@ def data_augmentation(
     n2_labels = np.repeat(n2_labels, augmentation)
     isat_labels = np.repeat(isat_labels, augmentation)
 
-    labels = (n2_labels, isat_labels)
+    labels = (number_of_n2, n2_labels, number_of_isat, isat_labels)
     if expansion:
         
       print("---- EXPANSION ----")

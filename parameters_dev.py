@@ -3,7 +3,7 @@
 # @author: Louis Rossignol
 
 import numpy as np
-from engine.finder import lauch_training
+from engine.finder import launch_training, prep_training
 from engine.use import get_parameters
 import cupy as cp
 from engine.generate_augment import data_creation, data_augmentation, generate_labels
@@ -14,7 +14,7 @@ exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/experiment.npy"
 
 device = 0
 resolution_in = 2048
-window_in = 70e-3
+window_in = 50e-3
 smallest_out_res = 3008
 out_pixel_size = 3.76e-6
 window_out = out_pixel_size * smallest_out_res
@@ -22,20 +22,20 @@ resolution_training = 256
 
 number_of_n2 = 50
 number_of_isat = 50
-n2 = -np.logspace(-10, -8, number_of_n2) #m/W^2
-isat = np.logspace(4, 6, number_of_isat) #W/m^2
+n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2
+isat = np.logspace(4, 5, number_of_isat) #W/m^2
 
-delta_z=1e-5
+delta_z=1e-4
 length=20e-2
 
 in_power = 1.05 #W
 alpha = 22 #m^-1
 waist = 2.3e-3 #m
-nl_length = 0#100e-6 #m
+nl_length = 0#20e-6 #m
 
 expansion=False
 generate=False
-training=False
+training=True
 learning_rate=0.01
 batch_size=50
 accumulator=1
@@ -62,7 +62,9 @@ if expansion or generate or training:
 
     if training:
         print("---- TRAINING ----")
-        lauch_training(nlse_settings, labels,E, saving_path, resolution_training, learning_rate, batch_size, num_epochs, accumulator, device)
+        trainloader, validationloader, testloader, model_settings, new_path = prep_training(nlse_settings, labels, E, saving_path, learning_rate, batch_size, num_epochs, accumulator, device)
+        del E
+        launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution_training, labels)
 
 if use:
     print("---- COMPUTING PARAMETERS ----\n")

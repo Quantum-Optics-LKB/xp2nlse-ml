@@ -6,8 +6,8 @@ plt.rcParams['font.size'] = 20
 
 def plot_and_save_images(data, path, number_of_n2, number_of_isat):
 
-    n2 = -np.logspace(-10, -8, number_of_n2) #m/W^2
-    isat = np.logspace(4, 6, number_of_isat) #W/m^2
+    n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2
+    isat = np.logspace(4, 5, number_of_isat) #W/m^2
     power= 1.05
 
     # Separate density and phase channels
@@ -72,7 +72,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     plt.savefig(f'{path}unwrap_phase_power_{power}.png')
     plt.close(fig_phase)
 power = 1.05
-number_of_n2, number_of_isat = 5, 5
+number_of_n2, number_of_isat = 2, 2
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/"
 data = np.load(f"{path}Es_w256_n2{number_of_n2}_isat{number_of_isat}_power{power:.2f}.npy")
 
