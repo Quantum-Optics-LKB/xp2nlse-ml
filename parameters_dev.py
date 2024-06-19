@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import gc
 import numpy as np
 from engine.finder import launch_training, prep_training
 from engine.use import get_parameters
@@ -37,7 +38,7 @@ expansion=False
 generate=False
 training=True
 learning_rate=0.01
-batch_size=50
+batch_size=100
 accumulator=1
 num_epochs=50
 
@@ -64,6 +65,7 @@ if expansion or generate or training:
         print("---- TRAINING ----")
         trainloader, validationloader, testloader, model_settings, new_path = prep_training(nlse_settings, labels, E, saving_path, learning_rate, batch_size, num_epochs, accumulator, device)
         del E
+        gc.collect()
         launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution_training, labels)
 
 if use:

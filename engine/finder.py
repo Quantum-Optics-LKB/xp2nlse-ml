@@ -77,13 +77,10 @@ def prep_training(
     print("---- DATA TREATMENT ----")
     train, validation, test = data_split(E, n2_values_normalized, isat_values_normalized, 0.8, 0.1, 0.1)
 
-    training_train = True
-    training_valid = False
-    training_test = False
 
-    trainloader = data_treatment(train, batch_size, training_train)
-    validationloader = data_treatment(validation, batch_size, training_valid)
-    testloader = data_treatment(test, batch_size, training_test )
+    trainloader = data_treatment(train, batch_size)
+    validationloader = data_treatment(validation, batch_size)
+    testloader = data_treatment(test, batch_size )
 
     model_settings = cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device
 

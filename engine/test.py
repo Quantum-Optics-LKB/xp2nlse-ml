@@ -25,9 +25,9 @@ def test_model(totalloader, net, device):
 
     with torch.no_grad():
         for images, n2_values, isat_values in totalloader:
-            images = images.to(device)
-            n2_values = n2_values.to(device)
-            isat_values = isat_values.to(device)
+            images = images.to(device = device, dtype=torch.float32)
+            n2_values = n2_values.to(device = device, dtype=torch.float32)
+            isat_values = isat_values.to(device = device, dtype=torch.float32)
 
             outputs_n2, outputs_isat = net(images)
             

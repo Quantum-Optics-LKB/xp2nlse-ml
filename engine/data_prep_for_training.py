@@ -44,11 +44,10 @@ def data_split(
 
 def data_treatment(
         sets: np.ndarray, 
-        batch_size: int, 
-        training: bool):
+        batch_size: int):
     
     set, n2label, isatlabel = sets 
-    fieldset = FieldDataset(set, n2label, isatlabel, training)
+    fieldset = FieldDataset(set, n2label, isatlabel)
     fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
 
     return fieldloader

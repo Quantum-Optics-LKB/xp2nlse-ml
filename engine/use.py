@@ -9,8 +9,8 @@ from engine.generate_augment import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
-def get_parameters(exp_path, saving_path, resolution_out, numbers, device_number, cameras, plot_generate_compare):
-    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
+def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_number, cameras, plot_generate_compare):
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     resolution_in, window_in, window_out, resolution_training = cameras
     
     number_of_n2 = len(n2)
