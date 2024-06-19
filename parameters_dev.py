@@ -11,7 +11,7 @@ from engine.generate_augment import data_creation, data_augmentation, generate_l
 
 saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 input_alpha_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/alpha.npy"
-exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/experiment.npy"
+exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
 
 device = 0
 resolution_in = 2048
@@ -21,8 +21,8 @@ out_pixel_size = 3.76e-6
 window_out = out_pixel_size * smallest_out_res
 resolution_training = 256
 
-number_of_n2 = 50
-number_of_isat = 50
+number_of_n2 = 30
+number_of_isat = 30
 n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2
 isat = np.logspace(4, 5, number_of_isat) #W/m^2
 
@@ -32,11 +32,11 @@ length=20e-2
 in_power = 1.05 #W
 alpha = 22 #m^-1
 waist = 2.3e-3 #m
-nl_length = 0#20e-6 #m
+nl_length = 0
 
 expansion=False
 generate=False
-training=True
+training=False
 learning_rate=0.01
 batch_size=100
 accumulator=1
@@ -58,7 +58,6 @@ if expansion or generate or training:
 
     
     labels = generate_labels(n2, isat)
-    
     E, labels = data_augmentation(E, in_power, expansion, saving_path, labels)
 
     if training:

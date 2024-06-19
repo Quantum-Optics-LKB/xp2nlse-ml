@@ -72,7 +72,7 @@ def plot_and_save_images(data, path, number_of_n2, number_of_isat):
     plt.savefig(f'{path}unwrap_phase_power_{power}.png')
     plt.close(fig_phase)
 power = 1.05
-number_of_n2, number_of_isat = 2, 2
+number_of_n2, number_of_isat = 10, 10
 path = "/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/"
 data = np.load(f"{path}Es_w256_n2{number_of_n2}_isat{number_of_isat}_power{power:.2f}.npy")
 

@@ -49,7 +49,8 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 
-    for epoch in tqdm(range(num_epochs), position=4, desc="Epoch", leave=False):  
+    for epoch in tqdm(range(num_epochs),desc=f"Training", 
+                                total=num_epochs, unit="Epoch"):  
         running_loss = 0.0
         net.train()
         

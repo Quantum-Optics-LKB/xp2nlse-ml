@@ -46,11 +46,9 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
     
     computed_n2 = outputs_n2[0,0].cpu().numpy()*min_n2
     computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
-    # computed_n2 = -1.2878944035735968e-09#outputs_n2[0,0].cpu().numpy()*min_n2
-    # computed_isat = 76842.93830580918#outputs_isat[0,0].cpu().numpy()*max_isat
 
-    print(f"n2 = {computed_n2:.2e} m^2/W")
-    print(f"Isat = {computed_isat:.2e} W/m^2")
+    print(f"n2 = {computed_n2} m^2/W")
+    print(f"Isat = {computed_isat} W/m^2")
 
     if plot_generate_compare:
         plt.rcParams['font.family'] = 'DejaVu Serif'
@@ -65,7 +63,7 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
         E = data_creation(numbers, cameras)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
-        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2:.2e} {n2_u}, {isat_str} = {computed_isat:.2e} {isat_u}')
+        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}')
         
         axes[0, 0].imshow(density, cmap='viridis')
         axes[0, 0].set_title(f'Experimental Density')
@@ -88,8 +86,4 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
 
 
         plt.tight_layout()
-        plt.savefig(f"{saving_path}/prediction.png")
-
-
-
-    
+        plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_power{in_power}.png")

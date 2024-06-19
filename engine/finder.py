@@ -128,3 +128,4 @@ def launch_training(trainloader, validationloader, testloader, model_settings, n
 
     sys.stdout = orig_stdout
     f.close()
+    

@@ -9,6 +9,7 @@ from scipy.constants import c, epsilon_0
 import gc
 from cupyx.scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
+from tqdm import tqdm
 from engine.noise_generator import line_noise, salt_and_pepper_noise
 
 
@@ -30,7 +31,6 @@ def data_creation(
     saving_path: str = "",
     ) -> np.ndarray:
     
-    print("---- NLSE ----")
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
     resolution_in, window_in, window_out, resolution_training = cameras
 
@@ -62,7 +62,8 @@ def data_creation(
     E = np.zeros((number_of_n2*number_of_isat,3, resolution_training, resolution_training), dtype=np.float16)
       
 
-    for index, n2_value in enumerate(n2):
+    for index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", 
+                                total=number_of_n2, unit="n2"):
 
       simu = NLSE(power=in_power, alpha=alpha, window=window_in, n2=n2_value, 
                      V=None, L=length, NX=resolution_in, NY=resolution_in, 
@@ -71,7 +72,7 @@ def data_creation(
       if nl_length != 0:
         simu.nl_profile =  simu.nl_profile[np.newaxis, :,:]
       simu.delta_z = delta_z
-      A = simu.out_field(beam, z=length, verbose=True, plot=False, normalize=True, precision="single")
+      A = simu.out_field(beam, z=length, verbose=False, plot=False, normalize=True, precision="single")
     
       density = np.abs(A)**2 * c * epsilon_0 / 2
       phase = np.angle(A)
@@ -142,31 +143,31 @@ def data_augmentation(
     labels = (number_of_n2, n2_labels, number_of_isat, isat_labels)
     if expansion:
         
-      print("---- EXPANSION ----")
+        print("---- EXPANSION ----")
 
-      augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
+        augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
 
-      for channel in range(E.shape[1]):
-          index = 0
-          for image_index in range(E.shape[0]):
-              image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
-              augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
-              index += 1  
-              for noise in noises:
-                  augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
-                  index += 1
-                  for angle in angles:
-                      for num_lines in lines:
-                          augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
-                          index += 1
+        for channel in range(E.shape[1]):
+            index = 0
+            for image_index in range(E.shape[0]):
+                image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
+                augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
+                index += 1  
+                for noise in noises:
+                    augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
+                    index += 1
+                    for angle in angles:
+                        for num_lines in lines:
+                            augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
+                            index += 1
 
-      np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended', augmented_data.astype(np.float16))
-      return augmented_data, labels
+        np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended', augmented_data.astype(np.float16))
+        return augmented_data, labels
     
     else:
-      augmented_data = np.load(f'{path}/Es_w{E.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended.npy')
-      
-      return augmented_data, labels
+        augmented_data = np.load(f'{path}/Es_w{E.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended.npy')
+        
+        return augmented_data, labels
 
 def normalize_data(
         data: np.ndarray,
