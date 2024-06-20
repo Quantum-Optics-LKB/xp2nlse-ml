@@ -6,15 +6,15 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 
 ## Overview
 
-This repository introduces a Convolutional Neural Network (CNN) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
+This repository introduces a Inception-Residual Network (Inception-Resnet) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
 
 ## Workflow
 
 1. **Create Your Setup**: Design your experimental or simulation setup.
-2. **Record Input Beam**: Capture the beam profile used as input for generating training data.
-3. **Generate Training Data**: Use `parameters.py` with the `--generate` option to create training datasets.
-4. **Train the Model**: Train the CNN using the generated data.
-5. **Deploy the Model**: Apply the trained model to new data to estimate parameters.
+2. **Record Output parameters**: Take note of all the parameters of the output camera that the dataset will need to become
+3. **Generate Training Data**: The data is generated using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) based on your parameters
+4. **Train the Model**: Train the model using the generated data.
+5. **Estimate your parameters**: Apply the trained model to new data to estimate parameters.
 
 ## Getting Started
 
@@ -26,10 +26,12 @@ Ensure you have Python 3.x installed. This project requires the following extern
 - **Matplotlib**
 - **SciPy**
 - **CuPy**
-- **Pillow**
+- **NLSE**
 - **PyTorch**
-- **Albumentations**
+- **Cupyx**
 - **Skimage**
+- **tqdm**
+- **kornia**
 
 These dependencies can be installed using mamba:
 
