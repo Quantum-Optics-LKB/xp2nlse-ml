@@ -26,8 +26,8 @@ expansion=False
 
 
 ###Parameter spaces:
-number_of_n2 = 30
-number_of_isat = 30
+number_of_n2 = 20
+number_of_isat = 20
 n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2
 isat = np.logspace(4, 5, number_of_isat) #W/m^2
 

@@ -15,9 +15,9 @@ plt.rcParams['font.size'] = 20
 # Isat = np.array([ 2.07e5,  9.56e4,   5.97e4,   4.15e4,   1.06e5,   76842.93830580918])
 
 #100 epochs
-n2 =   np.array([-5.079650878906249e-09, None, None, None, None, -1.2878944035735968e-09])
-Isat = np.array([29851.415753364563    , None, None, None, None, 76842.93830580918])
-n2_range = [-1e-9, -1e-11]
+n2 =   np.array([-5.079650878906249e-09, -9.336806833744047e-10, None, None, None, -1.2878944035735968e-09])
+Isat = np.array([29851.415753364563    , 20186.665654182434    , None, None, None, 76842.93830580918])
+n2_range = [-5e-9, -5e-11]
 Isat_range = [1e4, 1e6]
 xticks_counts = [5,10,20,30, 50,50]
 

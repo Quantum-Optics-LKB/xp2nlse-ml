@@ -48,7 +48,6 @@ cd nlse_parameter_nn
 
 The `parameters.py` script controls the data generation, training, and parameter estimation processes:
 
-#### Usage
 ```bash
 python parameters.py
 ```
@@ -64,12 +63,12 @@ This will help the model generalize the fitting of the parameters regardless of 
 
 Choose wether you want to generate new data using NLSE:
 
-- If generate is True if you want to generate using NLSE 
-    - If expansion is True then it will augment unaugmented   dataset
-    - If expansion is False then it will load the augmented dataset
-- If generate is False if it has already been generated
-    - If expansion is True then it will load the unaugmented dataset
-    - If expansion is False then it will load the augmented dataset
+- If generate is True if you want to generate using NLSE.
+    - If expansion is True then it will augment unaugmented dataset.
+    - If expansion is False then it will load the augmented dataset.
+- If generate is False if it has already been generated.
+    - If expansion is True then it will load the unaugmented dataset.
+    - If expansion is False then it will load the augmented dataset.
 
 ### Data Generation and Augmentation
 - `generate`: Set to `True` to generate new data using NLSE.
@@ -88,20 +87,19 @@ Choose wether you want to generate new data using NLSE:
 ### Parameter Spaces
 - `number_of_n2`: Number of different n2 values for training.
 - `number_of_isat`: Number of different Isat values for training.
-- `n2`: Range of n2 values. (we use logspaces to ensure that that all parameters are represented)
-- `isat`: Range of Isat values. (we use logspaces to ensure that that all parameters are represented)
+- `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
+- `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
 
 ### Laser Parameters
 - `input_power`: Input power of the laser (W).
 - `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
 - `waist_input_beam`: Waist $\sigma$ (m) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
-- `non_locality_length`: Length of non locality (m)
+- `non_locality_length`: Length of non locality (m).
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
-
 ### Training Parameters
-- `training`: Do you want to generate and train a model ?
+- `training`:  Boolean indicating whether to train the model.
 - `learning_rate`: Learning rate for training.
 
 The training is done is batches.
@@ -116,16 +114,15 @@ The training method implements gradient accumulation.
 It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will devide the batch in the number you set to have the same training.
 The accumulator variable is a multiplier that does that.
 
-- Example: you want total_batch_size = 99 but it is too big. What you can do is set batch_size = 33 and accumulator = 3
-Therefore only batchsize will be loaded on the GPU
+- Example: you want total_batch_size = 99 but it is too big. What you can do is set batch_size = 33 and accumulator = 3. Therefore, only batchsize will be loaded on the GPU.
 
-Note: Since you need to accumulate, the training take more time.
+Note: Since you need to accumulate, the training takes more time.
 
-Note: To have no accumulation set `accumulator` to 1
+Note: To have no accumulation set `accumulator` to 1.
 - `accumulator`: Gradient accumulation multiplier.
 - `num_epochs`: Number of training epochs.
 
 ### Experimental Data
-- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (Number of images, `output_camera_resolution`, `output_camera_resolution`)
+- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (Number of images, `output_camera_resolution`, `output_camera_resolution`) or (`output_camera_resolution`, `output_camera_resolution`).
 - `use`: Boolean indicating whether to compute parameters for the dataset.
 - `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.
