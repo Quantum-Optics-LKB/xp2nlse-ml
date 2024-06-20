@@ -49,65 +49,83 @@ cd nlse_parameter_nn
 The `parameters.py` script controls the data generation, training, and parameter estimation processes:
 
 #### Usage
-```plaintext
-parameters.py [-h] [--device DEVICE] [--saving_path SAVING_PATH] [--input_image_path INPUT_IMAGE_PATH]
-                     [--exp_image_path EXP_IMAGE_PATH] [--output_image_path OUTPUT_IMAGE_PATH]
-                     [--resolution_in RESOLUTION_IN] [--resolution_out RESOLUTION_OUT]
-                     [--number_of_n2 NUMBER_OF_N2] [--number_of_power NUMBER_OF_POWER] [--number_of_isat NUMBER_OF_ISAT]
-                     [--visualize] [--expansion] [--generate] [--expanded]
-                     [--delta_z DELTA_Z] [--trans TRANS] [--length LENGTH] [--factor_window FACTOR_WINDOW]
-                     [--training] [--learning_rate LEARNING_RATE] [--batch_size BATCH_SIZE]
-                     [--accumulator ACCUMULATOR] [--num_epochs NUM_EPOCHS] [--use]
-```
-
-#### Options
-```plaintext
--h, --help            show this help message and exit
-  --device DEVICE       Which GPU you are using
-  --saving_path SAVING_PATH
-                        Directory path for saving output files.
-  --input_image_path INPUT_IMAGE_PATH
-                        Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff
-  --exp_image_path EXP_IMAGE_PATH
-                        Path to the experiment image file. Default is <saving_path>/exp_data/field_9.npy
-  --output_image_path OUTPUT_IMAGE_PATH
-                        Path to the input image file. Default is <saving_path>/exp_data/input_beam.tiff
-  --resolution_in RESOLUTION_IN
-                        Input resolution.
-  --resolution_out RESOLUTION_OUT
-                        Output resolution.
-  --number_of_n2 NUMBER_OF_N2
-                        Number of different n2
-  --number_of_power NUMBER_OF_POWER
-                        Number of different power
-  --number_of_isat NUMBER_OF_ISAT
-                        Number of different Isat
-  --expansion           Enable expansion.
-  --generate            Enable generation.
-  --expanded            Add if your data was expanded in a previous run
-  --delta_z DELTA_Z     Step of the propagation of NLSE
-  --trans TRANS         Transmission through the cell
-  --length LENGTH       Length of the cell
-  --factor_window FACTOR_WINDOW
-                        Factor window that is multiplied by the waist
-  --training            Enable training.
-  --learning_rate LEARNING_RATE
-                        Learning rate
-  --batch_size BATCH_SIZE
-                        Batch size
-  --accumulator ACCUMULATOR
-                        Number of accumulation steps to allow for gradient accumulation
-  --num_epochs NUM_EPOCHS
-                        Number of epochs
-  --use                 Find your parameters
-```
-
-### Example Command
-
-Run the following command to start the model with specific options:
-
 ```bash
-python parameters.py --saving_path "/path/to/save" --input_image_path "/path/to/input_image.tiff" --resolution_in 1024 --resolution_out 512 --number_of_n2 20 --number_of_power 20 --number_of_isat 20 --generate --expansion --training --learning_rate 0.001 --batch_size 16 --num_epochs 100
+python parameters.py
 ```
+## Parameters
 
-This command sets up the environment to generate data, expand the dataset if needed, train the model with specific settings, and then use the model to find parameters from new experimental images.
+### Path and Device Settings
+- `saving_path`: Directory where data and models will be saved.
+- `device`: GPU device ID to run the code.
+
+When you generate the data there are two steps.
+First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles, salt and pepper noise. 
+This will help the model generalize the fitting of the parameters regardless of the noise.
+
+Choose wether you want to generate new data using NLSE:
+
+- If generate is True if you want to generate using NLSE 
+    - If expansion is True then it will augment unaugmented   dataset
+    - If expansion is False then it will load the augmented dataset
+- If generate is False if it has already been generated
+    - If expansion is True then it will load the unaugmented dataset
+    - If expansion is False then it will load the augmented dataset
+
+### Data Generation and Augmentation
+- `generate`: Set to `True` to generate new data using NLSE.
+- `expansion`: Set to `True` to augment an unaugmented dataset.
+
+### Data Generation Parameters
+- `delta_z`: Step of the propagation in the split-step method (m).
+- `resolution_input_beam`: Resolution of the input beam.
+- `window_input`: Window size of the input beam (m).
+- `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
+- `output_pixel_size`: Size of pixels of the output camera (m).
+- `window_out`: Window size of the propagated output beam (m). It is set to be output_pixel_size x output_camera_resolution.
+- `cell_length`: Length of the rubidium cell (m).
+- `resolution_training`: Resolution of images when saved and for training.
+
+### Parameter Spaces
+- `number_of_n2`: Number of different n2 values for training.
+- `number_of_isat`: Number of different Isat values for training.
+- `n2`: Range of n2 values. (we use logspaces to ensure that that all parameters are represented)
+- `isat`: Range of Isat values. (we use logspaces to ensure that that all parameters are represented)
+
+### Laser Parameters
+- `input_power`: Input power of the laser (W).
+- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `waist_input_beam`: Waist $\sigma$ (m) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
+- `non_locality_length`: Length of non locality (m)
+
+For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
+
+
+### Training Parameters
+- `training`: Do you want to generate and train a model ?
+- `learning_rate`: Learning rate for training.
+
+The training is done is batches.
+It means that when it does a forward path through the model it does not train the full dataset at the same time.
+It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because
+training is better if the model receives samples by samples such that the parameters of the model get trained more times.
+It improves the speed of the convergence.
+
+- `batch_size`: Batch size for training.
+
+The training method implements gradient accumulation.
+It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will devide the batch in the number you set to have the same training.
+The accumulator variable is a multiplier that does that.
+
+- Example: you want total_batch_size = 99 but it is too big. What you can do is set batch_size = 33 and accumulator = 3
+Therefore only batchsize will be loaded on the GPU
+
+Note: Since you need to accumulate, the training take more time.
+
+Note: To have no accumulation set `accumulator` to 1
+- `accumulator`: Gradient accumulation multiplier.
+- `num_epochs`: Number of training epochs.
+
+### Experimental Data
+- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (Number of images, `output_camera_resolution`, `output_camera_resolution`)
+- `use`: Boolean indicating whether to compute parameters for the dataset.
+- `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.

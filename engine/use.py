@@ -22,19 +22,34 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
     device = torch.device(f"cuda:{device_number}")
     
     field = np.load(exp_path)
+    if len(field.shape) == 2: 
 
-    density = zoom(np.abs(field), 
-                   (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
-    phase = np.angle(field)
-    uphase = zoom(unwrap_phase(phase), 
-                  (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
-    phase = zoom(phase, 
-                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
-    
-    E = np.zeros((1, 3, 256, 256), dtype=np.float16)
-    E[0, 0, :, :] = density
-    E[0, 1, :, :] = phase
-    E[0, 2, :, :] = uphase
+        density = zoom(np.abs(field), 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        phase = np.angle(field)
+        uphase = zoom(unwrap_phase(phase), 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        phase = zoom(phase, 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        
+        E = np.zeros((1, 3, 256, 256), dtype=np.float16)
+        E[0, 0, :, :] = density
+        E[0, 1, :, :] = phase
+        E[0, 2, :, :] = uphase
+
+    else:
+        density = zoom(np.abs(field), 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        phase = np.angle(field)
+        uphase = zoom(unwrap_phase(phase), 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        phase = zoom(phase, 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        
+        E = np.zeros((field.shape[0], 3, 256, 256), dtype=np.float16)
+        E[:, 0, :, :] = density
+        E[:, 1, :, :] = phase
+        E[:, 2, :, :] = uphase
 
     cnn = Inception_ResNetv2(in_channels=E.shape[1])
     cnn.to(device)
