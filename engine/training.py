@@ -37,11 +37,13 @@ def augmentation(
         augmentation_pipeline = get_augmentation(256, 256)
         augmented_image = augmentation_pipeline(image=image)
     """
-    shift = random.uniform(0.01, 0.05)
+    shift = random.uniform(0.1,0.25)
+    shear = random.uniform(20,50)
+    direction = random.uniform(-1, 1)
     return torch.nn.Sequential(
-        K.RandomMotionBlur(kernel_size=7, angle=random.uniform(0, 360), direction=random.uniform(0, 1), p=0.5),
-        K.RandomGaussianBlur(kernel_size=(7, 7), sigma=(0.1, 2.0), p=0.25),
-        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=0.0, p=0.2),
+        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=1),
+        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.5),
+        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.1),
         K.Resize((original_height, original_width))
     )
 

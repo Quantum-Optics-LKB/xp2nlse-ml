@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import gc
 import os
 import sys
 import torch

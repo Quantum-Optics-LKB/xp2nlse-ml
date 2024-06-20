@@ -4,10 +4,21 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'DejaVu Serif'
 plt.rcParams['font.size'] = 20
 
-n2 = np.array([-3.06e-9, -1.63e-9, -1.97e-09,-1.02e-9, -1.20e-9, -1.2878944035735968e-09])
-Isat = np.array([6.64e4, 6.61e4,5.37e4,4.13e4,4.28e4, 76842.93830580918])
-n2_range = [-5e-9, -5e-11]
-Isat_range = [1e4, 1e5]
+#50 epochs
+#expend
+# n2 = np.array([-3.06e-9, -1.63e-9, -1.97e-09,-1.02e-9, -1.20e-9, -1.2878944035735968e-09])
+# Isat = np.array([6.64e4, 6.61e4,5.37e4,4.13e4,4.28e4, 76842.93830580918])
+
+#50 epochs
+#not expend
+# n2 =   np.array([-6.16e-9,-3.96e-9, -2.14e-09,-1.22e-9, -2.73e-9, -1.2878944035735968e-09])
+# Isat = np.array([ 2.07e5,  9.56e4,   5.97e4,   4.15e4,   1.06e5,   76842.93830580918])
+
+#100 epochs
+n2 =   np.array([-5.079650878906249e-09, None, None, None, None, -1.2878944035735968e-09])
+Isat = np.array([29851.415753364563    , None, None, None, None, 76842.93830580918])
+n2_range = [-1e-9, -1e-11]
+Isat_range = [1e4, 1e6]
 xticks_counts = [5,10,20,30, 50,50]
 
 n2_str = r"$n_2$"

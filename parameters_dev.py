@@ -13,7 +13,7 @@ saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 input_alpha_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp_data/alpha.npy"
 exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
 
-device = 0
+device = 1
 resolution_in = 2048
 window_in = 50e-3
 smallest_out_res = 3008
@@ -21,8 +21,8 @@ out_pixel_size = 3.76e-6
 window_out = out_pixel_size * smallest_out_res
 resolution_training = 256
 
-number_of_n2 = 30
-number_of_isat = 30
+number_of_n2 = 10
+number_of_isat = 10
 n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2
 isat = np.logspace(4, 5, number_of_isat) #W/m^2
 
@@ -36,11 +36,11 @@ nl_length = 0
 
 expansion=False
 generate=False
-training=False
+training=True
 learning_rate=0.01
-batch_size=100
-accumulator=1
-num_epochs=50
+batch_size=33
+accumulator=3
+num_epochs=100
 
 use=True
 plot_generate_compare=True
@@ -53,10 +53,12 @@ if expansion or generate or training:
         with cp.cuda.Device(device):
             E = data_creation(nlse_settings, cameras ,saving_path)
     else:
-        file = f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.npy'
-        E = np.load(file)
+        if expansion:
+            file = f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.npy'
+            E = np.load(file)
+        else:
+            E = np.zeros((number_of_n2*number_of_isat, 3, resolution_training, resolution_training), dtype=np.float16)
 
-    
     labels = generate_labels(n2, isat)
     E, labels = data_augmentation(E, in_power, expansion, saving_path, labels)
 
