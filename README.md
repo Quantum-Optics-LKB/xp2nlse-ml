@@ -40,11 +40,10 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 
 # Inception-ResNet-v2 Model
 
-![Inception-ResNet-v2](img/model.png)
 
 ```mermaid
-graph TD
-    A[Input - Batchx3x256x256] --> B[Stem]
+graph LR
+    A[Input - Bx3x256x256] --> B[Stem]
     B -->|5 x| C[Inception-ResNet-A]
     C --> D[Reduction-A]
     D -->|10 x| E[Inception-ResNet-B]
@@ -54,8 +53,8 @@ graph TD
     H --> I[Dropout]
     I --> J[Softmax]
     J --> K[Output]
-    K --> L[n_2]
-    K --> M[I_sat]
+    K --> L[n2]
+    K --> M[Isat]
 
     style A fill:#f9f,stroke:#333,stroke-width:4px
     style B fill:#bbf,stroke:#333,stroke-width:2px
@@ -68,7 +67,11 @@ graph TD
     style I fill:#ffe,stroke:#333,stroke-width:2px
     style J fill:#ffe,stroke:#333,stroke-width:2px
     style K fill:#ffe,stroke:#333,stroke-width:2px
-
+    style L fill:#ffe,stroke:#333,stroke-width:2px
+    style M fill:#ffe,stroke:#333,stroke-width:2px
+```
+```mermaid
+graph LR
     subgraph sub1["Stem"]
         direction LR
         B1[3x3 Conv - 32 - stride 2] --> B2[3x3 Conv - 32]
@@ -126,12 +129,6 @@ graph TD
         G7 --> G8[Relu activation]
     end
 
-    B --> sub1
-    C --> sub2
-    D --> sub3
-    E --> sub4
-    F --> sub5
-    G --> sub6
 ```
 
 ## Workflow
