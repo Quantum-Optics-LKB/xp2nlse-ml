@@ -55,17 +55,31 @@ graph TD
     I --> J[Softmax]
     J --> K[Output: 1000]
 
-    subgraph "Stem"
+    style A fill:#f9f,stroke:#333,stroke-width:4px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style C fill:#ccf,stroke:#333,stroke-width:2px
+    style D fill:#ddf,stroke:#333,stroke-width:2px
+    style E fill:#eef,stroke:#333,stroke-width:2px
+    style F fill:#ffe,stroke:#333,stroke-width:2px
+    style G fill:#ffe,stroke:#333,stroke-width:2px
+    style H fill:#ffe,stroke:#333,stroke-width:2px
+    style I fill:#ffe,stroke:#333,stroke-width:2px
+    style J fill:#ffe,stroke:#333,stroke-width:2px
+    style K fill:#ffe,stroke:#333,stroke-width:2px
+
+    subgraph sub1["Stem"]
+        direction LR
         B1[3x3 Conv - 32 - stride 2] --> B2[3x3 Conv - 32]
         B2 --> B3[3x3 Conv - 64]
-        B3 --> B4[3x3 MaxPool stride 2]
+        B3 --> B4[3x3 MaxPool - stride 2]
         B4 --> B5[1x1 Conv - 64]
         B5 --> B6[3x3 Conv - 96]
-        B6 --> B7[3x3 MaxPool stride 2]
+        B6 --> B7[3x3 MaxPool - stride 2]
     end
 
-    subgraph "Inception-ResNet-A"
-        C1[1x1 Conv 32] --> C2[1x1 Conv 32]
+    subgraph sub2["Inception-ResNet-A"]
+        direction LR
+        C1[1x1 Conv - 32] --> C2[1x1 Conv - 32]
         C2 --> C3[3x3 Conv - 32]
         C3 --> C4[1x1 Conv - 32]
         C4 --> C5[3x3 Conv - 48]
@@ -74,13 +88,15 @@ graph TD
         C7 --> C8[Relu activation]
     end
 
-    subgraph "Reduction-A"
-        D1[3x3 Conv  - n stride 2] --> D2[3x3 Conv - m stride 2]
+    subgraph sub3["Reduction-A"]
+        direction LR
+        D1[3x3 Conv - n - stride 2] --> D2[3x3 Conv - m - stride 2]
         D2 --> D3[3x3 MaxPool - stride 2]
         D3 --> D4[Filter concat]
     end
 
-    subgraph "Inception-ResNet-B"
+    subgraph sub4["Inception-ResNet-B"]
+        direction LR
         E1[1x1 Conv - 128] --> E2[1x7 Conv - 160]
         E2 --> E3[7x1 Conv - 192]
         E3 --> E4[1x1 Conv - 192]
@@ -89,15 +105,17 @@ graph TD
         E6 --> E7[Relu activation]
     end
 
-    subgraph "Reduction-B"
+    subgraph sub5["Reduction-B"]
+        direction LR
         F1[3x3 Conv - 256 - stride 2] --> F2[3x3 Conv - 288 - stride 2]
         F2 --> F3[3x3 Conv - 320 - stride 2]
-        F3 --> F4[3x3 MaxPool stride 2]
+        F3 --> F4[3x3 MaxPool - stride 2]
         F4 --> F5[Filter concat]
     end
 
-    subgraph "Inception-ResNet-C"
-        G1[1x1 Conv - 192 -] --> G2[1x3 Conv - 224]
+    subgraph sub6["Inception-ResNet-C"]
+        direction LR
+        G1[1x1 Conv - 192] --> G2[1x3 Conv - 224]
         G2 --> G3[3x1 Conv - 256]
         G3 --> G4[1x1 Conv - 192]
         G4 --> G5[1x3 Conv - 224]
@@ -105,6 +123,13 @@ graph TD
         G6 --> G7[Filter concat]
         G7 --> G8[Relu activation]
     end
+
+    B --> sub1
+    C --> sub2
+    D --> sub3
+    E --> sub4
+    F --> sub5
+    G --> sub6
 ```
 
 ## Workflow
