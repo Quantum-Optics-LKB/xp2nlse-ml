@@ -44,16 +44,18 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 
 ```mermaid
 graph TD
-    A[Input - 299x299x3] --> B[Stem]
-    B --> C[5 x Inception-ResNet-A]
+    A[Input - Batchx3x256x256] --> B[Stem]
+    B -->|5 x| C[Inception-ResNet-A]
     C --> D[Reduction-A]
-    D --> E[10 x Inception-ResNet-B]
+    D -->|10 x| E[Inception-ResNet-B]
     E --> F[Reduction-B]
-    F --> G[5 x Inception-ResNet-C]
+    F -->|5 x| G[Inception-ResNet-C]
     G --> H[Average Pooling]
-    H --> I[Dropout - keep 0.8]
+    H --> I[Dropout]
     I --> J[Softmax]
-    J --> K[Output: 1000]
+    J --> K[Output]
+    K --> L[$n_2$]
+    K --> L[$I_{sat}$]
 
     style A fill:#f9f,stroke:#333,stroke-width:4px
     style B fill:#bbf,stroke:#333,stroke-width:2px
