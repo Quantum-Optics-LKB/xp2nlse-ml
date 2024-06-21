@@ -43,7 +43,7 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 
 ```mermaid
 graph LR
-    A[Input - Bx3x256x256] --> B[Stem]
+    A[Input - Batchx3x256x256] --> B[Stem]
     B -->|5 x| C[Inception-ResNet-A]
     C --> D[Reduction-A]
     D -->|10 x| E[Inception-ResNet-B]
@@ -53,8 +53,8 @@ graph LR
     H --> I[Dropout]
     I --> J[Softmax]
     J --> K[Output]
-    K --> L[n2]
-    K --> M[Isat]
+    K --> L[n_2]
+    K --> M[I_sat]
 
     style A fill:#f9f,stroke:#333,stroke-width:4px
     style B fill:#bbf,stroke:#333,stroke-width:2px
@@ -71,55 +71,9 @@ graph LR
     style M fill:#ffe,stroke:#333,stroke-width:2px
 ```
 ```mermaid
-graph LR
-    subgraph sub1["Stem"]
-        direction LR
-        B1[3x3 Conv - 32 - stride 2] --> B2[3x3 Conv - 32]
-        B2 --> B3[3x3 Conv - 64]
-        B3 --> B4[3x3 MaxPool - stride 2]
-        B4 --> B5[1x1 Conv - 64]
-        B5 --> B6[3x3 Conv - 96]
-        B6 --> B7[3x3 MaxPool - stride 2]
-    end
-
-    subgraph sub2["Inception-ResNet-A"]
-        direction LR
-        C1[1x1 Conv - 32] --> C2[1x1 Conv - 32]
-        C2 --> C3[3x3 Conv - 32]
-        C3 --> C4[1x1 Conv - 32]
-        C4 --> C5[3x3 Conv - 48]
-        C5 --> C6[3x3 Conv - 64]
-        C6 --> C7[Filter concat]
-        C7 --> C8[Relu activation]
-    end
-
-    subgraph sub3["Reduction-A"]
-        direction LR
-        D1[3x3 Conv - n - stride 2] --> D2[3x3 Conv - m - stride 2]
-        D2 --> D3[3x3 MaxPool - stride 2]
-        D3 --> D4[Filter concat]
-    end
-
-    subgraph sub4["Inception-ResNet-B"]
-        direction LR
-        E1[1x1 Conv - 128] --> E2[1x7 Conv - 160]
-        E2 --> E3[7x1 Conv - 192]
-        E3 --> E4[1x1 Conv - 192]
-        E4 --> E5[3x3 Conv - 384]
-        E5 --> E6[Filter concat]
-        E6 --> E7[Relu activation]
-    end
-
-    subgraph sub5["Reduction-B"]
-        direction LR
-        F1[3x3 Conv - 256 - stride 2] --> F2[3x3 Conv - 288 - stride 2]
-        F2 --> F3[3x3 Conv - 320 - stride 2]
-        F3 --> F4[3x3 MaxPool - stride 2]
-        F4 --> F5[Filter concat]
-    end
-
+graph TB
     subgraph sub6["Inception-ResNet-C"]
-        direction LR
+        direction TB
         G1[1x1 Conv - 192] --> G2[1x3 Conv - 224]
         G2 --> G3[3x1 Conv - 256]
         G3 --> G4[1x1 Conv - 192]
@@ -128,9 +82,51 @@ graph LR
         G6 --> G7[Filter concat]
         G7 --> G8[Relu activation]
     end
+    subgraph sub5["Reduction-B"]
+        direction TB
+        F1[3x3 Conv - 256 - stride 2] --> F2[3x3 Conv - 288 - stride 2]
+        F2 --> F3[3x3 Conv - 320 - stride 2]
+        F3 --> F4[3x3 MaxPool - stride 2]
+        F4 --> F5[Filter concat]
+    end
+    subgraph sub4["Inception-ResNet-B"]
+        direction TB
+        E1[1x1 Conv - 128] --> E2[1x7 Conv - 160]
+        E2 --> E3[7x1 Conv - 192]
+        E3 --> E4[1x1 Conv - 192]
+        E4 --> E5[3x3 Conv - 384]
+        E5 --> E6[Filter concat]
+        E6 --> E7[Relu activation]
+    end
+    subgraph sub3["Reduction-A"]
+        direction TB
+        D1[3x3 Conv - n - stride 2] --> D2[3x3 Conv - m - stride 2]
+        D2 --> D3[3x3 MaxPool - stride 2]
+        D3 --> D4[Filter concat]
+    end
+    subgraph sub2["Inception-ResNet-A"]
+        direction TB
+        C1[1x1 Conv - 32] --> C2[1x1 Conv - 32]
+        C2 --> C3[3x3 Conv - 32]
+        C3 --> C4[1x1 Conv - 32]
+        C4 --> C5[3x3 Conv - 48]
+        C5 --> C6[3x3 Conv - 64]
+        C6 --> C7[Filter concat]
+        C7 --> C8[Relu activation]
+    end
+    subgraph sub1["Stem"]
+        direction TB
+        B1[3x3 Conv - 32 - stride 2] --> B2[3x3 Conv - 32]
+        B2 --> B3[3x3 Conv - 64]
+        B3 --> B4[3x3 MaxPool - stride 2]
+        B4 --> B5[1x1 Conv - 64]
+        B5 --> B6[3x3 Conv - 96]
+        B6 --> B7[3x3 MaxPool - stride 2]
+    end
+    
 
+    
 ```
-
 ## Workflow
 
 1. **Create Your Setup**: Design your experimental or simulation setup.
