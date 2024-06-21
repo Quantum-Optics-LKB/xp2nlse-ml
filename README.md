@@ -38,6 +38,10 @@ This repository uses a Inception-Residual Network (Inception-Resnetv2) model ded
 
 The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper ["Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016](https://doi.org/10.48550/arXiv.1602.07261).
 
+### Inception-ResNet-v2 Model
+
+![Inception-ResNet-v2](img/model.png)
+
 
 ## Workflow
 
@@ -95,15 +99,16 @@ When you generate the data there are two steps.
 First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles, salt and pepper noise. 
 This will help the model generalize the fitting of the parameters regardless of the noise.
 
-Choose wether you want to generate new data using NLSE:
 
-- If generate is True if you want to generate using NLSE.
-    - If expansion is True then it will augment unaugmented dataset.
-    - If expansion is False then it will load the augmented dataset.
-- If generate is False if it has already been generated.
-    - If expansion is True then it will load the unaugmented dataset.
-    - If expansion is False then it will load the augmented dataset.
-
+```mermaid
+flowchart LR;
+    A[generate] -->|True| B[expansion];
+    A -->|False| C[expansion];
+    B -->|True| D[Expand generated dataset];
+    B -->|False| E[Load the expanded dataset];
+    C -->|True| F[Load unaugmented and expand it dataset];
+    C -->|False| G[Load the expanded dataset];
+```
 
 - `generate`: Set to `True` to generate new data using NLSE.
 - `expansion`: Set to `True` to augment an unaugmented dataset.
