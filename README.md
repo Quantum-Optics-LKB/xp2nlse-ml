@@ -11,7 +11,7 @@ In this particular instance, it can solve in the formalism of the propagation of
 Within the [paraxial approximation](https://en.wikipedia.org/wiki/Paraxial_approximation), the propagation equation for the field $E$ in V/m solved is:
 
 $$
-i\partial_{z}E = -\frac{1}{2k_0}\nabla_{\perp}^2 E - n_2 \frac{I}{1 + \frac{I}{I_{sat}}} \frac{k_0c\epsilon_0}{2}c\epsilon_0|E|^2E - i \frac{\alpha}{2}
+i\partial_{z}E = -\frac{1}{2k_0}\nabla_{\perp}^2 E - n_2 \frac{k_0c\epsilon_0}{2}|E|^2E - i \frac{\alpha}{2}
 $$
 
 The system holds 2 unknowns: non-linear index $n_2$ and saturation intensity $I_{sat}$.
@@ -22,7 +22,7 @@ These parameters cannot be measured in the experiment. They are intrinsic proper
 The previous method to find these parameters was to fit the dephasing and the intensity with the solution of the following coupled differential equations.
 
 $$
-\frac{\partial_{}\phi}{\partial_{}z} = k_0 n_2 \frac{I}{1 + \frac{I}{I_{sat}}} \\
+\frac{\partial_{}\phi}{\partial_{}z} = k_0 n_2 \frac{I}{1 + \frac{I}{I_{sat}}},  \\
 \frac{\partial_{}I}{\partial_{}z} = - \alpha \frac{I}{1 + \frac{I}{I_{sat}}}
 $$
 
