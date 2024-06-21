@@ -41,9 +41,9 @@ def augmentation(
     shear = random.uniform(20,50)
     direction = random.uniform(-1, 1)
     return torch.nn.Sequential(
-        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=1),
+        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.2),
         K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.5),
-        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.1),
+        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.2),
         K.Resize((original_height, original_width))
     )
 

@@ -1,0 +1,10 @@
+cupy_cuda12x==13.1.0
+kornia==0.7.2
+matplotlib==3.8.4
+NLSE==2.2.0
+numpy==2.0.0
+scipy==1.13.1
+skimage==0.0
+torch==2.3.0
+tqdm==4.66.1
+NLSE
