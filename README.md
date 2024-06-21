@@ -38,10 +38,74 @@ This repository uses a Inception-Residual Network (Inception-Resnetv2) model ded
 
 The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper ["Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016](https://doi.org/10.48550/arXiv.1602.07261).
 
-### Inception-ResNet-v2 Model
+# Inception-ResNet-v2 Model
 
 ![Inception-ResNet-v2](img/model.png)
 
+```mermaid
+graph TD
+    A[Input - 299x299x3] --> B[Stem]
+    B --> C[5 x Inception-ResNet-A]
+    C --> D[Reduction-A]
+    D --> E[10 x Inception-ResNet-B]
+    E --> F[Reduction-B]
+    F --> G[5 x Inception-ResNet-C]
+    G --> H[Average Pooling]
+    H --> I[Dropout - keep 0.8]
+    I --> J[Softmax]
+    J --> K[Output: 1000]
+
+    subgraph "Stem"
+        B1[3x3 Conv - 32 - stride 2] --> B2[3x3 Conv - 32]
+        B2 --> B3[3x3 Conv - 64]
+        B3 --> B4[3x3 MaxPool stride 2]
+        B4 --> B5[1x1 Conv - 64]
+        B5 --> B6[3x3 Conv - 96]
+        B6 --> B7[3x3 MaxPool stride 2]
+    end
+
+    subgraph "Inception-ResNet-A"
+        C1[1x1 Conv 32] --> C2[1x1 Conv 32]
+        C2 --> C3[3x3 Conv - 32]
+        C3 --> C4[1x1 Conv - 32]
+        C4 --> C5[3x3 Conv - 48]
+        C5 --> C6[3x3 Conv - 64]
+        C6 --> C7[Filter concat]
+        C7 --> C8[Relu activation]
+    end
+
+    subgraph "Reduction-A"
+        D1[3x3 Conv  - n stride 2] --> D2[3x3 Conv - m stride 2]
+        D2 --> D3[3x3 MaxPool - stride 2]
+        D3 --> D4[Filter concat]
+    end
+
+    subgraph "Inception-ResNet-B"
+        E1[1x1 Conv - 128] --> E2[1x7 Conv - 160]
+        E2 --> E3[7x1 Conv - 192]
+        E3 --> E4[1x1 Conv - 192]
+        E4 --> E5[3x3 Conv - 384]
+        E5 --> E6[Filter concat]
+        E6 --> E7[Relu activation]
+    end
+
+    subgraph "Reduction-B"
+        F1[3x3 Conv - 256 - stride 2] --> F2[3x3 Conv - 288 - stride 2]
+        F2 --> F3[3x3 Conv - 320 - stride 2]
+        F3 --> F4[3x3 MaxPool stride 2]
+        F4 --> F5[Filter concat]
+    end
+
+    subgraph "Inception-ResNet-C"
+        G1[1x1 Conv - 192 -] --> G2[1x3 Conv - 224]
+        G2 --> G3[3x1 Conv - 256]
+        G3 --> G4[1x1 Conv - 192]
+        G4 --> G5[1x3 Conv - 224]
+        G5 --> G6[3x1 Conv - 256]
+        G6 --> G7[Filter concat]
+        G7 --> G8[Relu activation]
+    end
+```
 
 ## Workflow
 
