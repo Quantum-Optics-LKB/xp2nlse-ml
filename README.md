@@ -54,8 +54,8 @@ graph TD
     H --> I[Dropout]
     I --> J[Softmax]
     J --> K[Output]
-    K --> L[$n_2$]
-    K --> L[$I_{sat}$]
+    K --> L[n_2]
+    K --> L[I_sat]
 
     style A fill:#f9f,stroke:#333,stroke-width:4px
     style B fill:#bbf,stroke:#333,stroke-width:2px
