@@ -1,12 +1,43 @@
 # Nonlinear Schrödinger Equation Parameter Estimation with Neural Networks
 
+## Problem
+
+### Physical situation
+
+[NLSE](https://github.com/Quantum-Optics-LKB/NLSE) offers a powerful simulation tool to solve a typical [non linear Schrödinger](https://en.wikipedia.org/wiki/Nonlinear_Schr%C3%B6dinger_equation) / [Gross-Pitaevskii](https://en.wikipedia.org/wiki/Gross%E2%80%93Pitaevskii_equation) equation of the type :
+$$i\partial_{t}\psi = -\frac{1}{2}\nabla^2\psi+g|\psi|^2\psi$$
+
+In this particular instance, it can solve in the formalism of the propagation of a pulse of light in a non linear medium (here a Rubidium cell).
+Within the [paraxial approximation](https://en.wikipedia.org/wiki/Paraxial_approximation), the propagation equation for the field $E$ in V/m solved is:
+
+$$
+i\partial_{z}E = -\frac{1}{2k_0}\nabla_{\perp}^2 E - n_2 \frac{I}{1 + \frac{I}{I_{sat}}} \frac{k_0c\epsilon_0}{2}c\epsilon_0|E|^2E - i \frac{\alpha}{2}
+$$
+
+The system holds 2 unknowns: non-linear index $n_2$ and saturation intensity $I_{sat}$.
+These parameters cannot be measured in the experiment. They are intrinsic properties of the system.
+
+### Previous solution
+
+The previous method to find these parameters was to fit the dephasing and the intensity with the solution of the following coupled differential equations.
+
+$$
+\frac{\partial_{}\phi}{\partial_{}z} = k_0 n_2 \frac{I}{1 + \frac{I}{I_{sat}}} \\
+\frac{\partial_{}I}{\partial_{}z} = - \alpha \frac{I}{1 + \frac{I}{I_{sat}}}
+$$
+
+The fit works well to extract n2 for large beams. However it fails to measure Isat. The problem is that even if the beam is large, the fit fails to include self-defocusing.
+
+With the recent research in machine learning and optimization tools thriving, the idea was to attempt and solve this problem with neural networks. 
+
+## Overview
+
+This repository uses a Inception-Residual Network (Inception-Resnetv2) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
+
 ## Source
 
 The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper ["Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016](https://doi.org/10.48550/arXiv.1602.07261).
 
-## Overview
-
-This repository introduces a Inception-Residual Network (Inception-Resnetv2) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
 
 ## Workflow
 
@@ -33,7 +64,9 @@ Ensure you have Python 3.x installed. This project requires the following extern
 - **tqdm**
 - **kornia**
 
-These dependencies can be installed using mamba:
+These dependencies can be installed using mamba.
+
+The requirements are in the requirements.txt at the root of the repo.
 
 ### Installation
 
