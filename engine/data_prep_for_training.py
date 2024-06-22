@@ -5,7 +5,7 @@
 import numpy as np
 from engine.field_dataset import FieldDataset
 from torch.utils.data import DataLoader
-from seed_settings import set_seed
+from engine.seed_settings import set_seed
 set_seed(42)
 
 def data_split(

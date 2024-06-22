@@ -16,14 +16,14 @@ output_pixel_size = 3.76e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2
 resolution_training = 256
-generate=False
-expansion=False
+generate=True
+expansion=True
 create_visual = False
 
 
 ###Parameter spaces:
-number_of_n2 = 20
-number_of_isat = 20
+number_of_n2 = 40
+number_of_isat = 40
 n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2 [-5e-11 -> -5e-9]
 isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 

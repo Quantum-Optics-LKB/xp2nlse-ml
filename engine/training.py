@@ -8,7 +8,7 @@ import numpy as np
 import torch.optim
 from tqdm import tqdm
 import kornia.augmentation as K
-from seed_settings import set_seed
+from engine.seed_settings import set_seed
 set_seed(42)
 
 def augmentation(
