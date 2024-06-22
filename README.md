@@ -40,8 +40,6 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 
 # Inception-ResNet-v2 Model
 
-![Inception-ResNet-v2 ](img/model.png)
-
 ```mermaid
 graph LR
     A[Input - Batchx3x256x256] --> B[Stem]
