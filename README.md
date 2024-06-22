@@ -56,20 +56,6 @@ graph LR
     J --> K[Output]
     K --> L[n_2]
     K --> M[I_sat]
-
-    style A fill:#800080,stroke:#333,stroke-width:4px
-    style B fill:#993399,stroke:#333,stroke-width:2px
-    style C fill:#b266b2,stroke:#333,stroke-width:2px
-    style D fill:#cc99cc,stroke:#333,stroke-width:2px
-    style E fill:#d9b3d9,stroke:#333,stroke-width:2px
-    style F fill:#e6cce6,stroke:#333,stroke-width:2px
-    style G fill:#f2e5f2,stroke:#333,stroke-width:2px
-    style H fill:#f5e6cc,stroke:#333,stroke-width:2px
-    style I fill:#f9f2cc,stroke:#333,stroke-width:2px
-    style J fill:#fcf9e6,stroke:#333,stroke-width:2px
-    style K fill:#ffffcc,stroke:#333,stroke-width:2px
-    style L fill:#ffff99,stroke:#333,stroke-width:2px
-    style M fill:#ffff66,stroke:#333,stroke-width:2px
 ```
 ```mermaid
 graph TB
