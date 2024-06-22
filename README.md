@@ -231,33 +231,21 @@ python parameters.py
 - `saving_path`: Directory where data and models will be saved.
 - `device`: GPU device ID to run the code.
 
-#### <ins>Data Generation and Augmentation<ins>
+#### <ins>Data Generation <ins>
 When you generate the data there are two steps.
-First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles, salt and pepper noise. 
+First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles and salt and pepper noise. 
 This will help the model generalize the fitting of the parameters regardless of the noise.
 
-
-```mermaid
-flowchart LR;
-    A[generate] -->|True| B[expansion];
-    A -->|False| C[expansion];
-    B -->|True| D[Expand generated dataset];
-    B -->|False| E[Load the expanded dataset];
-    C -->|True| F[Load unaugmented and expand it dataset];
-    C -->|False| G[Load the expanded dataset];
-```
-
 - `generate`: Set to `True` to generate new data using NLSE.
-- `expansion`: Set to `True` to augment an unaugmented dataset.
 
-#### <ins>Data Generation Parameters<ins>
-- `delta_z`: Step of the propagation in the split-step method (m).
+#### <ins>Data Generation Parameters using NLSE <ins>
+- `delta_z`: Step of the propagation in the split-step method ($m$).
 - `resolution_input_beam`: Resolution of the input beam.
-- `window_input`: Window size of the input beam (m).
+- `window_input`: Window size of the input beam ($m$).
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
-- `output_pixel_size`: Size of pixels of the output camera (m).
-- `window_out`: Window size of the propagated output beam (m). It is set to be output_pixel_size x output_camera_resolution.
-- `cell_length`: Length of the rubidium cell (m).
+- `output_pixel_size`: Size of pixels of the output camera ($m$).
+- `window_out`: Window size of the propagated output beam ($m$). It is set to be output_pixel_size x output_camera_resolution.
+- `cell_length`: Length of the rubidium cell ($m$).
 - `resolution_training`: Resolution of images when saved and for training.
 
 #### <ins>Parameter Spaces<ins>
@@ -267,10 +255,10 @@ flowchart LR;
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
 
 #### <ins>Laser Parameters<ins>
-- `input_power`: Input power of the laser (W).
+- `input_power`: Input power of the laser ($W$).
 - `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
-- `waist_input_beam`: Waist $\sigma$ (m) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
-- `non_locality_length`: Length of non locality (m).
+- `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
+- `non_locality_length`: Length of non locality ($m$).
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
@@ -278,7 +266,7 @@ For for more information on the generation process see [NLSE](https://github.com
 - `training`:  Boolean indicating whether to train the model.
 - `learning_rate`: Learning rate for training.
 
-The training is done is batches.
+The training is done in batches.
 It means that when it does a forward path through the model it does not train the full dataset at the same time.
 It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because
 training is better if the model receives samples by samples such that the parameters of the model get trained more times.

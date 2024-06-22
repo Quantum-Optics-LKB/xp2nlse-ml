@@ -32,7 +32,7 @@ def plot_and_save_images(data, saving_path, nlse_settings):
 
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
-    plt.savefig(f'{saving_path}density_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
+    plt.savefig(f'{saving_path}/density_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_density) 
 
     # Plot phase channels for the current power value
@@ -48,7 +48,7 @@ def plot_and_save_images(data, saving_path, nlse_settings):
 
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
-    plt.savefig(f'{saving_path}phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
+    plt.savefig(f'{saving_path}/phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_phase)
 
     #Plot phase channels for the current power value
@@ -64,5 +64,5 @@ def plot_and_save_images(data, saving_path, nlse_settings):
 
     plt.tight_layout()
     plt.subplots_adjust(top=0.95)
-    plt.savefig(f'{saving_path}unwrap_phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
+    plt.savefig(f'{saving_path}/unwrap_phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_phase)

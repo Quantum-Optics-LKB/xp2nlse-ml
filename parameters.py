@@ -17,9 +17,7 @@ window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2
 resolution_training = 256
 generate=True
-expansion=True
 create_visual = False
-
 
 ###Parameter spaces:
 number_of_n2 = 40
@@ -45,8 +43,7 @@ exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
 use=True
 plot_generate_compare=True
 
-
-manager(generate, expansion, training, create_visual, use, plot_generate_compare, device, 
-            resolution_input_beam, window_input, window_out, resolution_training, n2, number_of_n2,
-            input_power, alpha, isat, number_of_isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
+manager(generate, training, create_visual, use, plot_generate_compare, device, 
+            resolution_input_beam, window_input, window_out, resolution_training, n2,
+            input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
             saving_path, exp_image_path, learning_rate, batch_size, num_epochs, accumulator)

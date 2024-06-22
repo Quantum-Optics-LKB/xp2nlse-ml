@@ -125,9 +125,6 @@ def generate_labels(
 
 def data_augmentation(
     E: np.ndarray,
-    in_power: float,
-    expansion: bool,
-    path: str, 
     labels: tuple,
     ) -> np.ndarray:
 
@@ -142,33 +139,27 @@ def data_augmentation(
     isat_labels = np.repeat(isat_labels, augmentation)
 
     labels = (number_of_n2, n2_labels, number_of_isat, isat_labels)
-    if expansion:
-        
-        print("---- EXPANSION ----")
-
-        augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
-
-        for channel in range(E.shape[1]):
-            index = 0
-            for image_index in range(E.shape[0]):
-                image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
-                augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
-                index += 1  
-                for noise in noises:
-                    augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
-                    index += 1
-                    for angle in angles:
-                        for num_lines in lines:
-                            augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
-                            index += 1
-
-        np.save(f'{path}/Es_w{augmented_data.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended', augmented_data.astype(np.float16))
-        return augmented_data, labels
     
-    else:
-        augmented_data = np.load(f'{path}/Es_w{E.shape[-1]}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}_extended.npy')
         
-        return augmented_data, labels
+    print("---- EXPANSION ----")
+
+    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
+
+    for channel in range(E.shape[1]):
+        index = 0
+        for image_index in range(E.shape[0]):
+            image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
+            augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
+            index += 1  
+            for noise in noises:
+                augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
+                index += 1
+                for angle in angles:
+                    for num_lines in lines:
+                        augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
+                        index += 1
+
+    return augmented_data, labels
 
 def normalize_data(
         data: np.ndarray,
