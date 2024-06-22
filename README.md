@@ -73,6 +73,34 @@ graph LR
 ```
 ```mermaid
 graph TD
+    subgraph sub1["Stem"]
+        direction LR
+        B1[Input]
+        B1 --> B2[3x3 Conv - 32 - stride 2 V]
+        B2 --> B3[3x3 Conv - 32 V]
+        B3 --> B4[3x3 Conv - 64]
+        B4 --> B5[3x3 MaxPool - stride 2 V]
+        B4 --> B6[3x3 Conv - 96 - stride 2 V]
+        B5 --> B7[Filter concat]
+        B6 --> B7[Filter concat]
+        B7 --> B8[1x1 Conv - 64]
+        B8 --> B9[3x3 Conv - 96 V]
+        B9 --> B10[Filter concat]
+        B7 --> B11[1x1 Conv - 64]
+        B11 --> B12[7x1 Conv - 64]
+        B12 --> B13[1x7 Conv - 64]
+        B13 --> B14[3x3 Conv 96 V]
+        B14 --> B10[Filter concat]
+        B10 --> B15[3x3 Conv - 192 V]
+        B10 --> B16[MaxPool - stride 2 V]
+        B15 --> B17[Filter concat]
+        B16 --> B17[Filter concat]
+        style sub1 fill:#6c8ebf,stroke:#333,stroke-width:2px,color:#000
+    end
+
+```
+```mermaid
+graph TD
     subgraph sub6["Inception-ResNet-C"]
         direction TB
         G1[Relu activation]
@@ -115,19 +143,12 @@ graph TD
         E4 --> E7[+]
         E7 --> E8[Relu activation]
     end
-    subgraph sub3["Reduction-A"]
-        direction TB
-        D1[Filter concat]
-        D1 --> D2[3x3 MaxPool - stride 2 V]
-        D1 --> D3[3x3 Conv - n - stride 2 V] 
-        D1 --> D5[1x1 Conv - k]
-        D5 --> D6[3x3 Conv - l]
-        D6 --> D7[3x3 Conv - m - stride 2 V]
-        D2 --> D8[Filter concat]
-        D3 --> D8[Filter concat]
-        D7 --> D8[Filter concat]
-        
-    end
+    style sub4 fill:#c6e2ff,stroke:#333,stroke-width:2px,color:#000
+    style sub5 fill:#d3d3d3,stroke:#333,stroke-width:2px,color:#000
+    style sub6 fill:#e0ffff,stroke:#333,stroke-width:2px,color:#000
+```
+```mermaid
+graph TD
     subgraph sub2["Reduction-B"]
         direction TB
         C1[Previous Layer]
@@ -143,38 +164,22 @@ graph TD
         C6 --> C10[Filter concat]
         C7 --> C10[Filter concat]
         C9 --> C10[Filter concat]
-
     end
-    subgraph sub1["Stem"]
+    subgraph sub3["Reduction-A"]
         direction TB
-        B1[Input]
-        B1 --> B2[3x3 Conv - 32 - stride 2 V]
-        B2 --> B3[3x3 Conv - 32 V]
-        B3 --> B4[3x3 Conv - 64]
-        B4 --> B5[3x3 MaxPool - stride 2 V]
-        B4 --> B6[3x3 Conv - 96 - stride 2 V]
-        B5 --> B7[Filter concat]
-        B6 --> B7[Filter concat]
-        B7 --> B8[1x1 Conv - 64]
-        B8 --> B9[3x3 Conv - 96 V]
-        B9 --> B10[Filter concat]
-        B7 --> B11[1x1 Conv - 64]
-        B11 --> B12[7x1 Conv - 64]
-        B12 --> B13[1x7 Conv - 64]
-        B13 --> B14[3x3 Conv 96 V]
-        B14 --> B10[Filter concat]
-        B10 --> B15[3x3 Conv - 192 V]
-        B10 --> B16[MaxPool - stride 2 V]
-        B15 --> B17[Filter concat]
-        B16 --> B17[Filter concat]
-
+        D1[Filter concat]
+        D1 --> D2[3x3 MaxPool - stride 2 V]
+        D1 --> D3[3x3 Conv - n - stride 2 V] 
+        D1 --> D5[1x1 Conv - k]
+        D5 --> D6[3x3 Conv - l]
+        D6 --> D7[3x3 Conv - m - stride 2 V]
+        D2 --> D8[Filter concat]
+        D3 --> D8[Filter concat]
+        D7 --> D8[Filter concat]
+        
     end
-    style sub1 fill:#6c8ebf,stroke:#333,stroke-width:2px,color:#fff
-    style sub2 fill:#aec6cf,stroke:#333,stroke-width:2px,color:#fff
-    style sub3 fill:#b7d7e8,stroke:#333,stroke-width:2px,color:#fff
-    style sub4 fill:#c6e2ff,stroke:#333,stroke-width:2px,color:#000
-    style sub5 fill:#d3d3d3,stroke:#333,stroke-width:2px,color:#000
-    style sub6 fill:#e0ffff,stroke:#333,stroke-width:2px,color:#000
+    style sub2 fill:#aec6cf,stroke:#333,stroke-width:2px,color:#000
+    style sub3 fill:#b7d7e8,stroke:#333,stroke-width:2px,color:#000
 
 ```
 ## Workflow
