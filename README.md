@@ -95,7 +95,7 @@ graph TD
         B10 --> B16[MaxPool - stride 2 V]
         B15 --> B17[Filter concat]
         B16 --> B17[Filter concat]
-        style sub1 fill:#6c8ebf,stroke:#333,stroke-width:2px,color:#000
+        style sub1 fill:#6c8ebf,stroke:#333,stroke-width:2px,color:#000,font-size:18px
     end
 
 ```
@@ -143,9 +143,9 @@ graph TD
         E4 --> E7[+]
         E7 --> E8[Relu activation]
     end
-    style sub4 fill:#c6e2ff,stroke:#333,stroke-width:2px,color:#000
-    style sub5 fill:#d3d3d3,stroke:#333,stroke-width:2px,color:#000
-    style sub6 fill:#e0ffff,stroke:#333,stroke-width:2px,color:#000
+    style sub4 fill:#c6e2ff,stroke:#333,stroke-width:2px,color:#000,font-size:18px
+    style sub5 fill:#d3d3d3,stroke:#333,stroke-width:2px,color:#000,font-size:18px
+    style sub6 fill:#e0ffff,stroke:#333,stroke-width:2px,color:#000,font-size:18px
 ```
 ```mermaid
 graph TD
@@ -178,8 +178,8 @@ graph TD
         D7 --> D8[Filter concat]
         
     end
-    style sub2 fill:#aec6cf,stroke:#333,stroke-width:2px,color:#000
-    style sub3 fill:#b7d7e8,stroke:#333,stroke-width:2px,color:#000
+    style sub2 fill:#aec6cf,stroke:#333,stroke-width:2px,color:#000,font-size:18px
+    style sub3 fill:#b7d7e8,stroke:#333,stroke-width:2px,color:#000,font-size:18px
 
 ```
 ## Workflow
