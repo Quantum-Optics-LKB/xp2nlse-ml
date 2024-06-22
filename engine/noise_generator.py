@@ -3,6 +3,8 @@
 # @author: Louis Rossignol
 
 import numpy as np
+from seed_settings import set_seed
+set_seed(42)
 
 def salt_and_pepper_noise(image, noise_level):
     # Function to add salt and pepper noise to an image

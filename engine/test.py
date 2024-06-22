@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 import torch
+from seed_settings import set_seed
+set_seed(42)
 
 def test_model(totalloader, net, device):
     """

@@ -11,7 +11,8 @@ from cupyx.scipy.ndimage import zoom
 from skimage.restoration import unwrap_phase
 from tqdm import tqdm
 from engine.noise_generator import line_noise, salt_and_pepper_noise
-
+from seed_settings import set_seed
+set_seed(42)
 
 def add_model_noise(beam, poisson_noise_lam, normal_noise_sigma):
         

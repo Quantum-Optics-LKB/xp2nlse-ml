@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'DejaVu Serif'
 plt.rcParams['font.size'] = 20
-
+from seed_settings import set_seed
+set_seed(42)
 
 def plot_and_save_images(data, saving_path, nlse_settings):
     n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length = nlse_settings

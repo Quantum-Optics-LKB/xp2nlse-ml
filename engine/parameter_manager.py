@@ -9,6 +9,8 @@ from engine.use import get_parameters
 import cupy as cp
 from engine.generate_augment import data_creation, data_augmentation, generate_labels
 from engine.visualize import plot_and_save_images
+from seed_settings import set_seed
+set_seed(42)
 
 def manager(generate: bool, 
             expansion: bool,

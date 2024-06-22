@@ -8,6 +8,8 @@ import numpy as np
 import torch.optim
 from tqdm import tqdm
 import kornia.augmentation as K
+from seed_settings import set_seed
+set_seed(42)
 
 def augmentation(
         original_height: int, 
@@ -48,6 +50,7 @@ def augmentation(
     )
 
 def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device):
+
     loss_list = np.zeros(num_epochs)
     val_loss_list = np.zeros(num_epochs)
 

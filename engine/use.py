@@ -8,6 +8,8 @@ from scipy.ndimage import zoom
 from engine.generate_augment import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
+from seed_settings import set_seed
+set_seed(42)
 
 def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_number, cameras, plot_generate_compare):
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings

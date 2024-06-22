@@ -13,6 +13,8 @@ from engine.training import network_training
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.model import Inception_ResNetv2
+from seed_settings import set_seed
+set_seed(42)
 
 def network_init(
         learning_rate: float, 

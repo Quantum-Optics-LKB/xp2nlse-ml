@@ -43,6 +43,35 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 ![Inception-ResNet-v2 ](img/model.png)
 
 ```mermaid
+graph LR
+    A[Input - Batchx3x256x256] --> B[Stem]
+    B -->|5 x| C[Inception-ResNet-A]
+    C --> D[Reduction-A]
+    D -->|10 x| E[Inception-ResNet-B]
+    E --> F[Reduction-B]
+    F -->|5 x| G[Inception-ResNet-C]
+    G --> H[Average Pooling]
+    H --> I[Dropout]
+    I --> J[Softmax]
+    J --> K[Output]
+    K --> L[n_2]
+    K --> M[I_sat]
+
+    style A fill:#f9f9f9,stroke:#333,stroke-width:4px
+    style B fill:#bbbbff,stroke:#333,stroke-width:2px
+    style C fill:#ccccff,stroke:#333,stroke-width:2px
+    style D fill:#ddddff,stroke:#333,stroke-width:2px
+    style E fill:#eeeeff,stroke:#333,stroke-width:2px
+    style F fill:#ffffee,stroke:#333,stroke-width:2px
+    style G fill:#ffffee,stroke:#333,stroke-width:2px
+    style H fill:#ffffee,stroke:#333,stroke-width:2px
+    style I fill:#ffffee,stroke:#333,stroke-width:2px
+    style J fill:#ffffee,stroke:#333,stroke-width:2px
+    style K fill:#ffffee,stroke:#333,stroke-width:2px
+    style L fill:#ffffee,stroke:#333,stroke-width:2px
+    style M fill:#ffffee,stroke:#333,stroke-width:2px
+```
+```mermaid
 graph TB
     subgraph sub6["Inception-ResNet-C"]
         direction TB
@@ -112,35 +141,6 @@ graph TB
         B6 --> B7[3x3 MaxPool - stride 2]
     end
 
-```
-```mermaid
-graph LR
-    A[Input - Batchx3x256x256] --> B[Stem]
-    B -->|5 x| C[Inception-ResNet-A]
-    C --> D[Reduction-A]
-    D -->|10 x| E[Inception-ResNet-B]
-    E --> F[Reduction-B]
-    F -->|5 x| G[Inception-ResNet-C]
-    G --> H[Average Pooling]
-    H --> I[Dropout]
-    I --> J[Softmax]
-    J --> K[Output]
-    K --> L[n_2]
-    K --> M[I_sat]
-
-    style A fill:#f9f,stroke:#333,stroke-width:4px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-    style D fill:#ddf,stroke:#333,stroke-width:2px
-    style E fill:#eef,stroke:#333,stroke-width:2px
-    style F fill:#ffe,stroke:#333,stroke-width:2px
-    style G fill:#ffe,stroke:#333,stroke-width:2px
-    style H fill:#ffe,stroke:#333,stroke-width:2px
-    style I fill:#ffe,stroke:#333,stroke-width:2px
-    style J fill:#ffe,stroke:#333,stroke-width:2px
-    style K fill:#ffe,stroke:#333,stroke-width:2px
-    style L fill:#ffe,stroke:#333,stroke-width:2px
-    style M fill:#ffe,stroke:#333,stroke-width:2px
 ```
 ## Workflow
 
