@@ -2,16 +2,8 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import random
-from NLSE import NLSE
 import numpy as np
-import cupy as cp
-from scipy.constants import c, epsilon_0
-import gc
-from cupyx.scipy.ndimage import zoom
-from skimage.restoration import unwrap_phase
 from tqdm import tqdm
-from engine.noise_generator import line_noise, salt_and_pepper_noise
 from engine.seed_settings import set_seed
 set_seed(42)
 
@@ -32,6 +24,13 @@ def data_creation(
     cameras: tuple,
     saving_path: str = "",
     ) -> np.ndarray:
+
+    from NLSE import NLSE
+    from cupyx.scipy.ndimage import zoom
+    import gc
+    import cupy as cp
+    from scipy.constants import c, epsilon_0
+    from skimage.restoration import unwrap_phase
     
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
     resolution_in, window_in, window_out, resolution_training = cameras
@@ -128,12 +127,13 @@ def data_augmentation(
     E: np.ndarray,
     labels: tuple,
     ) -> np.ndarray:
+    from engine.noise_generator import line_noise, salt_and_pepper_noise
 
     number_of_n2, n2_labels, number_of_isat, isat_labels = labels
 
     angles = np.random.uniform(0,180,5)
-    noises = np.random.uniform(0.01,0.2,2)
-    lines = np.random.uniform(20,200,3)
+    noises = np.random.uniform(0.1,0.4,2)
+    lines = [20, 50, 100]
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
     n2_labels = np.repeat(n2_labels, augmentation)
@@ -152,14 +152,14 @@ def data_augmentation(
         augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
         index += 1  
         for noise in noises:
-            augmented_data[index,0 ,:, :] = salt_and_pepper_noise(image_at_channel, noise).astype(np.float16)
+            augmented_data[index,0 ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise))
             augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
             augmented_data[index,2 ,:, :] = E[image_index,1,:,:]
 
             index += 1
             for angle in angles:
                 for num_lines in lines:
-                    augmented_data[index,0 ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle).astype(np.float16)
+                    augmented_data[index,0 ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle))
                     augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
                     augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
                     index += 1

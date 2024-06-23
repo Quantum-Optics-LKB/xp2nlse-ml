@@ -11,7 +11,7 @@ def salt_and_pepper_noise(image, noise_level):
     noisy = image.copy()
     probs = np.random.rand(*image.shape)
     noisy[probs < noise_level / 2] = 0
-    noisy[probs > 1 - noise_level / 2] = 100*np.max(image)
+    noisy[probs > 1 - noise_level / 2] = np.max(image)
     return noisy
 
 def line_noise(
@@ -47,7 +47,7 @@ def line_noise(
     wave_frequency = (num_lines * 2 * np.pi) / diagonal_length
     
     # Apply the sine function to create the lines pattern
-    lines_pattern =  amplitude* np.sin(X_rotated * wave_frequency)
+    lines_pattern =  amplitude*np.sin(X_rotated * wave_frequency)
     
     noisy_image = image.copy() + lines_pattern
     
