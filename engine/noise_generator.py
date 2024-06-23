@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from engine.seed_settings import set_seed
 import kornia.augmentation as K
-set_seed(42)
+set_seed(0)
 
 def augmentation(
         original_height: int, 

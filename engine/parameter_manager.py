@@ -4,7 +4,7 @@
 
 import numpy as np
 from .seed_settings import set_seed
-set_seed(42)
+set_seed(0)
 
 def manager(generate: bool, 
             training: bool, 

@@ -9,7 +9,7 @@ import torch.optim
 from tqdm import tqdm
 from engine.noise_generator import augmentation
 from engine.seed_settings import set_seed
-set_seed(42)
+set_seed(0)
 
 def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device):
 

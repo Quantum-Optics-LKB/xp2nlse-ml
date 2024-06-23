@@ -4,7 +4,8 @@ import random
 import os
 
 def set_seed(
-        seed: int):
+        seed: int
+        ) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

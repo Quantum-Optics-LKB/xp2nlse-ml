@@ -16,7 +16,7 @@ from engine.model import Inception_ResNetv2
 from engine.seed_settings import set_seed
 from torch.utils.data import DataLoader
 
-set_seed(42)
+set_seed(0)
 
 def network_init(
         learning_rate: float, 

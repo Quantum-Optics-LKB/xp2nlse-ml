@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 from engine.seed_settings import set_seed
-set_seed(42)
+set_seed(0)
 
 class Conv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, padding, stride=1, bias=True):
