@@ -4,20 +4,9 @@
 
 import numpy as np
 from tqdm import tqdm
+from engine.noise_generator import add_model_noise
 from engine.seed_settings import set_seed
 set_seed(42)
-
-def add_model_noise(beam, poisson_noise_lam, normal_noise_sigma):
-        
-    poisson_noise = np.random.poisson(lam=poisson_noise_lam, size=(beam.shape))*poisson_noise_lam*0.75
-    normal_noise = np.random.normal(0, normal_noise_sigma, (beam.shape))
-
-    total_noise = normal_noise + poisson_noise
-    noisy_beam = np.real(beam) + total_noise + 1j * np.imag(beam)
-
-
-    noisy_beam = noisy_beam.astype(np.complex64)
-    return noisy_beam
 
 def data_creation(
     numbers: tuple,
@@ -42,21 +31,10 @@ def data_creation(
 
     isat = isat[:, np.newaxis, np.newaxis]
 
-    X, delta_X = np.linspace(-window_in / 2, window_in / 2,
-            num=resolution_in,
-            endpoint=False,
-            retstep=True,
-            dtype=np.float32,
-        )
-    Y, delta_Y = np.linspace(-window_in / 2, window_in / 2,
-            num=resolution_in,
-            endpoint=False,
-            retstep=True,
-            dtype=np.float32,
-        )
+    X = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float32)
+    Y = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float32)
     XX, YY = np.meshgrid(X, Y)
     
-
     beam = np.ones((number_of_isat, resolution_in, resolution_in), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / waist**2)
     poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
     beam = add_model_noise(beam, poisson_noise_lam, normal_noise_sigma)
@@ -113,7 +91,7 @@ def data_creation(
 def generate_labels(
         n2: float,
         isat: float,
-        )-> tuple:
+        ) -> tuple:
 
     N2_labels, ISAT_labels = np.meshgrid(n2, isat) 
 

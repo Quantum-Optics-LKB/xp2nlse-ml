@@ -17,7 +17,6 @@ class Conv2d(nn.Module):
         return x
     
 class Reduction_A(nn.Module):
-    # 35 -> 17
     def __init__(self, in_channels, k, l, m, n):
         super(Reduction_A, self).__init__()
         self.branch_0 = Conv2d(in_channels, n, 3, stride=2, padding=0, bias=False)
@@ -32,19 +31,19 @@ class Reduction_A(nn.Module):
         x0 = self.branch_0(x)
         x1 = self.branch_1(x)
         x2 = self.branch_2(x)
-        return torch.cat((x0, x1, x2), dim=1) # 17 x 17 x 1024
+        return torch.cat((x0, x1, x2), dim=1) 
     
 class Stem(nn.Module):
     def __init__(self, in_channels):
         super(Stem, self).__init__()
         self.features = nn.Sequential(
-            Conv2d(in_channels, 32, 3, stride=2, padding=0, bias=False), # 149 x 149 x 32
-            Conv2d(32, 32, 3, stride=1, padding=0, bias=False), # 147 x 147 x 32
-            Conv2d(32, 64, 3, stride=1, padding=1, bias=False), # 147 x 147 x 64
-            nn.MaxPool2d(3, stride=2, padding=0), # 73 x 73 x 64
-            Conv2d(64, 80, 1, stride=1, padding=0, bias=False), # 73 x 73 x 80
-            Conv2d(80, 192, 3, stride=1, padding=0, bias=False), # 71 x 71 x 192
-            nn.MaxPool2d(3, stride=2, padding=0), # 35 x 35 x 192
+            Conv2d(in_channels, 32, 3, stride=2, padding=0, bias=False),
+            Conv2d(32, 32, 3, stride=1, padding=0, bias=False),
+            Conv2d(32, 64, 3, stride=1, padding=1, bias=False), 
+            nn.MaxPool2d(3, stride=2, padding=0),
+            Conv2d(64, 80, 1, stride=1, padding=0, bias=False),
+            Conv2d(80, 192, 3, stride=1, padding=0, bias=False), 
+            nn.MaxPool2d(3, stride=2, padding=0), 
         )
         self.branch_0 = Conv2d(192,  96, 1, stride=1, padding=0, bias=False)
         self.branch_1 = nn.Sequential(

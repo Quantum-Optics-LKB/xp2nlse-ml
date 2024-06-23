@@ -3,7 +3,8 @@ import numpy as np
 import random
 import os
 
-def set_seed(seed):
+def set_seed(
+        seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)

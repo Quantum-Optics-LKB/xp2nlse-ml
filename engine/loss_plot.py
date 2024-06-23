@@ -13,28 +13,9 @@ def plotter(
     number_of_n2: int, 
     number_of_isat: int
     ) -> None:
-    """
-    Generates and saves a plot comparing training and validation losses over epochs with a dark theme. 
-    The plot includes customized color cycles for better visual distinction and supports a dark background 
-    for aesthetic or presentation purposes.
-
-    Parameters:
-    - y_train (np.ndarray): A sequence of training loss values over epochs. Each entry corresponds 
-      to the loss at a particular epoch.
-    - y_val (np.ndarray): A sequence of validation loss values over epochs, similarly indexed.
-    - path (str): The directory path where the plot image will be saved. The file name is constructed 
-      using other parameters to reflect the plot's context.
-    - resolution (int): The resolution parameter, typically representing the resolution of the input data 
-      or model output, used in naming the saved plot file.
-    - number_of_n2 (int): Specifies the number of nonlinear refractive index (n2) values considered, 
-      used in the file name to provide context about the simulation or model configuration.
-    - number_of_isat (int): Specifies the number of isat considered, also used 
-      in the file naming to give further context.
-    """
     
     plt.figure(figsize=(10, 6))
 
-    # Set font to DejaVu Serif
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 12
 

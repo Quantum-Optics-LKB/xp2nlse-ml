@@ -14,6 +14,8 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.model import Inception_ResNetv2
 from engine.seed_settings import set_seed
+from torch.utils.data import DataLoader
+
 set_seed(42)
 
 def network_init(
@@ -87,7 +89,16 @@ def prep_training(
 
     return trainloader, validationloader, testloader, model_settings, new_path
 
-def launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution, labels):
+def launch_training(
+        trainloader: DataLoader,
+        validationloader: DataLoader,
+        testloader: DataLoader,
+        model_settings: tuple, 
+        nlse_settings: tuple, 
+        new_path: str, 
+        resolution: int, 
+        labels: tuple
+        ) -> None:
 
     number_of_n2, n2_values, number_of_isat, isat_values = labels
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings

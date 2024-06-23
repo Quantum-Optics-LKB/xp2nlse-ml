@@ -1,10 +1,17 @@
 import matplotlib.pyplot as plt
-plt.rcParams['font.family'] = 'DejaVu Serif'
-plt.rcParams['font.size'] = 20
+import numpy as np
 from engine.seed_settings import set_seed
 set_seed(42)
 
-def plot_and_save_images(data, saving_path, nlse_settings):
+plt.rcParams['font.family'] = 'DejaVu Serif'
+plt.rcParams['font.size'] = 20
+
+def plot_and_save_images(
+        data: np.ndarray, 
+        saving_path: str, 
+        nlse_settings: tuple
+        ) -> None:
+    
     n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length = nlse_settings
     number_of_n2 = len(n2)
     number_of_isat = len(isat)

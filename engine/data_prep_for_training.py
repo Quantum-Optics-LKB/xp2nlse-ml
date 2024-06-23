@@ -16,7 +16,6 @@ def data_split(
         validation_ratio: float = 0.1, 
         test_ratio: float = 0.1
         ) -> tuple:
-    # Ensure the ratios sum to 1
     assert train_ratio + validation_ratio + test_ratio == 1
     
     np.random.seed(0)
@@ -46,7 +45,8 @@ def data_split(
 
 def data_treatment(
         sets: np.ndarray, 
-        batch_size: int):
+        batch_size: int
+        ) -> DataLoader:
     
     set, n2label, isatlabel = sets 
     fieldset = FieldDataset(set, n2label, isatlabel)

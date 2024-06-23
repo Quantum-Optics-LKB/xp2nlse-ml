@@ -11,7 +11,14 @@ from skimage.restoration import unwrap_phase
 from engine.seed_settings import set_seed
 set_seed(42)
 
-def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_number, cameras, plot_generate_compare):
+def get_parameters(
+        exp_path: str,
+        saving_path: str, 
+        resolution_out: int, 
+        nlse_settings: tuple, 
+        device_number: int, 
+        cameras: tuple, 
+        plot_generate_compare: bool):
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     resolution_in, window_in, window_out, resolution_training = cameras
     
@@ -22,6 +29,9 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
     max_isat = isat.max()
 
     device = torch.device(f"cuda:{device_number}")
+    cnn = Inception_ResNetv2(in_channels=3)
+    cnn.to(device)
+    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth'))
     
     field = np.load(exp_path)
     if len(field.shape) == 2: 
@@ -52,10 +62,6 @@ def get_parameters(exp_path, saving_path, resolution_out, nlse_settings, device_
         E[:, 0, :, :] = density
         E[:, 1, :, :] = phase
         E[:, 2, :, :] = uphase
-
-    cnn = Inception_ResNetv2(in_channels=E.shape[1])
-    cnn.to(device)
-    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth'))
     
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)

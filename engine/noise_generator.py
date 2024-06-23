@@ -2,9 +2,65 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import random
 import numpy as np
+import torch
 from engine.seed_settings import set_seed
+import kornia.augmentation as K
 set_seed(42)
+
+def augmentation(
+        original_height: int, 
+        original_width: int
+        ) -> torch.nn.Sequential:
+    """
+    Constructs a data augmentation pipeline with a specific set of transformations tailored for 
+    optical field data or similar types of images. This pipeline includes blurring, cropping, and 
+    resizing operations to simulate various realistic alterations that data might undergo.
+
+    Parameters:
+    - original_height (int): The original height of the images before augmentation.
+    - original_width (int): The original width of the images before augmentation.
+
+    Returns:
+    torch.nn.Sequential: A Kornia Sequential object that contains a 
+    sequence of augmentation transformations to be applied to the images. These transformations 
+    include Gaussian blur, motion blur, a slight shift without scaling or rotation, 
+    and resizing back to the original dimensions.
+
+    The pipeline is set up to apply these transformations with certain probabilities, allowing for a 
+    diversified dataset without excessively distorting the underlying data characteristics. This 
+    augmentation strategy is particularly useful for training machine learning models on image data, 
+    as it helps to improve model robustness by exposing it to a variety of visual perturbations.
+
+    Example Usage:
+        augmentation_pipeline = get_augmentation(256, 256)
+        augmented_image = augmentation_pipeline(image=image)
+    """
+    shift = random.uniform(0.1,0.25)
+    shear = random.uniform(20,50)
+    direction = random.uniform(-1, 1)
+    return torch.nn.Sequential(
+        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.2),
+        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.5),
+        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.2),
+        K.Resize((original_height, original_width))
+    )
+
+def add_model_noise(
+        beam: np.ndarray, 
+        poisson_noise_lam: float,
+        normal_noise_sigma: float
+          )-> np.ndarray:
+        
+    poisson_noise = np.random.poisson(lam=poisson_noise_lam, size=(beam.shape))*poisson_noise_lam*0.75
+    normal_noise = np.random.normal(0, normal_noise_sigma, (beam.shape))
+
+    total_noise = normal_noise + poisson_noise
+    noisy_beam = np.real(beam) + total_noise + 1j * np.imag(beam)
+
+    noisy_beam = noisy_beam.astype(np.complex64)
+    return noisy_beam
 
 def salt_and_pepper_noise(image, noise_level):
     # Function to add salt and pepper noise to an image
