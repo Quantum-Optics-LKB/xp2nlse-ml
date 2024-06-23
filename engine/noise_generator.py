@@ -49,6 +49,6 @@ def line_noise(
     # Apply the sine function to create the lines pattern
     lines_pattern =  amplitude* np.sin(X_rotated * wave_frequency)
     
-    noisy_image = image + lines_pattern
+    noisy_image = image.copy() + lines_pattern
     
     return noisy_image

@@ -9,9 +9,10 @@ def plot_and_save_images(data, saving_path, nlse_settings):
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
 
-    density_channels = data[:, :, 0, :, :]
-    phase_channels = data[:, :, 1, :, :]
-    uphase_channels = data[:, :, 2, :, :]
+    field = data.copy().reshape(number_of_n2, number_of_isat, 3, data.shape[-2], data.shape[-2])
+    density_channels = field[:,  :, 0, :, :]
+    phase_channels = field[:, :, 1, :, :]
+    uphase_channels = field[:, :, 2, :, :]
     
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"

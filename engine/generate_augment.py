@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import random
 from NLSE import NLSE
 import numpy as np
 import cupy as cp
@@ -130,9 +131,9 @@ def data_augmentation(
 
     number_of_n2, n2_labels, number_of_isat, isat_labels = labels
 
-    angles = np.linspace(0, 90, 5)
-    noises = [0.01, 0.1] 
-    lines = [20, 50, 100]
+    angles = np.random.uniform(0,180,5)
+    noises = np.random.uniform(0.01,0.2,2)
+    lines = np.random.uniform(20,200,3)
     augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
 
     n2_labels = np.repeat(n2_labels, augmentation)
@@ -140,25 +141,28 @@ def data_augmentation(
 
     labels = (number_of_n2, n2_labels, number_of_isat, isat_labels)
     
-        
-    print("---- EXPANSION ----")
+    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float16)
 
-    augmented_data = np.zeros((augmentation*E.shape[0], E.shape[1], E.shape[2],E.shape[3]), dtype=np.float32)
+    index = 0
+    for image_index in tqdm(range(E.shape[0]),desc=f"EXPANSION", 
+                                total=number_of_n2*number_of_isat, unit="frame"):
+        image_at_channel = E[image_index,0,:,:]
+        augmented_data[index,0 ,:, :] = E[image_index,0,:,:]
+        augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
+        augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
+        index += 1  
+        for noise in noises:
+            augmented_data[index,0 ,:, :] = salt_and_pepper_noise(image_at_channel, noise).astype(np.float16)
+            augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
+            augmented_data[index,2 ,:, :] = E[image_index,1,:,:]
 
-    for channel in range(E.shape[1]):
-        index = 0
-        for image_index in range(E.shape[0]):
-            image_at_channel = normalize_data(E[image_index,channel,:,:]).astype(np.float32)
-            augmented_data[index,channel ,:, :] = normalize_data(image_at_channel).astype(np.float32)
-            index += 1  
-            for noise in noises:
-                augmented_data[index,channel ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise)).astype(np.float32)
-                index += 1
-                for angle in angles:
-                    for num_lines in lines:
-                        augmented_data[index,channel ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle)).astype(np.float32)
-                        index += 1
-
+            index += 1
+            for angle in angles:
+                for num_lines in lines:
+                    augmented_data[index,0 ,:, :] = line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle).astype(np.float16)
+                    augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
+                    augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
+                    index += 1
     return augmented_data, labels
 
 def normalize_data(

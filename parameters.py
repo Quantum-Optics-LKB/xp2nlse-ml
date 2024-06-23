@@ -14,9 +14,9 @@ window_input = 50e-3 #m
 output_camera_resolution = 3008
 output_pixel_size = 3.76e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
-cell_length=20e-2
+cell_length=20e-2 #m
 resolution_training = 256
-generate=True
+generate=False
 create_visual = False
 
 ###Parameter spaces:
@@ -32,7 +32,7 @@ waist_input_beam = 2.3e-3 #m
 non_locality_length = 0 #m
 
 ###Training Parameters:
-training=True
+training=False
 learning_rate=0.01
 batch_size=100
 accumulator=1
@@ -40,10 +40,10 @@ num_epochs=100
 
 ###Find your parameters (n2 and Isat):
 exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
-use=True
-plot_generate_compare=True
+use=False
+plot_generate_compare=False
 
 manager(generate, training, create_visual, use, plot_generate_compare, device, 
-            resolution_input_beam, window_input, window_out, resolution_training, n2,
-            input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
+            resolution_input_beam, window_input, window_out, resolution_training, n2, number_of_n2,
+            input_power, alpha, isat, number_of_isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
             saving_path, exp_image_path, learning_rate, batch_size, num_epochs, accumulator)
