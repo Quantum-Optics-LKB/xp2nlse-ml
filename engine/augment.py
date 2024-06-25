@@ -6,14 +6,14 @@ import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
 from engine.treament_methods import normalize_data
+from engine.treament_methods import line_noise, salt_and_pepper_noise
 set_seed(10)
 
 def data_augmentation(
     E: np.ndarray,
     labels: tuple,
     ) -> np.ndarray:
-    from engine.treament_methods import line_noise, salt_and_pepper_noise
-
+    
     number_of_n2, n2_labels, number_of_isat, isat_labels = labels
 
     angles = np.random.uniform(0,180,5)

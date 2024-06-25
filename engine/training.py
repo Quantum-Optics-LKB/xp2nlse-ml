@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import random
 import torch
 import numpy as np
-import torch.optim
 from tqdm import tqdm
-from engine.treament_methods import augmentation_training
 from engine.seed_settings import set_seed
+from engine.treament_methods import modifications_training
+
 set_seed(10)
 
 def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device):
@@ -22,7 +21,7 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         net.train()
         
         for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):
-            augment = augmentation_training(images.shape[-2],images.shape[-1])
+            augment = modifications_training(images.shape[-2],images.shape[-1])
             
             images = augment(images.to(device = device, dtype=torch.float32))
             n2_values = n2_values.to(device = device, dtype=torch.float32)

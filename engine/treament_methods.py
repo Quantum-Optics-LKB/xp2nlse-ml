@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-
+import torch
 import random
 import numpy as np
-import torch
-from engine.seed_settings import set_seed
 import kornia.augmentation as K
+from engine.seed_settings import set_seed
+
 set_seed(10)
 
 def normalize_data(
@@ -16,34 +16,11 @@ def normalize_data(
     data /= np.max(data, axis=(-2, -1), keepdims=True)
     return data
 
-def augmentation_training(
+def modifications_training(
         original_height: int, 
         original_width: int
         ) -> torch.nn.Sequential:
-    """
-    Constructs a data augmentation pipeline with a specific set of transformations tailored for 
-    optical field data or similar types of images. This pipeline includes blurring, cropping, and 
-    resizing operations to simulate various realistic alterations that data might undergo.
-
-    Parameters:
-    - original_height (int): The original height of the images before augmentation.
-    - original_width (int): The original width of the images before augmentation.
-
-    Returns:
-    torch.nn.Sequential: A Kornia Sequential object that contains a 
-    sequence of augmentation transformations to be applied to the images. These transformations 
-    include Gaussian blur, motion blur, a slight shift without scaling or rotation, 
-    and resizing back to the original dimensions.
-
-    The pipeline is set up to apply these transformations with certain probabilities, allowing for a 
-    diversified dataset without excessively distorting the underlying data characteristics. This 
-    augmentation strategy is particularly useful for training machine learning models on image data, 
-    as it helps to improve model robustness by exposing it to a variety of visual perturbations.
-
-    Example Usage:
-        augmentation_pipeline = get_augmentation(256, 256)
-        augmented_image = augmentation_pipeline(image=image)
-    """
+    
     shift = random.uniform(0.1,0.25)
     shear = random.uniform(20,50)
     direction = random.uniform(-1, 1)

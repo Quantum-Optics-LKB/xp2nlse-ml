@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 def plotter(
     y_train: np.ndarray, 
@@ -31,4 +31,3 @@ def plotter(
     plt.legend()
     plt.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_isat{number_of_isat}.png")
     plt.close()
-    

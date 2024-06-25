@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
+
 import torch
-from engine.seed_settings import set_seed
 from torch.utils.data import DataLoader
+from engine.seed_settings import set_seed
 set_seed(10)
 
 def exam(model, loader,device ):

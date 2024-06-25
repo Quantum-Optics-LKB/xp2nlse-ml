@@ -6,17 +6,62 @@ import os
 import sys
 import torch
 import numpy as np
-from engine.loss_plot import plotter
-from engine.test import exam
-from engine.data_prep_for_training import data_split, data_treatment
-from engine.training import network_training
 import torch.nn as nn
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from engine.model import Inception_ResNetv2
-from engine.seed_settings import set_seed
+from engine.test import exam
+from engine.loss_plot import plotter
 from torch.utils.data import DataLoader
-
+from engine.seed_settings import set_seed
+from engine.model import Inception_ResNetv2
+from engine.training import network_training
+from engine.field_dataset import FieldDataset
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 set_seed(10)
+
+def data_split(
+        E: np.ndarray, 
+        n2_labels: np.ndarray,
+        isat_labels: np.ndarray,
+        train_ratio: float = 0.8, 
+        validation_ratio: float = 0.1, 
+        test_ratio: float = 0.1
+        ) -> tuple:
+    assert train_ratio + validation_ratio + test_ratio == 1
+    
+    np.random.seed(0)
+    indices = np.arange(E.shape[0])
+    np.random.shuffle(indices)
+    
+    train_index = int(len(indices) * train_ratio)
+    validation_index = int(len(indices) * (train_ratio + validation_ratio))
+
+    training_indices = indices[:train_index]
+    validation_indices = indices[train_index:validation_index]
+    test_indices = indices[validation_index:]
+
+    train = E[training_indices,:,:,:].copy()
+    validation = E[validation_indices,:,:,:].copy()
+    test = E[test_indices,:,:,:].copy()
+
+    train_n2 = n2_labels[training_indices].copy()
+    validation_n2 = n2_labels[validation_indices].copy()
+    test_n2 = n2_labels[test_indices].copy()
+
+    train_isat = isat_labels[training_indices].copy()
+    validation_isat = isat_labels[validation_indices].copy()
+    test_isat = isat_labels[test_indices].copy()
+
+    return (train, train_n2, train_isat), (validation, validation_n2, validation_isat), (test, test_n2, test_isat)
+
+def create_loaders(
+        sets: np.ndarray, 
+        batch_size: int
+        ) -> DataLoader:
+    
+    set, n2label, isatlabel = sets 
+    fieldset = FieldDataset(set, n2label, isatlabel)
+    fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
+
+    return fieldloader
 
 def network_init(
         learning_rate: float, 
@@ -45,7 +90,7 @@ def network_init(
 
     return cnn, optimizer, criterion, scheduler
 
-def prep_training(
+def prepare_training(
         nlse_settings: tuple, 
         labels: tuple, 
         E: np.ndarray,
@@ -81,9 +126,9 @@ def prep_training(
     train, validation, test = data_split(E, n2_values_normalized, isat_values_normalized, 0.8, 0.1, 0.1)
 
 
-    trainloader = data_treatment(train, batch_size)
-    validationloader = data_treatment(validation, batch_size)
-    testloader = data_treatment(test, batch_size )
+    trainloader = create_loaders(train, batch_size)
+    validationloader = create_loaders(validation, batch_size)
+    testloader = create_loaders(test, batch_size )
 
     model_settings = cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device
 
@@ -135,5 +180,4 @@ def launch_training(
     exam(cnn, testloader, device)
 
     sys.stdout = orig_stdout
-    f.close()
-    
+    f.close()   

@@ -1,10 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from engine.seed_settings import set_seed
-set_seed(10)
-
-plt.rcParams['font.family'] = 'DejaVu Serif'
-plt.rcParams['font.size'] = 20
+import matplotlib.pyplot as plt
 
 def plot_and_save_images(
         data: np.ndarray, 
@@ -28,6 +23,9 @@ def plot_and_save_images(
     puiss_str = r"$p$"
     puiss_u = r"$W$"
     
+    plt.rcParams['font.family'] = 'DejaVu Serif'
+    plt.rcParams['font.size'] = 20
+
     fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
     fig_density.suptitle(f'Density Channels - {puiss_str} = {input_power:.2e} {puiss_u}')
 

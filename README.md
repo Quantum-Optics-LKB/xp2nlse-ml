@@ -41,9 +41,9 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 # Inception-ResNet-v2 Model
 
 ```mermaid
-graph TD
+graph LR
     subgraph sub1["Stem"]
-        direction TB
+        direction LR
         B1[Input]
         B1 --> B2[3x3 Conv - 32 - stride 2 V]
         B2 --> B3[3x3 Conv - 32 V]
@@ -67,7 +67,7 @@ graph TD
         style sub1 fill:#551a8b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
     end
     subgraph sub2["MODEL"]
-        direction TB
+        direction LR
         A[Input - Batchx3x256x256] --> B[Stem]
         B -->|5 x| C[Inception-ResNet-A]
         C --> D[Reduction-A]
@@ -98,7 +98,7 @@ graph TD
 
 ```
 ```mermaid
-graph TD
+graph TB
     subgraph sub6["Inception-ResNet-C"]
         direction TB
         G1[Relu activation]
@@ -146,8 +146,9 @@ graph TD
     style sub6 fill:#9932cc,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
 ```
 ```mermaid
-graph TD
-    subgraph sub2["Reduction-B"]
+graph TB
+
+    subgraph sub7["Reduction-B"]
         direction TB
         C1[Previous Layer]
         C1 --> C2[3x3 MaxPool - stride 2 V]
@@ -163,7 +164,7 @@ graph TD
         C7 --> C10[Filter concat]
         C9 --> C10[Filter concat]
     end
-    subgraph sub3["Reduction-A"]
+    subgraph sub8["Reduction-A"]
         direction TB
         D1[Filter concat]
         D1 --> D2[3x3 MaxPool - stride 2 V]
@@ -176,8 +177,8 @@ graph TD
         D7 --> D8[Filter concat]
         
     end
-    style sub2 fill:#8b008b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
-    style sub3 fill:#732e99,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
+    style sub7 fill:#8b008b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
+    style sub8 fill:#732e99,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
 
 ```
 ## Workflow
@@ -358,45 +359,59 @@ manager(generate, training, create_visual, use, plot_generate_compare, device,
 ```mermaid
 graph TD
     A[parameters.py] --> B[parameter_manager.py]
-    B --> C[generate]
-    sub1 --> D[training]
+    B --> C{generate}
     C --> |True| sub1
-    sub1 --> B
+    C --> |False| D[Load data]
+    sub1 --> sub2
+    D --> sub2
+    sub2 --> G{create_visual}
+    G --> |True| sub5
+    G --> |False| E{training}
+    sub5 --> E{training}
+    E --> |True| sub3
+    E --> |False| F{use}
+    F --> |True| sub4
+    sub3 --> F
+
     
     subgraph sub1[Generate data]
-        C1[generate.py] --> C2[data_creation]
+        C1[generate.py] --> C2(data_creation)
         C2 --> C3[noise_generator.py]
-        C3 --> C4[experiment_noise]
-        C4 --> C5[NLSE]
+        C3 --> C4(experiment_noise)
+        C4 --> C5(NLSE)
         
     end
     subgraph sub2[Augment data]
-        F1[augment.py] --> F2[data_augmentation]  
+        F1[augment.py] --> F2(data_augmentation)  
         F2 --> F3[treament_methods.py]
-        F3 --> F4[salt_and_pepper_noise]
-        F3 --> F5[line_noise]
+        F3 --> F4(salt_and_pepper_noise)
+        F3 --> F5(line_noise)
 
     end
     
     subgraph sub3[Training the model]
         D1[finder.py]
         D1 --> D2[prep_training]
-        D2 --> D3[network_init]
-        D3 --> D4[data_split]
-        D4 --> D5[data_treatment]
-        D5 --> D6[launch_training]
+        D2 --> D3(network_init)
+        D3 --> D4(data_split)
+        D4 --> D5(data_treatment)
+        D5 --> D6(launch_training)
         D6 --> D7[training.py] 
-        D7 --> D8[network_training]
+        D7 --> D8(network_training)
         D6 --> D9[loss_plot.py]
-        D9 --> D10[plotter]
+        D9 --> D10(plotter)
         D6 --> D11[test.py]
-        D11 --> D12[exam]
-        D12 --> D13[count_parameters_pandas]
-        D13 --> D14[test_model]
+        D11 --> D12(exam)
+        D12 --> D13(count_parameters_pandas)
+        D13 --> D14(test_model)
 
     end
 
     subgraph sub4[Use the model]
         E1[use.py]
+    end
+
+    subgraph sub5[Visualize training data]
+        G1[visualize.py]
     end
 ```

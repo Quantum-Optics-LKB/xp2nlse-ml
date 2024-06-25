@@ -20,8 +20,8 @@ generate = True
 create_visual = False
 
 ###Parameter spaces:
-number_of_n2 = 20
-number_of_isat = 20
+number_of_n2 = 30
+number_of_isat = 30
 n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
 isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 

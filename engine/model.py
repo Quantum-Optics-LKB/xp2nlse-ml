@@ -1,4 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# @author: Louis Rossignol
 # inspired from https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch/tree/master
+
 import torch
 import torch.nn as nn
 from engine.seed_settings import set_seed

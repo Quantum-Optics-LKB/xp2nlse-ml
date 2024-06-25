@@ -2,10 +2,17 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
+import gc
+import cupy as cp
 import numpy as np
 from tqdm import tqdm
-from engine.treament_methods import experiment_noise, normalize_data
+from NLSE import NLSE
+from cupyx.scipy.ndimage import zoom
+from scipy.constants import c, epsilon_0
 from engine.seed_settings import set_seed
+from skimage.restoration import unwrap_phase
+from engine.treament_methods import experiment_noise, normalize_data
+
 set_seed(10)
 
 def data_creation(
@@ -13,13 +20,6 @@ def data_creation(
     cameras: tuple,
     saving_path: str = "",
     ) -> np.ndarray:
-
-    from NLSE import NLSE
-    from cupyx.scipy.ndimage import zoom
-    import gc
-    import cupy as cp
-    from scipy.constants import c, epsilon_0
-    from skimage.restoration import unwrap_phase
     
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
     resolution_in, window_in, window_out, resolution_training = cameras

@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-from torch.utils.data import Dataset
+
 import torch
 import numpy as np
+from torch.utils.data import Dataset
 from engine.seed_settings import set_seed
 set_seed(10)
 

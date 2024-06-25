@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-from matplotlib import pyplot as plt
+
 import torch
 import numpy as np
 from scipy.ndimage import zoom
-from engine.augment import data_creation
+from matplotlib import pyplot as plt
+from engine.seed_settings import set_seed
+from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
-from engine.seed_settings import set_seed
+
+
+
+
 set_seed(10)
 
 def get_parameters(
@@ -84,7 +89,7 @@ def get_parameters(
         puiss_u = r"$W$"
 
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
-        E = data_creation(numbers, cameras)
+        E, labels = data_creation(numbers, cameras)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
         fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}')
         
