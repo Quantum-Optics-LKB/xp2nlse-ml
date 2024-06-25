@@ -318,6 +318,7 @@ manager(generate, training, create_visual, use, plot_generate_compare,
          saving_path, exp_image_path)
 ```
 
+### Generation
 This code will generate a dataset and store in your saving path under the name:
 ```python
 f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power}.npy"
@@ -328,12 +329,72 @@ The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :
 
 Using the `create_visual` variable you can get:
 
-### Density
+#### Density
 ![image info](./img/density_n25_isat5_power1.05.png)
-### Phase
+#### Phase
 ![image info](./img/phase_n25_isat5_power1.05.png)
-### Unwrapped Phase
+#### Unwrapped Phase
 ![image info](./img/unwrap_phase_n25_isat5_power1.05.png)
+
+These images will be augmented by 33 with different noises and fringes.
+At the end of this process your array will be of shape (33 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
+### Augmentations
+Once the augmentations are done the array goes to training.
+
+### Training
+In training the batches will be distorded on the spot using different transforms.
+
+The goal is to have random transforms for which we set up a probability of happening using the following code.
+
+```python
+def modifications_training(
+        original_height: int, 
+        original_width: int
+        ) -> torch.nn.Sequential:
+    
+    shift = random.uniform(0.1,0.25)
+    shear = random.uniform(20,50)
+    direction = random.uniform(-1, 1)
+    return torch.nn.Sequential(
+        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.2),
+        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.3),
+        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.2),
+        K.Resize((original_height, original_width))
+    )
+```
+The following shows you how the images are getting modified.
+
+The model is saved in a directory of the name:
+```python
+f"training_n2{number_of_n2}_isat{number_of_isat}_power{input_power}"
+```
+This directory contains 4 files:
+
+- Model:
+```python
+f"n2_net_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_power{input_power}.pth"
+```
+- Plot of the losses:
+
+The two parameters that are measured during training are the training loss and the validation loss.
+Prior to training the model was splitted into 3 arrays (80% for training, 10% validation, 10% test). The goal is that while the training is going and the 80% are used to compute the good parameters for the model, the model also computes the loss on the 10% of the validation. The validation loss is not use to update the model but rather as a measure for us to check that the model is not overfitting. Namely, that it is not learning by heart the training set and its noise as well rather than generalising.
+```python
+f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_power{input_power}.pth"
+```
+On this it was computed with small numbers of $n_2$ and $I_{sat}$ so it converges really fast.
+![image info](./img/losses_w256_n25_isat5.png)
+
+- Parameters file:
+
+In `params.txt`, there are all the parameters that generated the model for you to keep track of the model parameters.
+
+- Testing file:
+
+In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$ and $I_{sat}$.
+
+### Sandbox:
+
+When you train, (trust me I have been through it) you want to be as close as possible to the experimental data. It implies ensuring convergence. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
 
 The `sandbox_parameters.py` contains this code.
 You can just choose your parameters and launch the code.
