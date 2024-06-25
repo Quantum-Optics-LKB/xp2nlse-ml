@@ -40,7 +40,7 @@ def manager(generate: bool,
     if generate or training:
         import gc
         import cupy as cp
-        from engine.generate import data_creation
+        from engine.generate import data_creation, generate_labels
         from engine.augment import data_augmentation
         from engine.visualize import plot_and_save_images
         from engine.finder import manage_training, prepare_training
@@ -48,13 +48,14 @@ def manager(generate: bool,
         
         if generate:
             with cp.cuda.Device(device):
-                E, labels = data_creation(nlse_settings, cameras, saving_path)
+                E = data_creation(nlse_settings, cameras, saving_path)
         else:
             E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.npy')
         if create_visual:
             
             plot_and_save_images(E, saving_path, nlse_settings)
 
+        labels = generate_labels(n2, isat)
         E, labels = data_augmentation(E, labels)
 
         if training:

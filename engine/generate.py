@@ -29,13 +29,6 @@ def data_creation(
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
 
-    N2_labels, ISAT_labels = np.meshgrid(n2, isat) 
-
-    n2_labels = N2_labels.reshape(-1)
-    isat_labels = ISAT_labels.reshape(-1)
-
-    labels = (len(n2), n2_labels, len(isat), isat_labels)
-
     isat = isat[:, np.newaxis, np.newaxis]
 
     X = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float32)
@@ -94,4 +87,17 @@ def data_creation(
     if saving_path != "":
         np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
     
-    return E, labels
+    return E
+
+def generate_labels(
+      n2: np.ndarray, 
+      isat: np.ndarray
+      ) -> tuple:
+  N2_labels, ISAT_labels = np.meshgrid(n2, isat) 
+
+  n2_labels = N2_labels.reshape(-1)
+  isat_labels = ISAT_labels.reshape(-1)
+
+  labels = (len(n2), n2_labels, len(isat), isat_labels)
+
+  return labels

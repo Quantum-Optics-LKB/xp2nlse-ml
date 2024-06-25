@@ -283,7 +283,7 @@ The accumulator variable is a multiplier that does that.
 - To have no accumulation set `accumulator` to 1.
 
 #### <ins>Experimental Data<ins>
-- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (N, `output_camera_resolution`, `output_camera_resolution`) or (`output_camera_resolution`, `output_camera_resolution`).
+- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (`output_camera_resolution`, `output_camera_resolution`).
 - `use`: Boolean indicating whether to compute parameters for the dataset.
 - `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.
 

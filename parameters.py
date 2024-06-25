@@ -16,7 +16,7 @@ output_pixel_size = 3.76e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2 #m
 resolution_training = 256
-generate = True
+generate = False
 create_visual = False
 
 ###Parameter spaces:
