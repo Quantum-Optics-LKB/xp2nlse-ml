@@ -17,17 +17,6 @@ $$
 The system holds 2 unknowns: non-linear index $n_2$ and saturation intensity $I_{sat}$.
 These parameters cannot be measured in the experiment. They are intrinsic properties of the system.
 
-### Previous solution
-
-The previous method to find these parameters was to fit the dephasing and the intensity with the solution of the following coupled differential equations.
-
-$$
-\frac{\partial_{}\phi}{\partial_{}z} = k_0 n_2 \frac{I}{1 + \frac{I}{I_{sat}}},  \\
-\frac{\partial_{}I}{\partial_{}z} = - \alpha \frac{I}{1 + \frac{I}{I_{sat}}}
-$$
-
-The fit works well to extract n2 for large beams. However it fails to measure Isat. The problem is that even if the beam is large, the fit fails to include self-defocusing.
-
 With the recent research in machine learning and optimization tools thriving, the idea was to attempt and solve this problem with neural networks. 
 
 ## Overview
@@ -298,7 +287,7 @@ You can just choose your parameters and launch the code.
 
 import numpy as np
 from engine.parameter_manager import manager
-saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+saving_path="/your/saving/path"
 device = 0
 
 ###Data generation Parameters:
@@ -333,7 +322,7 @@ accumulator=1
 num_epochs=100
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
+exp_image_path="/your/experiment/path/experiment.npy"
 use=True
 plot_generate_compare=True
 
@@ -352,7 +341,7 @@ You can just choose your parameters and launch the code.
 
 from engine.nlse_sandbox import sandbox
 
-saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+saving_path="/your/saving/path"
 device = 0
 
 ###Data generation Parameters:
@@ -378,7 +367,7 @@ waist_input_beam = 2.3e-3 #m
 non_locality_length = 0 #m
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
+exp_image_path="/your/experiment/path/experiment.npy"
 
 sandbox(device, resolution_input_beam, window_input, window_out,
         resolution_training, n2, input_power, alpha,
