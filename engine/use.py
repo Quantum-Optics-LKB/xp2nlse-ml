@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 import torch
 import numpy as np
 from scipy.ndimage import zoom
-from engine.generate_augment import data_creation
+from engine.augment import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 from engine.seed_settings import set_seed

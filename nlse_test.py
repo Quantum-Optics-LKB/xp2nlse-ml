@@ -4,7 +4,7 @@ from scipy.constants import c, epsilon_0
 from skimage.restoration import unwrap_phase
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from engine.generate_augment import add_model_noise, normalize_data
+from engine.augment import add_model_noise, normalize_data
 from scipy.ndimage import zoom
 import cupy as cp
 

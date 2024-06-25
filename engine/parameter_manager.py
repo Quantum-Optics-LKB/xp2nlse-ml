@@ -38,28 +38,27 @@ def manager(generate: bool,
     nlse_settings = n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length
 
     if generate or training:
-        from engine.generate_augment import data_creation, data_augmentation, generate_labels
+        from engine.augment import data_creation, data_augmentation, generate_labels
         if generate:
             import cupy as cp
             with cp.cuda.Device(device):
-                E = data_creation(nlse_settings, cameras, saving_path)
+                E, labels = data_creation(nlse_settings, cameras, saving_path)
         else:
             E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.npy')
         if create_visual:
             from engine.visualize import plot_and_save_images
             plot_and_save_images(E, saving_path, nlse_settings)
 
-        labels = generate_labels(n2, isat)
         E, labels = data_augmentation(E, labels)
 
-    if training:
-        from engine.finder import launch_training, prep_training
-        import gc
-        print("---- TRAINING ----")
-        trainloader, validationloader, testloader, model_settings, new_path = prep_training(nlse_settings, labels, E, saving_path, learning_rate, batch_size, num_epochs, accumulator, device)
-        del E
-        gc.collect()
-        launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution_training, labels)
+        if training:
+            from engine.finder import launch_training, prep_training
+            import gc
+            print("---- TRAINING ----")
+            trainloader, validationloader, testloader, model_settings, new_path = prep_training(nlse_settings, labels, E, saving_path, learning_rate, batch_size, num_epochs, accumulator, device)
+            del E
+            gc.collect()
+            launch_training(trainloader, validationloader, testloader, model_settings, nlse_settings, new_path, resolution_training, labels)
 
     if use:
         from engine.use import get_parameters

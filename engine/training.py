@@ -7,7 +7,7 @@ import torch
 import numpy as np
 import torch.optim
 from tqdm import tqdm
-from engine.noise_generator import augmentation
+from engine.treament_methods import augmentation_training
 from engine.seed_settings import set_seed
 set_seed(10)
 
@@ -22,7 +22,7 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         net.train()
         
         for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):
-            augment = augmentation(images.shape[-2],images.shape[-1])
+            augment = augmentation_training(images.shape[-2],images.shape[-1])
             
             images = augment(images.to(device = device, dtype=torch.float32))
             n2_values = n2_values.to(device = device, dtype=torch.float32)

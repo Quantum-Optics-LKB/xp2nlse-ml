@@ -78,8 +78,8 @@ graph TD
         H --> I[Dropout]
         I --> J[Softmax]
         J --> K[Output]
-        K --> L[n2]
-        K --> M[Isat]
+        K --> L[n<sub>2</sub>]
+        K --> M[I<sub>sat</sub>]
     end
 
     style A fill:#4b0082,stroke:#333,stroke-width:4px,color:#fff,font-size:18px,shape:rect
@@ -296,3 +296,107 @@ The accumulator variable is a multiplier that does that.
 - `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (N, `output_camera_resolution`, `output_camera_resolution`) or (`output_camera_resolution`, `output_camera_resolution`).
 - `use`: Boolean indicating whether to compute parameters for the dataset.
 - `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.
+
+## Example Usage
+
+The `parameter.py` contains this code.
+You can just choose your parameters and launch the code.
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# @author: Louis Rossignol
+
+import numpy as np
+from engine.parameter_manager import manager
+saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+device = 0
+
+###Data generation Parameters:
+delta_z=1e-4 #m
+resolution_input_beam = 2048
+window_input = 50e-3 #m
+output_camera_resolution = 3008
+output_pixel_size = 3.76e-6 #m
+window_out = output_pixel_size * output_camera_resolution #m
+cell_length=20e-2 #m
+resolution_training = 256
+generate = True
+create_visual = False
+
+###Parameter spaces:
+number_of_n2 = 20
+number_of_isat = 20
+n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
+isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
+
+###Laser Parameters:
+input_power = 1.05 #W
+alpha = 22 #m^-1
+waist_input_beam = 2.3e-3 #m
+non_locality_length = 0 #m
+
+###Training Parameters:
+training=True
+learning_rate=0.01
+batch_size=100
+accumulator=1
+num_epochs=100
+
+###Find your parameters (n2 and Isat):
+exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
+use=True
+plot_generate_compare=True
+
+manager(generate, training, create_visual, use, plot_generate_compare, device, 
+            resolution_input_beam, window_input, window_out, resolution_training, n2, number_of_n2,
+            input_power, alpha, isat, number_of_isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
+            saving_path, exp_image_path, learning_rate, batch_size, num_epochs, accumulator)
+```
+
+## Program flowchart
+
+```mermaid
+graph TD
+    A[parameters.py] --> B[parameter_manager.py]
+    B --> C[generate]
+    sub1 --> D[training]
+    C --> |True| sub1
+    sub1 --> B
+    
+    subgraph sub1[Generate data]
+        C1[generate.py] --> C2[data_creation]
+        C2 --> C3[noise_generator.py]
+        C3 --> C4[experiment_noise]
+        C4 --> C5[NLSE]
+        
+    end
+    subgraph sub2[Augment data]
+        F1[augment.py] --> F2[data_augmentation]  
+        F2 --> F3[treament_methods.py]
+        F3 --> F4[salt_and_pepper_noise]
+        F3 --> F5[line_noise]
+
+    end
+    
+    subgraph sub3[Training the model]
+        D1[finder.py]
+        D1 --> D2[prep_training]
+        D2 --> D3[network_init]
+        D3 --> D4[data_split]
+        D4 --> D5[data_treatment]
+        D5 --> D6[launch_training]
+        D6 --> D7[training.py] 
+        D7 --> D8[network_training]
+        D6 --> D9[loss_plot.py]
+        D9 --> D10[plotter]
+        D6 --> D11[test.py]
+        D11 --> D12[exam]
+        D12 --> D13[count_parameters_pandas]
+        D13 --> D14[test_model]
+
+    end
+
+    subgraph sub4[Use the model]
+        E1[use.py]
+    end
+```

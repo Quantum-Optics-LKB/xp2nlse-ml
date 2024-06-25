@@ -6,6 +6,14 @@ from engine.seed_settings import set_seed
 from torch.utils.data import DataLoader
 set_seed(10)
 
+def exam(model, loader,device ):
+    print("---- MODEL ANALYSIS ----")
+    count_parameters_pandas(model)
+
+    print("---- MODEL TESTING ----")
+    test_model(loader, model, device)
+
+
 def test_model(
         totalloader: DataLoader, 
         net: torch.nn.Module,

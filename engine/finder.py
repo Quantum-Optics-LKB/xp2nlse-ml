@@ -7,7 +7,7 @@ import sys
 import torch
 import numpy as np
 from engine.loss_plot import plotter
-from engine.test import count_parameters_pandas, test_model
+from engine.test import exam
 from engine.data_prep_for_training import data_split, data_treatment
 from engine.training import network_training
 import torch.nn as nn
@@ -132,11 +132,7 @@ def launch_training(
 
     plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_isat)
 
-    print("---- MODEL ANALYSIS ----")
-    count_parameters_pandas(cnn)
-
-    print("---- MODEL TESTING ----")
-    test_model(testloader, cnn, device)
+    exam(cnn, testloader, device)
 
     sys.stdout = orig_stdout
     f.close()

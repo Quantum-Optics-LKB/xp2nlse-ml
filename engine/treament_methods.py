@@ -9,7 +9,14 @@ from engine.seed_settings import set_seed
 import kornia.augmentation as K
 set_seed(10)
 
-def augmentation(
+def normalize_data(
+        data: np.ndarray,
+        ) -> np.ndarray: 
+    data -= np.min(data, axis=(-2, -1), keepdims=True)
+    data /= np.max(data, axis=(-2, -1), keepdims=True)
+    return data
+
+def augmentation_training(
         original_height: int, 
         original_width: int
         ) -> torch.nn.Sequential:
@@ -47,7 +54,7 @@ def augmentation(
         K.Resize((original_height, original_width))
     )
 
-def add_model_noise(
+def experiment_noise(
         beam: np.ndarray, 
         poisson_noise_lam: float,
         normal_noise_sigma: float
