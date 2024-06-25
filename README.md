@@ -400,9 +400,10 @@ graph TD
     G --> |False| E{training}
     sub5 --> E{training}
     E --> |True| sub3
-    E --> |False| F{use}
+    E --> |False| K[Loads the model: \n It implies the model has already been created and trained\n and matches the naming convention]
+    K --> F{use}
     F --> |True| sub4
-    sub3 --> F
+    sub3 --> K
 
     
     subgraph sub1[Generate data]
@@ -440,6 +441,9 @@ graph TD
 
     subgraph sub4[Use the model]
         E1[use.py]
+        E1 --> E2{plot_generate_compare}
+        E2 --> |True| E3[Creates a comparison plot \n between your experimental data and \nthe parameters the model computed]
+
     end
 
     subgraph sub5[Visualize training data]
