@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from engine.seed_settings import set_seed
-set_seed(0)
+set_seed(10)
 
 plt.rcParams['font.family'] = 'DejaVu Serif'
 plt.rcParams['font.size'] = 20

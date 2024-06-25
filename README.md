@@ -32,7 +32,7 @@ With the recent research in machine learning and optimization tools thriving, th
 
 ## Overview
 
-This repository uses a Inception-Residual Network (Inception-Resnetv2) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
+This repository uses the Inception-Residual Network (Inception-Resnetv2) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
 
 ## Source
 
@@ -182,8 +182,8 @@ graph TD
 ```
 ## Workflow
 
-1. **Create Your Setup**: Design your experimental or simulation setup.
-2. **Record Output parameters**: Take note of all the parameters of the output camera that the dataset will need to represent.
+1. **Create Your Setup**: Design your experimental setup.
+2. **Record Output parameters**: Take note of all the parameters of your system to ensure the data you will generate will be able to represent your system.
 3. **Generate Training Data**: The data is generated using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) based on your parameters.
 4. **Train the Model**: Train the model using the generated data.
 5. **Estimate your parameters**: Apply the trained model to new data to estimate parameters.
@@ -203,7 +203,7 @@ Ensure you have Python 3.x installed. This project requires the following extern
 - **Cupyx**
 - **Skimage**
 - **tqdm**
-- **kornia**
+- **Kornia**
 
 These dependencies can be installed using mamba.
 
@@ -220,7 +220,7 @@ cd nlse_parameter_nn
 
 ## Usage
 
-The `parameters.py` script controls the data generation, training, and parameter estimation processes:
+The `parameters.py` script is where you store the parameters for the data generation, training, and parameter estimation processes:
 
 ```bash
 python parameters.py
@@ -239,14 +239,19 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `generate`: Set to `True` to generate new data using NLSE.
 
 #### <ins>Data Generation Parameters using NLSE <ins>
-- `delta_z`: Step of the propagation in the split-step method ($m$).
+##### Cell
+- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `non_locality_length`: Length of non locality ($m$).
+- `cell_length`: Length of the rubidium cell ($m$).
+##### Camera
 - `resolution_input_beam`: Resolution of the input beam.
 - `window_input`: Window size of the input beam ($m$).
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
 - `output_pixel_size`: Size of pixels of the output camera ($m$).
 - `window_out`: Window size of the propagated output beam ($m$). It is set to be output_pixel_size x output_camera_resolution.
-- `cell_length`: Length of the rubidium cell ($m$).
 - `resolution_training`: Resolution of images when saved and for training.
+##### Simulation
+- `delta_z`: Step of the propagation in the split-step method ($m$).
 
 #### <ins>Parameter Spaces<ins>
 - `number_of_n2`: Number of different n2 values for training.
@@ -256,9 +261,7 @@ This will help the model generalize the fitting of the parameters regardless of 
 
 #### <ins>Laser Parameters<ins>
 - `input_power`: Input power of the laser ($W$).
-- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
 - `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
-- `non_locality_length`: Length of non locality ($m$).
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
@@ -267,15 +270,14 @@ For for more information on the generation process see [NLSE](https://github.com
 - `learning_rate`: Learning rate for training.
 
 The training is done in batches.
-It means that when it does a forward path through the model it does not train the full dataset at the same time.
-It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because
-training is better if the model receives samples by samples such that the parameters of the model get trained more times.
+It means that when it does a forward pass (ie the model takes a training image through the model) through the model it does not train the full dataset at the same time.
+It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because training is better if the model receives samples by samples. It ensures the parameters of the model get trained more times.
 It improves the speed of the convergence.
 
 - `batch_size`: Batch size for training.
 
 The training method implements gradient accumulation.
-It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will devide the batch in the number you set to have the same training.
+It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will divide the batch in the number you set to have the same training.
 The accumulator variable is a multiplier that does that.
 
 <ins>Example:<ins>

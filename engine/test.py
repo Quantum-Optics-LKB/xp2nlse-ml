@@ -4,7 +4,7 @@
 import torch
 from engine.seed_settings import set_seed
 from torch.utils.data import DataLoader
-set_seed(0)
+set_seed(10)
 
 def test_model(
         totalloader: DataLoader, 

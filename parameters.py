@@ -20,9 +20,9 @@ generate = True
 create_visual = False
 
 ###Parameter spaces:
-number_of_n2 = 50
-number_of_isat = 50
-n2 = -5*np.logspace(-11, -9, number_of_n2) #m/W^2 [-5e-11 -> -5e-9]
+number_of_n2 = 20
+number_of_isat = 20
+n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
 isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 
 ###Laser Parameters:
@@ -34,8 +34,8 @@ non_locality_length = 0 #m
 ###Training Parameters:
 training=True
 learning_rate=0.01
-batch_size=25
-accumulator=4
+batch_size=100
+accumulator=1
 num_epochs=100
 
 ###Find your parameters (n2 and Isat):

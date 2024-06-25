@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import torch
 import numpy as np
 from engine.seed_settings import set_seed
-set_seed(0)
+set_seed(10)
 
 class FieldDataset(Dataset):
     def __init__(

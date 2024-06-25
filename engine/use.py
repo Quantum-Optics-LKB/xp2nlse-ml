@@ -9,7 +9,7 @@ from engine.generate_augment import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 from engine.seed_settings import set_seed
-set_seed(0)
+set_seed(10)
 
 def get_parameters(
         exp_path: str,

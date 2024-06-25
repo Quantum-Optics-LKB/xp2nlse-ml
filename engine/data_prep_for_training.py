@@ -6,7 +6,7 @@ import numpy as np
 from engine.field_dataset import FieldDataset
 from torch.utils.data import DataLoader
 from engine.seed_settings import set_seed
-set_seed(0)
+set_seed(10)
 
 def data_split(
         E: np.ndarray, 

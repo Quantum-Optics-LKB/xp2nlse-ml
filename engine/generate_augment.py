@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from engine.noise_generator import add_model_noise
 from engine.seed_settings import set_seed
-set_seed(0)
+set_seed(10)
 
 def data_creation(
     numbers: tuple,
