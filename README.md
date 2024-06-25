@@ -208,7 +208,7 @@ python parameters.py
 
 #### <ins>Path and Device Settings<ins>
 - `saving_path`: Directory where data and models will be saved.
-- `device`: GPU device ID to run the code.
+- `device`: GPU device ID to run the code.  (default 0)
 
 #### <ins>Data Generation <ins>
 When you generate the data there are two steps.
@@ -220,17 +220,17 @@ This will help the model generalize the fitting of the parameters regardless of 
 #### <ins>Data Generation Parameters using NLSE <ins>
 ##### Cell
 - `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
-- `non_locality_length`: Length of non locality ($m$).
+- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
 - `cell_length`: Length of the rubidium cell ($m$).
 ##### Camera
-- `resolution_input_beam`: Resolution of the input beam.
-- `window_input`: Window size of the input beam ($m$).
+- `resolution_input_beam`: Resolution of the input beam. (default 2048) (Note that it is better to keep it a power of 2)
+- `window_input`: Window size of the input beam ($m$). (default $50\cdot10^{-3}$ $m$)
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
 - `output_pixel_size`: Size of pixels of the output camera ($m$).
 - `window_out`: Window size of the propagated output beam ($m$). It is set to be output_pixel_size x output_camera_resolution.
-- `resolution_training`: Resolution of images when saved and for training.
+- `resolution_training`: Resolution of images when saved and for training. (default 256)
 ##### Simulation
-- `delta_z`: Step of the propagation in the split-step method ($m$).
+- `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ $m$)
 
 #### <ins>Parameter Spaces<ins>
 - `number_of_n2`: Number of different n2 values for training.
@@ -240,7 +240,7 @@ This will help the model generalize the fitting of the parameters regardless of 
 
 #### <ins>Laser Parameters<ins>
 - `input_power`: Input power of the laser ($W$).
-- `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
+- `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam: $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
@@ -253,7 +253,7 @@ It means that when it does a forward pass (ie the model takes a training image t
 It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because training is better if the model receives samples by samples. It ensures the parameters of the model get trained more times.
 It improves the speed of the convergence.
 
-- `batch_size`: Batch size for training.
+- `batch_size`: Batch size for training. (default 100)
 
 The training method implements gradient accumulation.
 It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will divide the batch in the number you set to have the same training.
@@ -263,8 +263,8 @@ The accumulator variable is a multiplier that does that.
 
  You want total_batch_size = 99 but it is too big. What you can do is set batch_size = 33 and accumulator = 3. Therefore, only batchsize will be loaded on the GPU.
 
-- `accumulator`: Gradient accumulation multiplier.
-- `num_epochs`: Number of training epochs.
+- `accumulator`: Gradient accumulation multiplier.  (default 1)
+- `num_epochs`: Number of training epochs. (default 60)
 
 <ins>Note<ins>: 
 
@@ -281,30 +281,21 @@ The accumulator variable is a multiplier that does that.
 The `parameters.py` contains this code.
 You can just choose your parameters and launch the code.
 ```python
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# @author: Louis Rossignol
-
 import numpy as np
 from engine.parameter_manager import manager
 saving_path="/your/saving/path/"
-device = 0
 
 ###Data generation Parameters:
-delta_z=1e-4 #m
-resolution_input_beam = 2048
-window_input = 50e-3 #m
 output_camera_resolution = 3008
 output_pixel_size = 3.76e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2 #m
-resolution_training = 256
-generate = True
+generate = False
 create_visual = False
 
 ###Parameter spaces:
-number_of_n2 = 20
-number_of_isat = 20
+number_of_n2 = 30
+number_of_isat = 30
 n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
 isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 
@@ -312,24 +303,19 @@ isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 input_power = 1.05 #W
 alpha = 22 #m^-1
 waist_input_beam = 2.3e-3 #m
-non_locality_length = 0 #m
 
 ###Training Parameters:
 training=True
-learning_rate=0.01
-batch_size=100
-accumulator=1
-num_epochs=100
 
 ###Find your parameters (n2 and Isat):
 exp_image_path="/your/experiment/path/experiment.npy"
 use=True
 plot_generate_compare=True
 
-manager(generate, training, create_visual, use, plot_generate_compare, device, 
-            resolution_input_beam, window_input, window_out, resolution_training, n2, number_of_n2,
-            input_power, alpha, isat, number_of_isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
-            saving_path, exp_image_path, learning_rate, batch_size, num_epochs, accumulator)
+manager(generate, training, create_visual, use, plot_generate_compare,
+         window_out, n2, number_of_n2, alpha, isat, number_of_isat, 
+         input_power, waist_input_beam, cell_length, 
+         saving_path, exp_image_path)
 ```
 The `sandbox_parameters.py` contains this code.
 You can just choose your parameters and launch the code.
