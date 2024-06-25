@@ -41,6 +41,7 @@ The code for this model is adapted from an unofficial PyTorch implementation of 
 # Inception-ResNet-v2 Model
 
 ```mermaid
+
 graph LR
     subgraph sub1["Stem"]
         direction LR
@@ -64,7 +65,6 @@ graph LR
         B10 --> B16[MaxPool - stride 2 V]
         B15 --> B17[Filter concat]
         B16 --> B17[Filter concat]
-        style sub1 fill:#551a8b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
     end
     subgraph sub2["MODEL"]
         direction LR
@@ -81,20 +81,6 @@ graph LR
         K --> L[n<sub>2</sub>]
         K --> M[I<sub>sat</sub>]
     end
-
-    style A fill:#4b0082,stroke:#333,stroke-width:4px,color:#fff,font-size:18px,shape:rect
-    style B fill:#551a8b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style C fill:#660099,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style D fill:#732e99,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style E fill:#800080,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style F fill:#8b008b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style G fill:#9932cc,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style H fill:#ba55d3,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style I fill:#da70d6,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style J fill:#ee82ee,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style K fill:#dda0dd,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style L fill:#e6add8,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
-    style M fill:#f4a7f4,stroke:#333,stroke-width:2px,color:#fff,font-size:18px,shape:rect
 
 ```
 ```mermaid
@@ -141,9 +127,6 @@ graph TB
         E4 --> E7[+]
         E7 --> E8[Relu activation]
     end
-    style sub4 fill:#660099,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
-    style sub5 fill:#800080,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
-    style sub6 fill:#9932cc,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
 ```
 ```mermaid
 graph TB
@@ -177,8 +160,6 @@ graph TB
         D7 --> D8[Filter concat]
         
     end
-    style sub7 fill:#8b008b,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
-    style sub8 fill:#732e99,stroke:#333,stroke-width:2px,color:#fff,font-size:18px
 
 ```
 ## Workflow
