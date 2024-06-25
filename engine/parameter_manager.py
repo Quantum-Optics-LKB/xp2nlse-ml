@@ -43,7 +43,7 @@ def manager(generate: bool,
         from engine.generate import data_creation
         from engine.augment import data_augmentation
         from engine.visualize import plot_and_save_images
-        from engine.finder import launch_training, prepare_training
+        from engine.finder import manage_training, prepare_training
         
         
         if generate:
@@ -64,7 +64,7 @@ def manager(generate: bool,
                                                                                                     accumulator, device)
             del E
             gc.collect()
-            launch_training(trainloader, validationloader, testloader, model_settings, 
+            manage_training(trainloader, validationloader, testloader, model_settings, 
                             nlse_settings, new_path, resolution_training, labels)
 
     if use:

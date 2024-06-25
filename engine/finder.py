@@ -134,7 +134,7 @@ def prepare_training(
 
     return trainloader, validationloader, testloader, model_settings, new_path
 
-def launch_training(
+def manage_training(
         trainloader: DataLoader,
         validationloader: DataLoader,
         testloader: DataLoader,
