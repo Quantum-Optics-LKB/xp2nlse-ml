@@ -4,7 +4,7 @@
 
 import numpy as np
 from engine.parameter_manager import manager
-saving_path="/your/saving/path/"
+saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
 device = 0
 
 ###Data generation Parameters:
@@ -39,7 +39,7 @@ accumulator=1
 num_epochs=100
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/your/experiment/path/experiment.npy"
+exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
 use=True
 plot_generate_compare=True
 

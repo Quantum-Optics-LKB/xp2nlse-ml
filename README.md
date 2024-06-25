@@ -287,7 +287,7 @@ You can just choose your parameters and launch the code.
 
 import numpy as np
 from engine.parameter_manager import manager
-saving_path="/your/saving/path"
+saving_path="/your/saving/path/"
 device = 0
 
 ###Data generation Parameters:
@@ -341,7 +341,7 @@ You can just choose your parameters and launch the code.
 
 from engine.nlse_sandbox import sandbox
 
-saving_path="/your/saving/path"
+saving_path="/your/saving/path/"
 device = 0
 
 ###Data generation Parameters:
