@@ -294,8 +294,8 @@ generate = False
 create_visual = False
 
 ###Parameter spaces:
-number_of_n2 = 30
-number_of_isat = 30
+number_of_n2 = 5
+number_of_isat = 5
 n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
 isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
 
@@ -317,6 +317,24 @@ manager(generate, training, create_visual, use, plot_generate_compare,
          input_power, waist_input_beam, cell_length, 
          saving_path, exp_image_path)
 ```
+
+This code will generate a dataset and store in your saving path under the name:
+```python
+f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power}.npy"
+```
+This data set has shape:
+(`number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`). It has type `np.float16`.
+The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the phase unwrapped phase.
+
+Using the `create_visual` variable you can get:
+
+### Density
+![image info](./img/density_n25_isat5_power1.05.png)
+### Phase
+![image info](./img/phase_n25_isat5_power1.05.png)
+### Unwrapped Phase
+![image info](./img/unwrap_phase_n25_isat5_power1.05.png)
+
 The `sandbox_parameters.py` contains this code.
 You can just choose your parameters and launch the code.
 

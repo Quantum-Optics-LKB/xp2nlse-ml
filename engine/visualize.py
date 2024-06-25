@@ -24,7 +24,7 @@ def plot_and_save_images(
     puiss_u = r"$W$"
     
     plt.rcParams['font.family'] = 'DejaVu Serif'
-    plt.rcParams['font.size'] = 20
+    plt.rcParams['font.size'] = 50
 
     fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
     fig_density.suptitle(f'Density Channels - {puiss_str} = {input_power:.2e} {puiss_u}')
@@ -37,7 +37,6 @@ def plot_and_save_images(
             ax.axis('off')
 
     plt.tight_layout()
-    plt.subplots_adjust(top=0.95)
     plt.savefig(f'{saving_path}/density_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_density) 
 
@@ -53,7 +52,6 @@ def plot_and_save_images(
             ax.axis('off')
 
     plt.tight_layout()
-    plt.subplots_adjust(top=0.95)
     plt.savefig(f'{saving_path}/phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_phase)
 
@@ -69,6 +67,5 @@ def plot_and_save_images(
             ax.axis('off')
 
     plt.tight_layout()
-    plt.subplots_adjust(top=0.95)
     plt.savefig(f'{saving_path}/unwrap_phase_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.png')
     plt.close(fig_phase)
