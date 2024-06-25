@@ -325,7 +325,7 @@ f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_po
 ```
 This data set has shape:
 (`number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`). It has type `np.float16`.
-The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the phase unwrapped phase.
+The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the unwrapped phase.
 
 Using the `create_visual` variable you can get:
 
@@ -339,7 +339,7 @@ Using the `create_visual` variable you can get:
 These images will be augmented by 33 with different noises and fringes.
 At the end of this process your array will be of shape (33 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ### Augmentations
-Once the augmentations are done the array goes to training.
+Once the augmentations are done, the array goes to training.
 
 ### Training
 In training the batches will be distorded on the spot using different transforms.
@@ -391,6 +391,8 @@ In `params.txt`, there are all the parameters that generated the model for you t
 - Testing file:
 
 In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$ and $I_{sat}$.
+
+### Use
 
 ### Sandbox:
 
