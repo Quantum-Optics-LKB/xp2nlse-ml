@@ -185,9 +185,10 @@ graph TB
 
 1. **Create Your Setup**: Design your experimental setup.
 2. **Record Output parameters**: Take note of all the parameters of your system to ensure the data you will generate will be able to represent your system.
-3. **Generate Training Data**: The data is generated using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) based on your parameters.
-4. **Train the Model**: Train the model using the generated data.
-5. **Estimate your parameters**: Apply the trained model to new data to estimate parameters.
+3. **Explore the parameter space**: There is a sandpox program that allows you to tryout your generation parameters to check that your simulations converge and looks a bit like your experiment.
+4. **Generate Training Data**: The data is generated using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) based on your parameters.
+5. **Train the Model**: Train the model using the generated data.
+6. **Estimate your parameters**: Apply the trained model to new data to estimate parameters.
 
 ## Getting Started
 
