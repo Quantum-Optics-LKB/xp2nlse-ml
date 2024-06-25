@@ -16,12 +16,12 @@ from engine.treament_methods import experiment_noise, normalize_data
 set_seed(10)
 
 def data_creation(
-    numbers: tuple,
+    nlse_settings: tuple,
     cameras: tuple,
     saving_path: str = "",
     ) -> np.ndarray:
     
-    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = numbers
+    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     resolution_in, window_in, window_out, resolution_training = cameras
 
     crop = int(0.5*(window_in - window_out)*resolution_in/window_in)

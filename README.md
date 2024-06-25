@@ -226,6 +226,13 @@ The `parameters.py` script is where you store the parameters for the data genera
 ```bash
 python parameters.py
 ```
+
+The `sandbox_parameters.py` script is where you use the same parameters as for the data generation, training, and parameter estimation processes and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into 
+real `parameters.py` script.
+
+```bash
+python parameters.py
+```
 ### Parameters
 
 #### <ins>Path and Device Settings<ins>
@@ -300,7 +307,7 @@ The accumulator variable is a multiplier that does that.
 
 ## Example Usage
 
-The `parameter.py` contains this code.
+The `parameters.py` contains this code.
 You can just choose your parameters and launch the code.
 ```python
 #!/usr/bin/env python3
@@ -353,7 +360,49 @@ manager(generate, training, create_visual, use, plot_generate_compare, device,
             input_power, alpha, isat, number_of_isat, waist_input_beam, non_locality_length, delta_z, cell_length, 
             saving_path, exp_image_path, learning_rate, batch_size, num_epochs, accumulator)
 ```
+The `sandbox_parameters.py` contains this code.
+You can just choose your parameters and launch the code.
 
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# @author: Louis Rossignol
+
+from engine.nlse_sandbox import sandbox
+
+saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+device = 0
+
+###Data generation Parameters:
+delta_z=1e-4 #m
+resolution_input_beam = 2048
+window_input = 50e-3 #m
+output_camera_resolution = 3008
+output_pixel_size = 3.76e-6 #m
+window_out = output_pixel_size * output_camera_resolution #m
+cell_length=20e-2 #m
+resolution_training = 256
+
+###Parameter spaces:
+number_of_n2 = 1
+number_of_isat = 1
+n2 = -5e-9 #m/W^2 #switch this to an actual range using numpy to launch the real simulation 
+isat = 1e5 #W/m^2 #switch this to an actual range using numpy to launch the real simulation
+
+###Laser Parameters:
+input_power = 1.05 #W
+alpha = 22 #m^-1
+waist_input_beam = 2.3e-3 #m
+non_locality_length = 0 #m
+
+###Find your parameters (n2 and Isat):
+exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/exp/experiment.npy"
+
+sandbox(device, resolution_input_beam, window_input, window_out,
+        resolution_training, n2, input_power, alpha,
+        isat, waist_input_beam, non_locality_length, delta_z,
+        cell_length, exp_image_path, saving_path)
+```
 ## Program flowchart
 
 ```mermaid
@@ -361,7 +410,7 @@ graph TD
     A[parameters.py] --> B[parameter_manager.py]
     B --> C{generate}
     C --> |True| sub1
-    C --> |False| D[Load data]
+    C --> |False| D[Loads data: \n It implies the dataset has already been created\n and matches the naming convention]
     sub1 --> sub2
     D --> sub2
     sub2 --> G{create_visual}
@@ -395,12 +444,12 @@ graph TD
         D2 --> D3(network_init)
         D3 --> D4(data_split)
         D4 --> D5(data_treatment)
-        D5 --> D6(launch_training)
+        D5 --> D6(manage_training)
         D6 --> D7[training.py] 
         D7 --> D8(network_training)
-        D6 --> D9[loss_plot.py]
+        D8 --> D9[loss_plot.py]
         D9 --> D10(plotter)
-        D6 --> D11[test.py]
+        D10 --> D11[test.py]
         D11 --> D12(exam)
         D12 --> D13(count_parameters_pandas)
         D13 --> D14(test_model)
