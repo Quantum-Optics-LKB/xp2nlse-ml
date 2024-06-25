@@ -5,8 +5,8 @@
 import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
-from engine.treament_methods import normalize_data
-from engine.treament_methods import line_noise, salt_and_pepper_noise
+from engine.treament import normalize_data
+from engine.treament import line_noise, salt_and_pepper_noise
 set_seed(10)
 
 def data_augmentation(

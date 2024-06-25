@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
-from engine.treament_methods import modifications_training
+from engine.treament import modifications_training
 
 set_seed(10)
 

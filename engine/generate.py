@@ -11,7 +11,7 @@ from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
 from engine.seed_settings import set_seed
 from skimage.restoration import unwrap_phase
-from engine.treament_methods import experiment_noise, normalize_data
+from engine.treament import experiment_noise, normalize_data
 
 set_seed(10)
 
