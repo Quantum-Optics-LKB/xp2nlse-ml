@@ -336,29 +336,22 @@ Using the `create_visual` variable you can get:
 #### Unwrapped Phase
 ![image info](./img/unwrap_phase_n25_isat5_power1.05.png)
 
-These images will be augmented by 33 with different noises and fringes.
-At the end of this process your array will be of shape (33 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
+These images will be augmented by 31 with different noises and fringes.
+At the end of this process your array will be of shape (31 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ### Augmentations
 Once the augmentations are done, the array goes to training.
 
-### Training
-In training the batches will be distorded on the spot using different transforms.
-
-The goal is to have random transforms for which we set up a probability of happening using the following code.
-
 ```python
-def modifications_training(
+def elastic_saltpepper(
         original_height: int, 
         original_width: int
         ) -> torch.nn.Sequential:
     
-    shift = random.uniform(0.1,0.25)
-    shear = random.uniform(20,50)
-    direction = random.uniform(-1, 1)
+    elastic = (random.randrange(21, 42, 2), random.randrange(21, 42, 2))
+    salt_pepper = random.uniform(0.01, .11)
     return torch.nn.Sequential(
-        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.2),
-        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.3),
-        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.2),
+        K.RandomElasticTransform(kernel_size=51, sigma=elastic, alpha=(1,1),p=.75),
+        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.75),
         K.Resize((original_height, original_width))
     )
 ```

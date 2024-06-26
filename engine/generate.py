@@ -3,6 +3,7 @@
 # @author: Louis Rossignol
 
 import gc
+import torch
 import cupy as cp
 import numpy as np
 from tqdm import tqdm
@@ -11,6 +12,7 @@ from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
 from engine.seed_settings import set_seed
 from skimage.restoration import unwrap_phase
+from engine.treament import elastic_saltpepper
 from engine.treament import experiment_noise, normalize_data
 
 set_seed(10)
@@ -18,6 +20,7 @@ set_seed(10)
 def data_creation(
     nlse_settings: tuple,
     cameras: tuple,
+    device: int,
     saving_path: str = "",
     ) -> np.ndarray:
     
@@ -85,7 +88,11 @@ def data_creation(
       E[start_index:end_index,2,:,:] = uphase
     
     if saving_path != "":
-        np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
+      device = torch.device(f"cuda:{device}")
+      E = torch.from_numpy(E).float().to(device)
+      augment = elastic_saltpepper(E.shape[-2],E.shape[-1])
+      E = augment(E).cpu().numpy() 
+      np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
     
     return E
 

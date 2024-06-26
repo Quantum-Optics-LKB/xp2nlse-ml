@@ -3,10 +3,11 @@
 # @author: Louis Rossignol
 
 import numpy as np
+import torch
 from tqdm import tqdm
 from engine.seed_settings import set_seed
 from engine.treament import normalize_data
-from engine.treament import line_noise, salt_and_pepper_noise
+from engine.treament import line_noise
 set_seed(10)
 
 def data_augmentation(
@@ -19,7 +20,7 @@ def data_augmentation(
     angles = np.random.uniform(0,180,5)
     noises = np.random.uniform(0.1,0.4,2)
     lines = [20, 50, 100]
-    augmentation = len(noises) + len(lines) * len(noises) * len(angles) + 1
+    augmentation = len(lines) * len(noises) * len(angles) + 1
 
     n2_labels = np.repeat(n2_labels, augmentation)
     isat_labels = np.repeat(isat_labels, augmentation)
@@ -37,16 +38,11 @@ def data_augmentation(
         augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
         index += 1  
         for noise in noises:
-            augmented_data[index,0 ,:, :] = normalize_data(salt_and_pepper_noise(image_at_channel, noise))
-            augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
-            augmented_data[index,2 ,:, :] = E[image_index,1,:,:]
-
-            index += 1
             for angle in angles:
                 for num_lines in lines:
                     augmented_data[index,0 ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle))
                     augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
                     augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
                     index += 1
-                    
+              
     return augmented_data, labels

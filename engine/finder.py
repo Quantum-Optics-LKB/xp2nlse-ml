@@ -12,7 +12,7 @@ from engine.loss_plot import plotter
 from torch.utils.data import DataLoader
 from engine.seed_settings import set_seed
 from engine.model import Inception_ResNetv2
-from engine.training import network_training
+from engine.training import load_checkpoint, network_training
 from engine.field_dataset import FieldDataset
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 set_seed(10)
@@ -153,8 +153,21 @@ def manage_training(
     f = open(f'{new_path}/testing.txt', 'a')
     sys.stdout = f
 
+    try:
+        checkpoint = load_checkpoint(new_path)
+        cnn.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        scheduler.load_state_dict(checkpoint['scheduler'])
+        start_epoch = checkpoint['epoch']
+        loss_list = checkpoint['loss_list']
+        val_loss_list = checkpoint['val_loss_list']
+    except FileNotFoundError:
+        start_epoch = 0
+        loss_list = []
+        val_loss_list = []
+    
     print("---- MODEL TRAINING ----")
-    loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device)
+    loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list)
     
     print("---- MODEL SAVING ----")
     torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth')

@@ -89,7 +89,7 @@ def get_parameters(
         puiss_u = r"$W$"
 
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
-        E = data_creation(numbers, cameras)
+        E = data_creation(numbers, cameras, device_number)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
         fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}')
         

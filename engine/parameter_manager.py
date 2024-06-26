@@ -48,7 +48,7 @@ def manager(generate: bool,
         
         if generate:
             with cp.cuda.Device(device):
-                E = data_creation(nlse_settings, cameras, saving_path)
+                E = data_creation(nlse_settings, cameras, device, saving_path)
         else:
             E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.npy')
         if create_visual:

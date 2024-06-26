@@ -6,24 +6,24 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
-from engine.treament import modifications_training
 
 set_seed(10)
 
-def network_training(net, optimizer, criterion, scheduler, num_epochs, trainloader, validationloader, accumulation_steps, device):
+def save_checkpoint(state,new_path):
+    torch.save(state, f"{new_path}/checkpoint.pth.tar")
 
-    loss_list = np.zeros(num_epochs)
-    val_loss_list = np.zeros(num_epochs)
+def load_checkpoint(new_path):
+    return torch.load(f"{new_path}/checkpoint.pth.tar")
 
-    for epoch in tqdm(range(num_epochs),desc=f"Training", 
-                                total=num_epochs, unit="Epoch"):  
+def network_training(net, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list):
+
+    for epoch in tqdm(range(start_epoch, num_epochs),desc=f"Training", 
+                                total=num_epochs - start_epoch, unit="Epoch"):  
         running_loss = 0.0
         net.train()
         
-        for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):
-            augment = modifications_training(images.shape[-2],images.shape[-1])
-            
-            images = augment(images.to(device = device, dtype=torch.float32))
+        for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):            
+            images = images.to(device = device, dtype=torch.float32)
             n2_values = n2_values.to(device = device, dtype=torch.float32)
             isat_values = isat_values.to(device = device, dtype=torch.float32)
             
@@ -62,7 +62,16 @@ def network_training(net, optimizer, criterion, scheduler, num_epochs, trainload
         current_lr = scheduler.get_last_lr()  # Get current learning rate after update
         print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(trainloader):.4f}, Validation Loss: {avg_val_loss:.4f}, Current LR: {current_lr[0]}')
 
-        loss_list[epoch] = running_loss / len(trainloader)
-        val_loss_list[epoch] = avg_val_loss
+        loss_list.append(running_loss / len(trainloader))
+        val_loss_list.append(avg_val_loss)
+
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': net.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'scheduler': scheduler.state_dict(),
+            'loss_list': loss_list,
+            'val_loss_list': val_loss_list
+        },new_path)
     
     return loss_list, val_loss_list, net
