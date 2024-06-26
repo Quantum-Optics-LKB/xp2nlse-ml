@@ -13,3 +13,5 @@ IDC/
 parameters_dev.py
 
 sandbox_parameters_dev.py
+
+noise_examples.py
