@@ -19,7 +19,7 @@ def experiment(
     density_experiment = zoom(np.abs(field), 
                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
     phase_experiment = np.angle(field)
-    uphase_experiment = zoom(unwrap_phase(phase_experiment), 
+    uphase_experiment = zoom(np.abs(unwrap_phase(phase_experiment)), 
                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
     phase_experiment = zoom(phase_experiment, 
                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)

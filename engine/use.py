@@ -44,7 +44,7 @@ def get_parameters(
         density = zoom(np.abs(field), 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
         phase = np.angle(field)
-        uphase = zoom(unwrap_phase(phase), 
+        uphase = zoom(np.abs(unwrap_phase(phase)), 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
         phase = zoom(phase, 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
