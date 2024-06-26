@@ -8,6 +8,7 @@ import cupy as cp
 import numpy as np
 from tqdm import tqdm
 from NLSE import NLSE
+import kornia.augmentation as K
 from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
 from engine.seed_settings import set_seed
@@ -86,6 +87,9 @@ def data_creation(
       E[start_index:end_index,0,:,:] = density
       E[start_index:end_index,1,:,:] = phase
       E[start_index:end_index,2,:,:] = uphase
+    
+    gaussian_blur = K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100, 100), p=1.0)
+    E[:,2,:,:] = gaussian_blur(torch.from_numpy(E[:,2:3,:,:]).float().to(device)).cpu().numpy()[:,0,:,:]
     
     if saving_path != "":
       device = torch.device(f"cuda:{device}")

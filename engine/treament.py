@@ -21,11 +21,11 @@ def elastic_saltpepper(
         original_width: int
         ) -> torch.nn.Sequential:
     
-    elastic_sigma = (random.randrange(21, 42, 2), random.randrange(21, 42, 2))
-    elastic_alpha = (random.uniform(0.25, .75), random.uniform(0.25, .75))
+    elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
+    elastic_alpha = (1, 1)
     salt_pepper = random.uniform(0.01, .11)
     return torch.nn.Sequential(
-        K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.2),
+        K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
         K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
         K.Resize((original_height, original_width))
     )
