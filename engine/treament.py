@@ -21,13 +21,13 @@ def modifications_training(
         original_width: int
         ) -> torch.nn.Sequential:
     
-    shift = random.uniform(0.1,0.25)
-    shear = random.uniform(20,50)
+    shift = random.uniform(0.1,0.15)
+    shear = random.uniform(20,40)
     direction = random.uniform(-1, 1)
     return torch.nn.Sequential(
-        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.2),
-        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100.0, 100.0), p=0.3),
-        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.2),
+        K.RandomMotionBlur(kernel_size=51, angle=random.uniform(0, 360), direction=(direction, direction), border_type='replicate', p=0.1),
+        K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(60.0, 60.0), p=0.1),
+        K.RandomAffine(degrees=0, translate=(shift, shift), scale=(1.0, 1.0), shear=shear, p=0.1),
         K.Resize((original_height, original_width))
     )
 
