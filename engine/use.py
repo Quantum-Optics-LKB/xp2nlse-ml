@@ -87,9 +87,9 @@ def get_parameters(
     alpha_str = r"$\alpha$"
     alpha_u = r"$m^{-1}$"
 
-    print(f"{n2_str} = {computed_n2} {n2_u}")
-    print(f"{isat_str} = {computed_isat} {isat_u}")
-    print(f"{alpha_str} = {computed_alpha} {alpha_u}")
+    print(f"n2 = {computed_n2} m^2/W")
+    print(f"Isat = {computed_isat} W/m^2")
+    print(f"alpha = {computed_alpha} m^-1")
 
     if plot_generate_compare:
         plt.rcParams['font.family'] = 'DejaVu Serif'
