@@ -18,14 +18,12 @@ cell_length=20e-2 #m
 resolution_training = 256
 
 ###Parameter spaces:
-number_of_n2 = 1
-number_of_isat = 1
-n2 = -5e-9 #switch this to an actual range using numpy to launch the real simulation 
-isat = 1e5 #switch this to an actual range using numpy to launch the real simulation
+n2 = -5.76008677482605e-09 #switch this to an actual range using numpy to launch the real simulation 
+isat = 135309.72599983215 #switch this to an actual range using numpy to launch the real simulation
+alpha = 31.8 #switch this to an actual range using numpy to launch the real simulation
 
 ###Laser Parameters:
 input_power = 1.05 #W
-alpha = 22 #m^-1
 waist_input_beam = 2.3e-3 #m
 non_locality_length = 0 #m
 

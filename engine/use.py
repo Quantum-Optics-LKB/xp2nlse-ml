@@ -12,8 +12,6 @@ from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
 
-
-
 set_seed(10)
 
 def get_parameters(
@@ -98,7 +96,7 @@ def get_parameters(
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
         E = data_creation(numbers, cameras, device_number)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
-        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}')
+        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}, {alpha_str} = {computed_alpha} {alpha_u}')
         
         axes[0, 0].imshow(density, cmap='viridis')
         axes[0, 0].set_title(f'Experimental Density')
@@ -121,6 +119,6 @@ def get_parameters(
 
 
         plt.tight_layout()
-        plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_power{in_power}.png")
+        plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power}.png")
     
     return computed_n2, computed_isat, computed_alpha
