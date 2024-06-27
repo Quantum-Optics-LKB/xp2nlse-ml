@@ -17,10 +17,10 @@ def data_augmentation(
     
     number_of_n2, n2_labels, number_of_isat, isat_labels = labels
 
-    angles = np.random.uniform(0,180,5)
+    angles = np.random.uniform(0,180,3)
     noises = np.random.uniform(0.1,0.4,2)
     lines = [20, 50, 100]
-    originals = 34
+    originals = 18
     augmentation = len(lines) * len(noises) * len(angles) + originals
 
     n2_labels = np.repeat(n2_labels, augmentation)
