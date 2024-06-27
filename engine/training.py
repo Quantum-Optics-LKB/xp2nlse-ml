@@ -36,18 +36,21 @@ def network_training(net,
         running_loss = 0.0
         net.train()
         
-        for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):            
+        for i, (images, n2_values, isat_values, alpha_values) in enumerate(trainloader, 0):            
             images = augment(images.to(device = device, dtype=torch.float32))
             n2_values = n2_values.to(device = device, dtype=torch.float32)
             isat_values = isat_values.to(device = device, dtype=torch.float32)
+            alpha_values = alpha_values.to(device = device, dtype=torch.float32)
             
             optimizer.zero_grad()
-            outputs_n2, outputs_isat = net(images)
+            outputs_n2, outputs_isat, outputs_alpha = net(images)
 
             loss_n2 = criterion(outputs_n2, n2_values)
             loss_isat = criterion(outputs_isat, isat_values)
+            loss_alpha = criterion(outputs_alpha, alpha_values)
             loss_n2.backward(retain_graph=True)
-            loss_isat.backward()
+            loss_isat.backward(retain_graph=True)
+            loss_alpha.backward()
 
             if (i + 1) % accumulation_steps == 0 or accumulation_steps == 1:
                 optimizer.step()
@@ -59,16 +62,18 @@ def network_training(net,
         val_running_loss = 0.0
         net.eval()
         with torch.no_grad(): 
-            for images, n2_values, isat_values in validationloader:
+            for images, n2_values, isat_values, alpha_values in validationloader:
                 images = images.to(device = device, dtype=torch.float32)
                 n2_values = n2_values.to(device = device, dtype=torch.float32)
                 isat_values = isat_values.to(device = device, dtype=torch.float32)
+                alpha_values = alpha_values.to(device = device, dtype=torch.float32)
 
-                outputs_n2, outputs_isat = net(images)
+                outputs_n2, outputs_isat, outputs_alpha = net(images)
                 loss_n2 = criterion(outputs_n2, n2_values)
                 loss_isat = criterion(outputs_isat, isat_values)
+                loss_alpha = criterion(outputs_alpha, alpha_values)
                 
-                val_running_loss += loss_n2.item() + loss_isat.item()
+                val_running_loss += loss_n2.item() + loss_isat.item() + loss_alpha.item()
 
         avg_val_loss = val_running_loss / len(validationloader)
         scheduler.step(avg_val_loss)

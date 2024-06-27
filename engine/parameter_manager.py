@@ -15,6 +15,7 @@ def manager(generate: bool,
             n2: np.ndarray,
             number_of_n2: int,
             alpha: float,
+            number_of_alpha: int,
             isat: float,
             number_of_isat: int,
             input_power: float,
@@ -50,12 +51,12 @@ def manager(generate: bool,
             with cp.cuda.Device(device):
                 E = data_creation(nlse_settings, cameras, device, saving_path)
         else:
-            E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.npy')
+            E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}.npy')
         if create_visual:
             
-            plot_and_save_images(E, saving_path, nlse_settings)
+            plot_and_save_images(E, saving_path, nlse_settings) #TODO
 
-        labels = generate_labels(n2, isat)
+        labels = generate_labels(n2, isat, alpha)
         E, labels = data_augmentation(E, labels)
 
         if training:
@@ -70,8 +71,8 @@ def manager(generate: bool,
     
     if not generate and not training and create_visual:
         from engine.visualize import plot_and_save_images
-        E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power:.2f}.npy')
-        plot_and_save_images(E, saving_path, nlse_settings)
+        E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}.npy')
+        plot_and_save_images(E, saving_path, nlse_settings) #TODO
 
 
     if use:

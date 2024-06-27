@@ -185,6 +185,7 @@ class Inception_ResNetv2(nn.Module):
         self.global_average_pooling = nn.AdaptiveAvgPool2d((1, 1))
         self.linear_n2 = nn.Linear(1536, 1)
         self.linear_isat = nn.Linear(1536, 1)
+        self.linear_alpha = nn.Linear(1536, 1)
 
     def forward(self, x):
         x = self.features(x)
@@ -193,4 +194,5 @@ class Inception_ResNetv2(nn.Module):
         x = x.view(x.size(0), -1)
         x_n2 = self.linear_n2(x)
         x_isat = self.linear_isat(x)
-        return x_n2, x_isat
+        x_alpha = self.linear_alpha(x)
+        return x_n2, x_isat, x_alpha

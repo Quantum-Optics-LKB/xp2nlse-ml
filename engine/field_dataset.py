@@ -14,10 +14,12 @@ class FieldDataset(Dataset):
             self, 
             data: np.ndarray, 
             n2_values: np.ndarray, 
-            isat_values: np.ndarray):
+            isat_values: np.ndarray,
+            alpha_values: np.ndarray):
         
         self.n2_values = torch.from_numpy(n2_values).to(torch.float16).unsqueeze(1)
         self.isat_values = torch.from_numpy(isat_values).to(torch.float16).unsqueeze(1)
+        self.alpha_values = torch.from_numpy(alpha_values).to(torch.float16).unsqueeze(1)
         self.data = torch.from_numpy(data).to(torch.float16)
 
     def __len__(
@@ -30,5 +32,6 @@ class FieldDataset(Dataset):
         data_item = self.data[idx,:,:,:]
         n2_label = self.n2_values[idx]
         isat_label = self.isat_values[idx]
+        alpha_label = self.alpha_values[idx]
 
-        return  data_item, n2_label, isat_label
+        return  data_item, n2_label, isat_label, alpha_label
