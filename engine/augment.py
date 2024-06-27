@@ -20,7 +20,8 @@ def data_augmentation(
     angles = np.random.uniform(0,180,5)
     noises = np.random.uniform(0.1,0.4,2)
     lines = [20, 50, 100]
-    augmentation = len(lines) * len(noises) * len(angles) + 1
+    originals = 34
+    augmentation = len(lines) * len(noises) * len(angles) + originals
 
     n2_labels = np.repeat(n2_labels, augmentation)
     isat_labels = np.repeat(isat_labels, augmentation)
@@ -32,15 +33,15 @@ def data_augmentation(
     index = 0
     for image_index in tqdm(range(E.shape[0]),desc=f"EXPANSION", 
                                 total=number_of_n2*number_of_isat, unit="frame"):
-        image_at_channel = E[image_index,0,:,:]
-        augmented_data[index,0 ,:, :] = E[image_index,0,:,:]
-        augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
-        augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
-        index += 1  
+        for original in range(originals):
+            augmented_data[index,0 ,:, :] = E[image_index,0,:,:]
+            augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
+            augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
+            index += 1  
         for noise in noises:
             for angle in angles:
                 for num_lines in lines:
-                    augmented_data[index,0 ,:, :] = normalize_data(line_noise(image_at_channel, num_lines, np.max(image_at_channel)*noise,angle))
+                    augmented_data[index,0 ,:, :] = normalize_data(line_noise(E[image_index,0,:,:], num_lines, np.max(E[image_index,0,:,:])*noise,angle))
                     augmented_data[index,1 ,:, :] = E[image_index,1,:,:]
                     augmented_data[index,2 ,:, :] = E[image_index,2,:,:]
                     index += 1

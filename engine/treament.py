@@ -16,10 +16,7 @@ def normalize_data(
     data /= np.max(data, axis=(-2, -1), keepdims=True)
     return data
 
-def elastic_saltpepper(
-        original_height: int, 
-        original_width: int
-        ) -> torch.nn.Sequential:
+def elastic_saltpepper() -> torch.nn.Sequential:
     
     elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
     elastic_alpha = (1, 1)
@@ -27,7 +24,6 @@ def elastic_saltpepper(
     return torch.nn.Sequential(
         K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
         K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
-        K.Resize((original_height, original_width))
     )
 
 def experiment_noise(

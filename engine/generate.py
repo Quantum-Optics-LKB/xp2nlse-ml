@@ -27,7 +27,7 @@ def data_creation(
     
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     resolution_in, window_in, window_out, resolution_training = cameras
-
+  
     crop = int(0.5*(window_in - window_out)*resolution_in/window_in)
   
     number_of_n2 = len(n2)
@@ -60,10 +60,11 @@ def data_creation(
       density = np.abs(A)**2 * c * epsilon_0 / 2
       phase = np.angle(A)
       uphase = unwrap_phase(phase)
-        
-      density = density[:,crop:-crop,crop:-crop]
-      phase = phase[:,crop:-crop,crop:-crop] 
-      uphase = uphase[:,crop:-crop,crop:-crop] 
+      
+      if crop != 0:
+        density = density[:,crop:-crop,crop:-crop]
+        phase = phase[:,crop:-crop,crop:-crop] 
+        uphase = uphase[:,crop:-crop,crop:-crop] 
 
       zoom_factor = resolution_training / phase.shape[-1]
       density_cp = zoom(cp.asarray(density), (1, zoom_factor, zoom_factor),order=3)
@@ -92,10 +93,6 @@ def data_creation(
     E[:,2,:,:] = gaussian_blur(torch.from_numpy(E[:,2:3,:,:]).float().to(device)).cpu().numpy()[:,0,:,:]
     
     if saving_path != "":
-      device = torch.device(f"cuda:{device}")
-      E = torch.from_numpy(E).float().to(device)
-      augment = elastic_saltpepper(E.shape[-2],E.shape[-1])
-      E = augment(E).cpu().numpy() 
       np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}', E)
     
     return E

@@ -6,6 +6,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
+from engine.treament import elastic_saltpepper
 
 set_seed(10)
 
@@ -15,15 +16,28 @@ def save_checkpoint(state,new_path):
 def load_checkpoint(new_path):
     return torch.load(f"{new_path}/checkpoint.pth.tar")
 
-def network_training(net, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list):
+def network_training(net,
+                    optimizer, 
+                    criterion, 
+                    scheduler,
+                    start_epoch, 
+                    num_epochs, 
+                    trainloader, 
+                    validationloader, 
+                    accumulation_steps, 
+                    device, 
+                    new_path, 
+                    loss_list, 
+                    val_loss_list):
 
+    augment = elastic_saltpepper()
     for epoch in tqdm(range(start_epoch, num_epochs),desc=f"Training", 
                                 total=num_epochs - start_epoch, unit="Epoch"):  
         running_loss = 0.0
         net.train()
         
         for i, (images, n2_values, isat_values) in enumerate(trainloader, 0):            
-            images = images.to(device = device, dtype=torch.float32)
+            images = augment(images.to(device = device, dtype=torch.float32))
             n2_values = n2_values.to(device = device, dtype=torch.float32)
             isat_values = isat_values.to(device = device, dtype=torch.float32)
             
