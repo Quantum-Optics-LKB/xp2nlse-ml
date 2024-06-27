@@ -160,7 +160,7 @@ def sandbox(device: int,
     nlse_settings = np.array([n2]), input_power, alpha, np.array([isat]), waist_input_beam, non_locality_length, delta_z, cell_length
     
     with cp.cuda.Device(device):
-        E = data_creation(nlse_settings, cameras)
+        E = data_creation(nlse_settings, cameras, device)
 
     density_experiment, phase_experiment, uphase_experiment = experiment(resolution_training, exp_image_path)
 
