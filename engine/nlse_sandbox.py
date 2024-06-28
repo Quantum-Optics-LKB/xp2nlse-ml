@@ -27,7 +27,7 @@ def experiment(
     return density_experiment, phase_experiment, uphase_experiment
 
 def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, resolution_training, window_out,
-                 n2, isat, alpha, input_power, non_locality_length, saving_path):
+                 n2, isat, input_power, non_locality_length, saving_path):
     
     output_shape = (resolution_training, resolution_training)
     label_x = np.around(np.asarray([-window_out/2, 0.0 ,window_out/2])/1e-3,2)
@@ -45,10 +45,8 @@ def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, res
     puiss_u = r"$W$"
     nl_str = r"$nl$"
     nl_u = r"$m$"
-    alpha_str = r"$\alpha$"
-    alpha_u = r"$m^{-1}$"
 
-    title = f"{n2_str} = {n2:.2e}{n2_u}, {isat_str} = {isat:.2e}{isat_u}, {puiss_str} = {input_power:.2e}{puiss_u}, {alpha_str} = {alpha:.2e}{puiss_u}, {alpha_str} = {non_locality_length:.2e}{nl_u}"
+    title = f"{n2_str} = {n2:.2e}{n2_u}, {isat_str} = {isat:.2e}{isat_u}, {puiss_str} = {input_power:.2e}{puiss_u}, {nl_str} = {non_locality_length:.2e}{nl_u}"
     fig.suptitle(title)
 
     im1 = axs[0, 0].imshow(E[0, 0, :, :], cmap="viridis")
@@ -159,7 +157,7 @@ def sandbox(device: int,
             ) -> None:
 
     cameras = resolution_input_beam, window_input, window_out, resolution_training
-    nlse_settings = np.array([n2]), input_power, np.array([alpha]), np.array([isat]), waist_input_beam, non_locality_length, delta_z, cell_length
+    nlse_settings = np.array([n2]), input_power, alpha, np.array([isat]), waist_input_beam, non_locality_length, delta_z, cell_length
     
     with cp.cuda.Device(device):
         E = data_creation(nlse_settings, cameras, device)
@@ -167,5 +165,5 @@ def sandbox(device: int,
     density_experiment, phase_experiment, uphase_experiment = experiment(resolution_training, exp_image_path)
 
     plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, 
-                 resolution_training, window_out, n2, isat, alpha, input_power, 
+                 resolution_training, window_out, n2, isat, input_power, 
                  non_locality_length, saving_path)  
