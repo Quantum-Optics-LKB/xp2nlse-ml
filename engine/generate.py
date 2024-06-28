@@ -44,7 +44,7 @@ def data_creation(
     beam = np.ones((number_of_isat, number_of_alpha, resolution_in, resolution_in), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / waist**2)
     poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
     beam = experiment_noise(beam, poisson_noise_lam, normal_noise_sigma)
-    E = np.zeros((number_of_n2*number_of_isat*number_of_alpha,2, resolution_training, resolution_training), dtype=np.float16)
+    E = np.zeros((number_of_n2*number_of_isat*number_of_alpha,3, resolution_training, resolution_training), dtype=np.float16)
       
 
     for index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", 
@@ -86,8 +86,8 @@ def data_creation(
       gc.collect()
       cp.get_default_memory_pool().free_all_blocks()
 
-      start_index = number_of_n2 * index
-      end_index = number_of_n2 * (index + 1)
+      start_index = number_of_isat * number_of_alpha * index
+      end_index = number_of_isat * number_of_alpha * (index + 1)
       E[start_index:end_index,0,:,:] = density
       E[start_index:end_index,1,:,:] = phase
       E[start_index:end_index,2,:,:] = uphase
