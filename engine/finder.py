@@ -21,6 +21,7 @@ def data_split(
         E: np.ndarray, 
         n2_labels: np.ndarray,
         isat_labels: np.ndarray,
+        alpha_labels: np.ndarray,
         train_ratio: float = 0.8, 
         validation_ratio: float = 0.1, 
         test_ratio: float = 0.1
@@ -50,15 +51,19 @@ def data_split(
     validation_isat = isat_labels[validation_indices].copy()
     test_isat = isat_labels[test_indices].copy()
 
-    return (train, train_n2, train_isat), (validation, validation_n2, validation_isat), (test, test_n2, test_isat)
+    train_alpha = alpha_labels[training_indices].copy()
+    validation_alpha = alpha_labels[validation_indices].copy()
+    test_alpha = alpha_labels[test_indices].copy()
+
+    return (train, train_n2, train_isat, train_alpha), (validation, validation_n2, validation_isat, validation_alpha), (test, test_n2, test_isat, test_alpha)
 
 def create_loaders(
         sets: np.ndarray, 
         batch_size: int
         ) -> DataLoader:
     
-    set, n2label, isatlabel = sets 
-    fieldset = FieldDataset(set, n2label, isatlabel)
+    set, n2label, isatlabel, alphalabel= sets 
+    fieldset = FieldDataset(set, n2label, isatlabel, alphalabel)
     fieldloader = DataLoader(fieldset, batch_size=batch_size, shuffle=True)
 
     return fieldloader
@@ -105,25 +110,27 @@ def prepare_training(
     device = torch.device(f"cuda:{device_number}")
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
 
-    number_of_n2, n2_values, number_of_isat, isat_values = labels
+    number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values = labels
     
     n2_values_normalized = n2_values/np.min(n2_values)
     isat_values_normalized = isat_values/np.max(isat_values)
+    alpha_values_normalized = alpha_values/np.max(alpha_values)
 
-    new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}"
+    new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}"
 
     os.makedirs(new_path, exist_ok=True)
 
     assert E.shape[1] == 3
     assert E.shape[0] == n2_values.shape[0], f"field[0] is {E.shape[0]}, n2_values[0] is {n2_values.shape[0]}"
     assert E.shape[0] == isat_values.shape[0], f"field[0] is {E.shape[0]}, isat_values[0] is {isat_values.shape[0]}"
+    assert E.shape[0] == alpha_values.shape[0], f"field[0] is {E.shape[0]}, alpha_values[0] is {alpha_values.shape[0]}"
 
     print("---- MODEL INITIALIZING ----")
     cnn, optimizer, criterion, scheduler = network_init(learning_rate, E.shape[1], Inception_ResNetv2)
     cnn = cnn.to(device)
     
     print("---- DATA TREATMENT ----")
-    train, validation, test = data_split(E, n2_values_normalized, isat_values_normalized, 0.8, 0.1, 0.1)
+    train, validation, test = data_split(E, n2_values_normalized, isat_values_normalized, alpha_values_normalized, 0.8, 0.1, 0.1)
 
 
     trainloader = create_loaders(train, batch_size)
@@ -145,7 +152,7 @@ def manage_training(
         labels: tuple
         ) -> None:
 
-    number_of_n2, n2_values, number_of_isat, isat_values = labels
+    number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values = labels
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device = model_settings
 
@@ -170,12 +177,13 @@ def manage_training(
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list)
     
     print("---- MODEL SAVING ----")
-    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth')
+    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth')
 
     file_name = f"{new_path}/params.txt"
     classes = {
         'n2': tuple(map(str, n2)),
-        'isat' : tuple(map(str, isat))
+        'isat' : tuple(map(str, isat)),
+        'alpha' : tuple(map(str, alpha))
     }
     with open(file_name, "a") as file:
         file.write(f"resolution: {resolution}\n")
@@ -183,6 +191,7 @@ def manage_training(
         file.write(f"num_of_n2: {number_of_n2}\n")
         file.write(f"in_power: {in_power}\n")
         file.write(f"num_of_isat: {number_of_isat}\n")
+        file.write(f"num_of_alpha: {number_of_alpha}\n")
         file.write(f"num_epochs: {num_epochs}\n")
         file.write(f"file: {file}\n")
         file.write(f"model: {Inception_ResNetv2}\n")

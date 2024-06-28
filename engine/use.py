@@ -11,9 +11,6 @@ from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
-
-
-
 set_seed(10)
 
 def get_parameters(
@@ -29,14 +26,16 @@ def get_parameters(
     
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
+    number_of_alpha = len(alpha)
 
     min_n2 = n2.min()
     max_isat = isat.max()
+    max_alpha = alpha.max()
 
     device = torch.device(f"cuda:{device_number}")
     cnn = Inception_ResNetv2(in_channels=3)
     cnn.to(device)
-    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_power{in_power:.2f}.pth'))
+    cnn.load_state_dict(torch.load(f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}/n2_net_w{resolution_out}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth'))
     
     field = np.load(exp_path)
     if len(field.shape) == 2: 
@@ -70,28 +69,33 @@ def get_parameters(
     
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
-        outputs_n2, outputs_isat = cnn(images)
+        outputs_n2, outputs_isat, outputs_alpha = cnn(images)
     
     computed_n2 = outputs_n2[0,0].cpu().numpy()*min_n2
     computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
+    computed_alpha = outputs_alpha[0,0].cpu().numpy()*max_alpha
+
+    n2_str = r"$n_2$"
+    n2_u = r"$m^2$/$W$"
+    isat_str = r"$I_{sat}$"
+    isat_u = r"$W$/$m^2$"
+    puiss_str = r"$p$"
+    puiss_u = r"$W$"
+    alpha_str = r"$\alpha$"
+    alpha_u = r"$m^{-1}$"
 
     print(f"n2 = {computed_n2} m^2/W")
     print(f"Isat = {computed_isat} W/m^2")
+    print(f"alpha = {computed_alpha} m^-1")
 
     if plot_generate_compare:
         plt.rcParams['font.family'] = 'DejaVu Serif'
         plt.rcParams['font.size'] = 10
-        n2_str = r"$n_2$"
-        n2_u = r"$m^2$/$W$"
-        isat_str = r"$I_{sat}$"
-        isat_u = r"$W$/$m^2$"
-        puiss_str = r"$p$"
-        puiss_u = r"$W$"
 
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
         E = data_creation(numbers, cameras, device_number)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
-        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}')
+        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}, {alpha_str} = {computed_alpha} {alpha_u}')
         
         axes[0, 0].imshow(density, cmap='viridis')
         axes[0, 0].set_title(f'Experimental Density')
@@ -114,4 +118,6 @@ def get_parameters(
 
 
         plt.tight_layout()
-        plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_power{in_power}.png")
+        plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power}.png")
+    
+    return computed_n2, computed_isat, computed_alpha
