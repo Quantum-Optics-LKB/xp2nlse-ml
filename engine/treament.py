@@ -19,7 +19,9 @@ def normalize_data(
 def general_extrema(E):
     if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
         E -= np.max(E)
-        E = np.abs(E)
+    elif E[E.shape[-2]//2, E.shape[-1]//2] < 0:
+        E -= np.min(E)
+    E = np.abs(E)
     return E
 
 def elastic_saltpepper() -> torch.nn.Sequential:
