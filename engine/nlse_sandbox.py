@@ -38,7 +38,7 @@ def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, res
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 10
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    fig, axs = plt.subplots(3, 2, figsize=(10, 15))
 
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"
