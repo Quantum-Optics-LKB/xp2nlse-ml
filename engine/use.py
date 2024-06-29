@@ -11,7 +11,16 @@ from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 
+from engine.treament import normalize_data
+
 set_seed(10)
+
+def general_extrema(E):
+    if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
+        E -= np.max(E)
+        E = np.abs(E)
+    return E
+
 
 def get_parameters(
         exp_path: str,
@@ -40,13 +49,14 @@ def get_parameters(
     field = np.load(exp_path)
     if len(field.shape) == 2: 
 
-        density = zoom(np.abs(field), 
-                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        density = normalize_data(zoom(np.abs(field), 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         phase = np.angle(field)
-        uphase = zoom(np.abs(unwrap_phase(phase)), 
-                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
-        phase = zoom(phase, 
-                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        uphase = general_extrema(unwrap_phase(phase))
+        uphase = normalize_data(zoom(uphase, 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
+        phase = normalize_data(zoom(phase, 
+                    (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         
         E = np.zeros((1, 3, 256, 256), dtype=np.float16)
         E[0, 0, :, :] = density
@@ -54,13 +64,14 @@ def get_parameters(
         E[0, 2, :, :] = uphase
 
     else:
-        density = zoom(np.abs(field), 
-                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        density = normalize_data(zoom(np.abs(field), 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         phase = np.angle(field)
-        uphase = zoom(unwrap_phase(phase), 
-                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
-        phase = zoom(phase, 
-                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1])).astype(np.float16)
+        uphase = general_extrema(unwrap_phase(phase))
+        uphase = normalize_data(zoom(uphase, 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
+        phase = normalize_data(zoom(phase, 
+                    (1, resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         
         E = np.zeros((field.shape[0], 3, 256, 256), dtype=np.float16)
         E[:, 0, :, :] = density
