@@ -16,6 +16,12 @@ def normalize_data(
     data /= np.max(data, axis=(-2, -1), keepdims=True)
     return data
 
+def general_extrema(E):
+    if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
+        E -= np.max(E)
+        E = np.abs(E)
+    return E
+
 def elastic_saltpepper() -> torch.nn.Sequential:
     
     elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))

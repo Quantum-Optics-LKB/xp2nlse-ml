@@ -10,17 +10,9 @@ from engine.seed_settings import set_seed
 from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
-
-from engine.treament import normalize_data
+from engine.treament import general_extrema, normalize_data
 
 set_seed(10)
-
-def general_extrema(E):
-    if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
-        E -= np.max(E)
-        E = np.abs(E)
-    return E
-
 
 def get_parameters(
         exp_path: str,
