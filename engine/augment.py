@@ -19,7 +19,7 @@ def data_augmentation(
     angles = np.random.uniform(0,180,4)
     noises = np.random.uniform(0.1,0.4,1)
     lines = [50, 100]
-    originals = 8
+    originals = 16
     augmentation = len(lines) * len(noises) * len(angles) + originals
 
     n2_labels = np.repeat(n2_labels, augmentation)
