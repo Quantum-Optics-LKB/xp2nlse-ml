@@ -261,7 +261,7 @@ git clone https://github.com/Quantum-Optics-LKB/nlse_parameter_nn.git
 cd nlse_parameter_nn
 ```
 
-## Usage
+# Usage
 
 The `parameters.py` script is where you store the parameters for the data generation, training, and parameter estimation processes:
 
@@ -275,20 +275,20 @@ real `parameters.py` script.
 ```bash
 python parameters.py
 ```
-### Parameters
+## Parameters
 
-#### <ins>Path and Device Settings<ins>
+### <ins>Path and Device Settings<ins>
 - `saving_path`: Directory where data and models will be saved.
 - `device`: GPU device ID to run the code.  (default 0)
 
-#### <ins>Data Generation <ins>
+### <ins>Data Generation <ins>
 When you generate the data there are two steps.
 First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles and salt and pepper noise. 
 This will help the model generalize the fitting of the parameters regardless of the noise.
 
 - `generate`: Set to `True` to generate new data using NLSE.
 
-#### <ins>Data Generation Parameters using NLSE <ins>
+### <ins>Data Generation Parameters using NLSE <ins>
 - `cell_length`: Length of the rubidium cell ($m$).
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
 - `output_pixel_size`: Size of pixels of the output camera ($m$).
@@ -300,7 +300,7 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
 
 
-#### <ins>Parameter Spaces<ins>
+### <ins>Parameter Spaces<ins>
 - `number_of_n2`: Number of different $n_2$ values for training.
 - `number_of_isat`: Number of different $I_{sat}$ values for training.
 - `number_of_alpha`: Number of different $\alpha$ values for training.
@@ -309,13 +309,13 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `alpha`: Range of $\alpha$ values the absorption parameter ($m^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
 
 
-#### <ins>Laser Parameters<ins>
+### <ins>Laser Parameters<ins>
 - `input_power`: Input power of the laser ($W$).
 - `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam: $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
-#### <ins>Training Parameters<ins>
+### <ins>Training Parameters<ins>
 - `training`:  Boolean indicating whether to train the model.
 - `learning_rate`: Learning rate for training.
 
@@ -342,12 +342,12 @@ The accumulator variable is a multiplier that does that.
 - Since you need to accumulate, the training takes more time.
 - To have no accumulation set `accumulator` to 1.
 
-#### <ins>Experimental Data<ins>
+### <ins>Experimental Data<ins>
 - `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (`output_camera_resolution`, `output_camera_resolution`).
 - `use`: Boolean indicating whether to compute parameters for the dataset.
 - `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.
 
-# Example workflow
+# Example:
 
 ## Explore parameter space
 
@@ -362,6 +362,7 @@ We pick here:
 - `input_power` = $0.570 W$
 - `waist_input_beam`= $3.564\cdot10^{-3}m$
 
+## Sandbox
 When you train, (trust me I have been through it) you want to be sure your dataset represents the experimental data. It implies checking that the edge cases of your range triplet ($n_2$, $I_{sat}$ and $\alpha$) converge and make sense. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
 
 The `sandbox_parameters.py` contains this code.
@@ -401,7 +402,7 @@ sandbox(device, resolution_input_beam, window_input, window_out,
         isat, waist_input_beam, non_locality_length, delta_z,
         cell_length, exp_image_path, saving_path)
 ```
-
+## LAUNCH !
 Once the edge cases are checked you can launch `parameters.py` with your parameters.
 
 ```python
@@ -442,7 +443,7 @@ manager(generate, training, create_visual, use, plot_generate_compare,
          input_power, waist_input_beam, cell_length, 
          saving_path, exp_image_path)
 ```
-
+### Generate
 This code will generate a dataset and store in your `saving_path` under the name:
 ```python
 f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.npy"
@@ -592,7 +593,7 @@ Average MAE for 'alpha': 0.0850
 
 In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
 
-### Results
+## Results
 Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [[NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
 
 ![Results](img/prediction_n210_isat10_alpha10_power0.57.png)
