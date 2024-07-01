@@ -11,15 +11,15 @@ output_camera_resolution = 2056
 output_pixel_size = 3.45e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2 #m
-generate = False
-create_visual = False
+generate = True
+create_visual = True
 
 ###Parameter spaces:
-number_of_n2 = 5
-number_of_isat = 5
-number_of_alpha = 5
-n2 = -np.logspace(-9, -8, number_of_n2) #m/W^2 [-1e-9 -> -1e-8]
-isat = np.logspace(3, 6, number_of_isat) #W/m^2 [6e3 -> 6e6]
+number_of_n2 = 10
+number_of_isat = 10
+number_of_alpha = 10
+n2 = -np.logspace(-9, -8, number_of_n2) #m^2/W [-1e-9 -> -1e-8]
+isat = 6*np.logspace(3, 5, number_of_isat) #W/m^2 [6e3 -> 6e5]
 alpha = np.linspace(25, 45, number_of_alpha) #m^-1 [25 -> 45]
 
 ###Laser Parameters:

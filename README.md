@@ -290,23 +290,23 @@ This will help the model generalize the fitting of the parameters regardless of 
 
 #### <ins>Data Generation Parameters using NLSE <ins>
 - `cell_length`: Length of the rubidium cell ($m$).
-- `resolution_input_beam`: Resolution of the input beam. (default 512) (Note that it is better to keep it a power of 2)
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
 - `output_pixel_size`: Size of pixels of the output camera ($m$).
 
-- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
+- `resolution_input_beam`: Resolution of the input beam. (default 512) (Note that it is better to keep it a power of 2)
 - `window_input`: Window size of the input beam ($m$). (default $20\cdot10^{-3}$ $m$)
 - `resolution_training`: Resolution of images when saved and for training. (default 256)
 - `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ $m$)
+- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
 
 
 #### <ins>Parameter Spaces<ins>
-- `number_of_n2`: Number of different n2 values for training.
-- `number_of_isat`: Number of different Isat values for training.
+- `number_of_n2`: Number of different $n_2$ values for training.
+- `number_of_isat`: Number of different $I_{sat}$ values for training.
 - `number_of_alpha`: Number of different $\alpha$ values for training.
 - `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
-- `alpha`: Range of $\alpha$ values the absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `alpha`: Range of $\alpha$ values the absorption parameter ($m^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
 
 
 #### <ins>Laser Parameters<ins>
@@ -347,34 +347,87 @@ The accumulator variable is a multiplier that does that.
 - `use`: Boolean indicating whether to compute parameters for the dataset.
 - `plot_generate_compare`: If True it will use the computed n2 and Isat generate using NLSE. You would be able to compare the result it to your estimate.
 
-## Example Usage
+# Example workflow
 
-The `parameters.py` contains this code.
+## Explore parameter space
+
+You choose your parameters.
+We pick here:
+- `output_camera_resolution` = $2056$
+- `output_pixel_size` = $3.45\cdot10^{-6}m$
+- `cell_length` = $20\cdot10^{-2}m$
+- `n2` $\in$ [$-1\cdot10^{-8}$; $-1\cdot10^{-9}$] $m^2/W$
+- `isat` $\in$ [$6\cdot10^{3}$; $6\cdot10^{6}$] $W/m^2$
+- `alpha` $\in$ [$25$; $45$] $m^{-1}$
+- `input_power` = $0.570 W$
+- `waist_input_beam`= $3.564\cdot10^{-3}m$
+
+When you train, (trust me I have been through it) you want to be sure your dataset represents the experimental data. It implies checking that the edge cases of your range triplet ($n_2$, $I_{sat}$ and $\alpha$) converge and make sense. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
+
+The `sandbox_parameters.py` contains this code.
 You can just choose your parameters and launch the code.
+
+```python
+from engine.nlse_sandbox import sandbox
+
+saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+device = 0
+
+###Data generation Parameters:
+delta_z=1e-4 #m
+resolution_input_beam = 512
+window_input = 20e-3 #m
+output_camera_resolution = 2056
+output_pixel_size = 3.45e-6 #m
+window_out = output_pixel_size * output_camera_resolution #m
+cell_length=20e-2 #m
+resolution_training = 256
+
+###Parameter spaces:
+n2 = -4.24e-09 #switch this to an actual range using numpy to launch the real simulation 
+isat = .6e4 #switch this to an actual range using numpy to launch the real simulation
+alpha = 31.8 #switch this to an actual range using numpy to launch the real simulation
+
+###Laser Parameters:
+input_power = 0.570 #W
+waist_input_beam = 3.564e-3 #m
+non_locality_length = 0 #m
+
+###Find your parameters (n2 and Isat):
+exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/field.npy"
+
+sandbox(device, resolution_input_beam, window_input, window_out,
+        resolution_training, n2, input_power, alpha,
+        isat, waist_input_beam, non_locality_length, delta_z,
+        cell_length, exp_image_path, saving_path)
+```
+
+Once the edge cases are checked you can launch `parameters.py` with your parameters.
+
 ```python
 import numpy as np
 from engine.parameter_manager import manager
 saving_path="/your/saving/path/"
 
 ###Data generation Parameters:
-output_camera_resolution = 3008
-output_pixel_size = 3.76e-6 #m
+output_camera_resolution = 2056
+output_pixel_size = 3.45e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2 #m
-generate = False
-create_visual = False
+generate = True
+create_visual = True
 
 ###Parameter spaces:
-number_of_n2 = 5
-number_of_isat = 5
-number_of_alpha = 5
-n2 = -np.logspace(-9, -8, number_of_n2) #m/W^2 [-1e-9 -> -1e-8]
-isat = np.logspace(3, 6, number_of_isat) #W/m^2 [1e3 -> 1e6]
-alpha = np.linspace(10, 60, number_of_alpha) #m^-1 [10 -> 60]
+number_of_n2 = 10
+number_of_isat = 10
+number_of_alpha = 10
+n2 = -np.logspace(-9, -8, number_of_n2) #m^2/W [-1e-9 -> -1e-8]
+isat = 6*np.logspace(3, 5, number_of_isat) #W/m^2 [6e3 -> 6e5]
+alpha = np.linspace(25, 45, number_of_alpha) #m^-1 [25 -> 45]
 
 ###Laser Parameters:
-input_power = 1.05 #W
-waist_input_beam = 2.3e-3 #m
+input_power = 0.570 #W
+waist_input_beam = 3.564e-3 #m
 
 ###Training Parameters:
 training=True
@@ -390,8 +443,7 @@ manager(generate, training, create_visual, use, plot_generate_compare,
          saving_path, exp_image_path)
 ```
 
-### Generation
-This code will generate a dataset and store in your saving path under the name:
+This code will generate a dataset and store in your `saving_path` under the name:
 ```python
 f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.npy"
 ```
@@ -400,7 +452,6 @@ This data set has shape:
 The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the unwrapped phase.
 
 Using the `create_visual` variable you can get:
-# TODO
 #### Density 
 ![Density](img/density.gif)
 #### Phase
@@ -408,29 +459,55 @@ Using the `create_visual` variable you can get:
 #### Unwrapped Phase
 ![Unwrapped Phase](img/unwrapped_phase.gif)
 
-These images will be augmented by 31 with different noises and fringes.
-At the end of this process your array will be of shape (31 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ### Augmentations
+
+These images will be augmented.
+Each image will be cloned as it is already 16 times.
+Then each image will be added 8 different fringes.
+At the end of this process your array will be of shape (24 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
+#IMAGES WITH FRINGES
+
+
 Once the augmentations are done, the array goes to training.
+During training, on the spot modifications are applied to help the model generalize.
+Each image has a 50% chance of being affected by the elastic transform.
+#### Density 
+![Density](img/elastic_density.gif)
+#### Phase
+![Phase](img/elastic_phase.gif)
+#### Unwrapped Phase
+![Unwrapped Phase](img/elastic_uphase.gif)
 
-```python
-def elastic_saltpepper() -> torch.nn.Sequential:
-    
-    elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
-    elastic_alpha = (1, 1)
-    salt_pepper = random.uniform(0.01, .11)
-    return torch.nn.Sequential(
-        K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
-        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
-    )
-```
-The following shows you how the images are getting modified.
+<ins>Note<ins>:
 
+Here the transforms where applied on all the images.
+
+Then, each image has a 20% chance of being affected by the salt and pepper noise transform.
+#### Density 
+![Density](img/sp_density.gif)
+#### Phase
+![Phase](img/sp_phase.gif)
+#### Unwrapped Phase
+![Unwrapped Phase](img/sp_uphase.gif)
+
+<ins>Note<ins>:
+
+Here the transforms where applied on all the images.
+
+The combined version of the images has a 10% change of affecting the images.
+
+#### Density 
+![Density](img/all_density.gif)
+#### Phase
+![Phase](img/all_phase.gif)
+#### Unwrapped Phase
+![Unwrapped Phase](img/all_uphase.gif)
+### Training
 The model is saved in a directory of the name:
 ```python
 f"training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}"
 ```
-This directory contains 4 files:
+This directory contains 5 files:
 
 - Model:
 ```python
@@ -454,46 +531,10 @@ In `params.txt`, there are all the parameters that generated the model for you t
 
 In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$ and $I_{sat}$.
 
+- Checkpoint file:
+
+In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
 ### Use
 
 ### Sandbox:
 
-When you train, (trust me I have been through it) you want to be as close as possible to the experimental data. It implies ensuring convergence. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
-
-The `sandbox_parameters.py` contains this code.
-You can just choose your parameters and launch the code.
-
-```python
-from engine.nlse_sandbox import sandbox
-
-saving_path="/your/saving/path/"
-device = 0
-
-###Data generation Parameters:
-delta_z=1e-4 #m
-resolution_input_beam = 2048
-window_input = 50e-3 #m
-output_camera_resolution = 3008
-output_pixel_size = 3.76e-6 #m
-window_out = output_pixel_size * output_camera_resolution #m
-cell_length=20e-2 #m
-resolution_training = 256
-
-###Parameter spaces:
-n2 = -5.76008677482605e-09 #switch this to an actual range using numpy to launch the real simulation 
-isat = 135309.72599983215 #switch this to an actual range using numpy to launch the real simulation
-alpha = 31.8 #switch this to an actual range using numpy to launch the real simulation
-
-###Laser Parameters:
-input_power = 1.05 #W
-waist_input_beam = 2.3e-3 #m
-non_locality_length = 0 #m
-
-###Find your parameters (n2 and Isat):
-exp_image_path="/your/experiment/path/experiment.npy"
-
-sandbox(device, resolution_input_beam, window_input, window_out,
-        resolution_training, n2, input_power, alpha,
-        isat, waist_input_beam, non_locality_length, delta_z,
-        cell_length, exp_image_path, saving_path)
-```
