@@ -518,20 +518,81 @@ f"n2_net_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{numbe
 The two parameters that are measured during training are the training loss and the validation loss.
 Prior to training the model was splitted into 3 arrays (80% for training, 10% validation, 10% test). The goal is that while the training is going and the 80% are used to compute the good parameters for the model, the model also computes the loss on the 10% of the validation. The validation loss is not use to update the model but rather as a measure for us to check that the model is not overfitting. Namely, that it is not learning by heart the training set and its noise as well rather than generalising.
 ```python
-f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.pth"
+f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_alpha{number_of_alpha}.pth"
 ```
-On this it was computed with small numbers of $n_2$ and $I_{sat}$ so it converges really fast.
-![image info](./img/losses_w256_n25_isat5.png)
+![image info](./img/losses_w256_n210_isat10_alpha10.png)
 
 - Parameters file:
 
 In `params.txt`, there are all the parameters that generated the model for you to keep track of the model parameters.
+```bash
+resolution: 256
+accumulator: 1
+num_of_n2: 10
+in_power: 0.57
+num_of_isat: 10
+num_of_alpha: 10
+num_epochs: 30
+file: <_io.TextIOWrapper name='/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/training_n210_isat10_alpha10_power0.57/params.txt' mode='a' encoding='UTF-8'>
+model: <class 'engine.model.Inception_ResNetv2'>
+classes: {'n2': ('-9.999999999999999e-10', '-1.2915496650148826e-09', '-1.6681005372000556e-09', '-2.1544346900318866e-09', '-2.782559402207126e-09', '-3.5938136638046257e-09', '-4.641588833612772e-09', '-5.994842503189421e-09', '-7.742636826811278e-09', '-1e-08'), 'isat': ('6000.0', '10008.603223200354', '16695.356413242753', '27849.533001676664', '46455.82096086761', '77492.97990089297', '129266.08140191293', '215628.81982827754', '359690.5501913645', '600000.0'), 'alpha': ('25.0', '27.22222222222222', '29.444444444444443', '31.666666666666668', '33.888888888888886', '36.111111111111114', '38.333333333333336', '40.55555555555556', '42.77777777777778', '45.0')}
+
+```
 
 - Testing file:
 
-In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$ and $I_{sat}$.
+In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$, $I_{sat}$ and $\alpha$.
+
+```bash
+---- MODEL TRAINING ----
+Epoch 1, Train Loss: 0.6642, Validation Loss: 0.0613, Current LR: 0.01
+Epoch 2, Train Loss: 0.0270, Validation Loss: 0.0685, Current LR: 0.01
+Epoch 3, Train Loss: 0.0230, Validation Loss: 0.0464, Current LR: 0.01
+Epoch 4, Train Loss: 0.0211, Validation Loss: 0.0935, Current LR: 0.01
+Epoch 5, Train Loss: 0.0196, Validation Loss: 0.0693, Current LR: 0.01
+Epoch 6, Train Loss: 0.0199, Validation Loss: 0.0245, Current LR: 0.01
+Epoch 7, Train Loss: 0.0186, Validation Loss: 0.0324, Current LR: 0.01
+Epoch 8, Train Loss: 0.0171, Validation Loss: 0.0310, Current LR: 0.01
+Epoch 9, Train Loss: 0.0164, Validation Loss: 0.0266, Current LR: 0.01
+Epoch 10, Train Loss: 0.0166, Validation Loss: 0.0228, Current LR: 0.01
+Epoch 11, Train Loss: 0.0187, Validation Loss: 0.0361, Current LR: 0.01
+Epoch 12, Train Loss: 0.0160, Validation Loss: 0.0362, Current LR: 0.01
+Epoch 13, Train Loss: 0.0159, Validation Loss: 0.0645, Current LR: 0.01
+Epoch 14, Train Loss: 0.0151, Validation Loss: 0.0310, Current LR: 0.01
+Epoch 15, Train Loss: 0.0149, Validation Loss: 0.0384, Current LR: 0.01
+Epoch 16, Train Loss: 0.0147, Validation Loss: 0.0380, Current LR: 0.01
+Epoch 17, Train Loss: 0.0134, Validation Loss: 0.0224, Current LR: 0.01
+Epoch 18, Train Loss: 0.0146, Validation Loss: 0.0671, Current LR: 0.01
+Epoch 19, Train Loss: 0.0127, Validation Loss: 0.0306, Current LR: 0.01
+Epoch 20, Train Loss: 0.0126, Validation Loss: 0.0304, Current LR: 0.01
+Epoch 21, Train Loss: 0.0124, Validation Loss: 0.0270, Current LR: 0.01
+Epoch 22, Train Loss: 0.0123, Validation Loss: 0.0186, Current LR: 0.01
+Epoch 23, Train Loss: 0.0128, Validation Loss: 0.3245, Current LR: 0.01
+Epoch 24, Train Loss: 0.0114, Validation Loss: 0.0162, Current LR: 0.01
+Epoch 25, Train Loss: 0.0138, Validation Loss: 0.0204, Current LR: 0.01
+Epoch 26, Train Loss: 0.0110, Validation Loss: 0.0254, Current LR: 0.01
+Epoch 27, Train Loss: 0.0096, Validation Loss: 0.1469, Current LR: 0.01
+Epoch 28, Train Loss: 0.0092, Validation Loss: 0.0170, Current LR: 0.01
+Epoch 29, Train Loss: 0.0099, Validation Loss: 0.0328, Current LR: 0.01
+Epoch 30, Train Loss: 0.0091, Validation Loss: 0.0312, Current LR: 0.01
+---- MODEL SAVING ----
+---- MODEL ANALYSIS ----
+Total Trainable Params: 89200259
+---- MODEL TESTING ----
+Average MSE for 'n2': 0.0108
+Average MSE for 'isat': 0.0094
+Average MSE for 'alpha': 0.0105
+Average MAE for 'n2': 0.0735
+Average MAE for 'isat': 0.0716
+Average MAE for 'alpha': 0.0850
+
+```
 
 - Checkpoint file:
 
 In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
 
+### Results
+Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [[NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
+
+![Results](img/prediction_n210_isat10_alpha10_power0.57.png)
