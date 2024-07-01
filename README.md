@@ -164,21 +164,19 @@ graph TB
 
 ## Program flowchart
 
-#TODO
 ```mermaid
 graph TD
     A[parameters.py] --> B[parameter_manager.py]
     B --> C{generate}
     C --> |True| sub1
     C --> |False| D[Loads data: \n It implies the dataset has already been created\n and matches the naming convention]
-    sub1 --> L[generate_labels]
-
-    L --> sub2
-    D --> L
-    sub2 --> G{create_visual}
+    sub1 --> G{create_visual}
+    D --> G
     G --> |True| sub5
-    G --> |False| E{training}
-    sub5 --> E{training}
+    G --> |False| L[generate_labels]
+    sub5 --> L[generate_labels]
+    L --> sub2
+    sub2 --> E{training}
     E --> |True| sub3
     E --> |False| K[Loads the model: \n It implies the model has already been created and trained\n and matches the naming convention]
     K --> F{use}
@@ -196,7 +194,6 @@ graph TD
     subgraph sub2[Augment data]
         F1[augment.py] --> F2(data_augmentation)  
         F2 --> F3[treament_methods.py]
-        F3 --> F4(salt_and_pepper_noise)
         F3 --> F5(line_noise)
 
     end
