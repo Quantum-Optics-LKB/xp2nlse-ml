@@ -534,7 +534,4 @@ In `testing.txt`, there is the trace of the training loss and the validation los
 - Checkpoint file:
 
 In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
-### Use
-
-### Sandbox:
 

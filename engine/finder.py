@@ -197,7 +197,7 @@ def manage_training(
         file.write(f"model: {Inception_ResNetv2}\n")
         file.write(f"classes: {classes}\n")
 
-    plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_isat)
+    plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_isat, number_of_alpha)
 
     exam(cnn, testloader, device)
 

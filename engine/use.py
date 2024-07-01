@@ -98,7 +98,7 @@ def get_parameters(
         numbers = np.array([computed_n2]), in_power, alpha, np.array([computed_isat]), waist, nl_length, delta_z, length
         E = data_creation(numbers, cameras, device_number)
         fig, axes = plt.subplots(3, 2, figsize=(10, 15))
-        fig.suptitle(f'Results:\n {puiss_str} = {in_power:.2e} {puiss_u}, {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}, {alpha_str} = {computed_alpha} {alpha_u}')
+        fig.suptitle(f'Results: {puiss_str} = {in_power:.2e} {puiss_u},\n {n2_str} = {computed_n2} {n2_u}, {isat_str} = {computed_isat} {isat_u}, {alpha_str} = {computed_alpha} {alpha_u}')
         
         axes[0, 0].imshow(density, cmap='viridis')
         axes[0, 0].set_title(f'Experimental Density')
