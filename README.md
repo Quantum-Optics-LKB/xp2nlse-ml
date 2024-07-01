@@ -14,8 +14,8 @@ $$
 i\partial_{z}E = -\frac{1}{2k_0}\nabla_{\perp}^2 E - n_2 \frac{k_0c\epsilon_0}{2}|E|^2E - i \frac{\alpha}{2}
 $$
 
-The system holds 2 unknowns: non-linear index $n_2$ and saturation intensity $I_{sat}$.
-These parameters cannot be measured in the experiment. They are intrinsic properties of the system.
+The system holds 3 unknowns: non-linear index $n_2$, absorption $\alpha$ and saturation intensity $I_{sat}$.
+Aside from $\alpha$, these parameters are coupled and cannot be measured in the experiment. They are intrinsic properties of the system.
 
 With the recent research in machine learning and optimization tools thriving, the idea was to attempt and solve this problem with neural networks. 
 
