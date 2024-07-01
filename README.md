@@ -1,8 +1,8 @@
 # Nonlinear Schrödinger Equation Parameter Estimation with Neural Networks
 
-## Problem
+# Problem
 
-### Physical situation
+## Physical situation
 
 [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) offers a powerful simulation tool to solve a typical [non linear Schrödinger](https://en.wikipedia.org/wiki/Nonlinear_Schr%C3%B6dinger_equation) / [Gross-Pitaevskii](https://en.wikipedia.org/wiki/Gross%E2%80%93Pitaevskii_equation) equation of the type :
 $$i\partial_{t}\psi = -\frac{1}{2}\nabla^2\psi+g|\psi|^2\psi$$
@@ -19,15 +19,17 @@ Aside from $\alpha$, these parameters are coupled and cannot be measured in the 
 
 With the recent research in machine learning and optimization tools thriving, the idea was to attempt and solve this problem with neural networks. 
 
+# Solution
+
 ## Overview
 
 This repository uses the Inception-Residual Network (Inception-Resnetv2) model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
 
-## Source
+### Source
 
 The code for this model is adapted from an unofficial PyTorch implementation of Inception-v4 and Inception-ResNet-v2, available at [this repository](https://github.com/zhulf0804/Inceptionv4_and_Inception-ResNetv2.PyTorch). This adaptation is inspired by the paper ["Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning" by Christian Szegedy, et al., 2016](https://doi.org/10.48550/arXiv.1602.07261).
 
-# Inception-ResNet-v2 Model
+### Inception-ResNet-v2 Model
 
 ```mermaid
 
@@ -160,9 +162,78 @@ graph TB
 5. **Train the Model**: Train the model using the generated data.
 6. **Estimate your parameters**: Apply the trained model to new data to estimate parameters.
 
-## Getting Started
+## Program flowchart
 
-### Prerequisites
+#TODO
+```mermaid
+graph TD
+    A[parameters.py] --> B[parameter_manager.py]
+    B --> C{generate}
+    C --> |True| sub1
+    C --> |False| D[Loads data: \n It implies the dataset has already been created\n and matches the naming convention]
+    sub1 --> L[generate_labels]
+
+    L --> sub2
+    D --> L
+    sub2 --> G{create_visual}
+    G --> |True| sub5
+    G --> |False| E{training}
+    sub5 --> E{training}
+    E --> |True| sub3
+    E --> |False| K[Loads the model: \n It implies the model has already been created and trained\n and matches the naming convention]
+    K --> F{use}
+    F --> |True| sub4
+    sub3 --> K
+
+    
+    subgraph sub1[Generate data]
+        C1[generate.py] --> C2(data_creation)
+        C2 --> C3[noise_generator.py]
+        C3 --> C4(experiment_noise)
+        C4 --> C5(NLSE)
+        
+    end
+    subgraph sub2[Augment data]
+        F1[augment.py] --> F2(data_augmentation)  
+        F2 --> F3[treament_methods.py]
+        F3 --> F4(salt_and_pepper_noise)
+        F3 --> F5(line_noise)
+
+    end
+    
+    subgraph sub3[Training the model]
+        D1[finder.py]
+        D1 --> D2[prep_training]
+        D2 --> D3(network_init)
+        D3 --> D4(data_split)
+        D4 --> D5(data_treatment)
+        D5 --> D6(manage_training)
+        D6 --> D7[training.py] 
+        D7 --> D8(network_training)
+        D8 --> D9[loss_plot.py]
+        D9 --> D10(plotter)
+        D10 --> D11[test.py]
+        D11 --> D12(exam)
+        D12 --> D13(count_parameters_pandas)
+        D13 --> D14(test_model)
+
+    end
+
+    subgraph sub4[Use the model]
+        E1[use.py]
+        E1 --> E2{plot_generate_compare}
+        E2 --> |True| E3[Creates a comparison plot \n between your experimental data and \nthe parameters the model computed]
+
+    end
+
+    subgraph sub5[Visualize training data]
+        G1[visualize.py]
+    end
+```
+
+# Getting Started
+
+## Prerequisites
 
 Ensure you have Python 3.x installed. This project requires the following external libraries:
 
@@ -218,18 +289,16 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `generate`: Set to `True` to generate new data using NLSE.
 
 #### <ins>Data Generation Parameters using NLSE <ins>
-##### Cell
-- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
 - `cell_length`: Length of the rubidium cell ($m$).
-##### Camera
-- `resolution_input_beam`: Resolution of the input beam. (default 2048) (Note that it is better to keep it a power of 2)
-- `window_input`: Window size of the input beam ($m$). (default $50\cdot10^{-3}$ $m$)
+- `resolution_input_beam`: Resolution of the input beam. (default 512) (Note that it is better to keep it a power of 2)
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
 - `output_pixel_size`: Size of pixels of the output camera ($m$).
-- `window_out`: Window size of the propagated output beam ($m$). It is set to be output_pixel_size x output_camera_resolution.
+
+- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
+- `window_input`: Window size of the input beam ($m$). (default $20\cdot10^{-3}$ $m$)
 - `resolution_training`: Resolution of images when saved and for training. (default 256)
-##### Simulation
 - `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ $m$)
+
 
 #### <ins>Parameter Spaces<ins>
 - `number_of_n2`: Number of different n2 values for training.
@@ -237,7 +306,7 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `number_of_alpha`: Number of different $\alpha$ values for training.
 - `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
-- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `alpha`: Range of $\alpha$ values the absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
 
 
 #### <ins>Laser Parameters<ins>
@@ -339,7 +408,6 @@ Using the `create_visual` variable you can get:
 #### Unwrapped Phase
 ![Unwrapped Phase](img/unwrapped_phase.gif)
 
-# TODO
 These images will be augmented by 31 with different noises and fringes.
 At the end of this process your array will be of shape (31 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ### Augmentations
@@ -428,71 +496,4 @@ sandbox(device, resolution_input_beam, window_input, window_out,
         resolution_training, n2, input_power, alpha,
         isat, waist_input_beam, non_locality_length, delta_z,
         cell_length, exp_image_path, saving_path)
-```
-## Program flowchart
-
-```mermaid
-graph TD
-    A[parameters.py] --> B[parameter_manager.py]
-    B --> C{generate}
-    C --> |True| sub1
-    C --> |False| D[Loads data: \n It implies the dataset has already been created\n and matches the naming convention]
-    sub1 --> L[generate_labels]
-
-    L --> sub2
-    D --> L
-    sub2 --> G{create_visual}
-    G --> |True| sub5
-    G --> |False| E{training}
-    sub5 --> E{training}
-    E --> |True| sub3
-    E --> |False| K[Loads the model: \n It implies the model has already been created and trained\n and matches the naming convention]
-    K --> F{use}
-    F --> |True| sub4
-    sub3 --> K
-
-    
-    subgraph sub1[Generate data]
-        C1[generate.py] --> C2(data_creation)
-        C2 --> C3[noise_generator.py]
-        C3 --> C4(experiment_noise)
-        C4 --> C5(NLSE)
-        
-    end
-    subgraph sub2[Augment data]
-        F1[augment.py] --> F2(data_augmentation)  
-        F2 --> F3[treament_methods.py]
-        F3 --> F4(salt_and_pepper_noise)
-        F3 --> F5(line_noise)
-
-    end
-    
-    subgraph sub3[Training the model]
-        D1[finder.py]
-        D1 --> D2[prep_training]
-        D2 --> D3(network_init)
-        D3 --> D4(data_split)
-        D4 --> D5(data_treatment)
-        D5 --> D6(manage_training)
-        D6 --> D7[training.py] 
-        D7 --> D8(network_training)
-        D8 --> D9[loss_plot.py]
-        D9 --> D10(plotter)
-        D10 --> D11[test.py]
-        D11 --> D12(exam)
-        D12 --> D13(count_parameters_pandas)
-        D13 --> D14(test_model)
-
-    end
-
-    subgraph sub4[Use the model]
-        E1[use.py]
-        E1 --> E2{plot_generate_compare}
-        E2 --> |True| E3[Creates a comparison plot \n between your experimental data and \nthe parameters the model computed]
-
-    end
-
-    subgraph sub5[Visualize training data]
-        G1[visualize.py]
-    end
 ```

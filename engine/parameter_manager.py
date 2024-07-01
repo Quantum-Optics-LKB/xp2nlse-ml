@@ -24,14 +24,14 @@ def manager(generate: bool,
             saving_path: str,
             exp_image_path: str,
             device: int = 0, 
-            resolution_input_beam: int = 2048,
-            window_input: float = 50e-3,
+            resolution_input_beam: int = 512,
+            window_input: float = 20e-3,
             resolution_training: int = 256,
             non_locality_length: float = 0,
             delta_z: float = 1e-4,
             learning_rate: float = 0.01, 
             batch_size: int = 100, 
-            num_epochs: int = 60, 
+            num_epochs: int = 30, 
             accumulator: int = 1
             ) -> None:
     

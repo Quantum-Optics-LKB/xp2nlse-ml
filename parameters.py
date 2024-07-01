@@ -7,8 +7,8 @@ from engine.parameter_manager import manager
 saving_path="/your/saving/path/"
 
 ###Data generation Parameters:
-output_camera_resolution = 3008
-output_pixel_size = 3.76e-6 #m
+output_camera_resolution = 2056
+output_pixel_size = 3.45e-6 #m
 window_out = output_pixel_size * output_camera_resolution #m
 cell_length=20e-2 #m
 generate = False
@@ -19,12 +19,12 @@ number_of_n2 = 5
 number_of_isat = 5
 number_of_alpha = 5
 n2 = -np.logspace(-9, -8, number_of_n2) #m/W^2 [-1e-9 -> -1e-8]
-isat = np.logspace(3, 6, number_of_isat) #W/m^2 [1e3 -> 1e6]
-alpha = np.linspace(10, 60, number_of_alpha) #m^-1 [10 -> 60]
+isat = np.logspace(3, 6, number_of_isat) #W/m^2 [6e3 -> 6e6]
+alpha = np.linspace(25, 45, number_of_alpha) #m^-1 [25 -> 45]
 
 ###Laser Parameters:
-input_power = 1.05 #W
-waist_input_beam = 2.3e-3 #m
+input_power = 0.570 #W
+waist_input_beam = 3.564e-3 #m
 
 ###Training Parameters:
 training=True
