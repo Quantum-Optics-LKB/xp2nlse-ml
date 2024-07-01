@@ -219,7 +219,6 @@ This will help the model generalize the fitting of the parameters regardless of 
 
 #### <ins>Data Generation Parameters using NLSE <ins>
 ##### Cell
-- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
 - `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
 - `cell_length`: Length of the rubidium cell ($m$).
 ##### Camera
@@ -235,8 +234,11 @@ This will help the model generalize the fitting of the parameters regardless of 
 #### <ins>Parameter Spaces<ins>
 - `number_of_n2`: Number of different n2 values for training.
 - `number_of_isat`: Number of different Isat values for training.
+- `number_of_alpha`: Number of different $\alpha$ values for training.
 - `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
+- `alpha`: Absorption parameter ($m^{-1}$) $I = I_0 \cdot e^{-\alpha \cdot L}$.
+
 
 #### <ins>Laser Parameters<ins>
 - `input_power`: Input power of the laser ($W$).
@@ -296,12 +298,13 @@ create_visual = False
 ###Parameter spaces:
 number_of_n2 = 5
 number_of_isat = 5
-n2 = -5*np.logspace(-10, -9, number_of_n2) #m/W^2 [-5e-10 -> -5e-9]
-isat = np.logspace(4, 5, number_of_isat) #W/m^2 [1e4 -> 1e5]
+number_of_alpha = 5
+n2 = -np.logspace(-9, -8, number_of_n2) #m/W^2 [-1e-9 -> -1e-8]
+isat = np.logspace(3, 6, number_of_isat) #W/m^2 [1e3 -> 1e6]
+alpha = np.linspace(10, 60, number_of_alpha) #m^-1 [10 -> 60]
 
 ###Laser Parameters:
 input_power = 1.05 #W
-alpha = 22 #m^-1
 waist_input_beam = 2.3e-3 #m
 
 ###Training Parameters:
@@ -313,7 +316,7 @@ use=True
 plot_generate_compare=True
 
 manager(generate, training, create_visual, use, plot_generate_compare,
-         window_out, n2, number_of_n2, alpha, isat, number_of_isat, 
+         window_out, n2, number_of_n2, alpha, number_of_alpha, isat, number_of_isat, 
          input_power, waist_input_beam, cell_length, 
          saving_path, exp_image_path)
 ```
@@ -321,58 +324,56 @@ manager(generate, training, create_visual, use, plot_generate_compare,
 ### Generation
 This code will generate a dataset and store in your saving path under the name:
 ```python
-f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_power{input_power}.npy"
+f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.npy"
 ```
 This data set has shape:
-(`number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`). It has type `np.float16`.
+(`number_of_n2` * `number_of_isat` * `number_of_alpha`, 3, `resolution_training`, `resolution_training`). It has type `np.float16`.
 The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the unwrapped phase.
 
 Using the `create_visual` variable you can get:
-
-#### Density
-![image info](./img/density_n25_isat5_power1.05.png)
+# TODO
+#### Density 
+![Density](img/density.gif)
 #### Phase
-![image info](./img/phase_n25_isat5_power1.05.png)
+![Phase](img/phase.gif)
 #### Unwrapped Phase
-![image info](./img/unwrap_phase_n25_isat5_power1.05.png)
+![Unwrapped Phase](img/unwrapped_phase.gif)
 
+# TODO
 These images will be augmented by 31 with different noises and fringes.
 At the end of this process your array will be of shape (31 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ### Augmentations
 Once the augmentations are done, the array goes to training.
 
 ```python
-def elastic_saltpepper(
-        original_height: int, 
-        original_width: int
-        ) -> torch.nn.Sequential:
+def elastic_saltpepper() -> torch.nn.Sequential:
     
-    elastic = (random.randrange(21, 42, 2), random.randrange(21, 42, 2))
+    elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
+    elastic_alpha = (1, 1)
     salt_pepper = random.uniform(0.01, .11)
     return torch.nn.Sequential(
-        K.RandomElasticTransform(kernel_size=51, sigma=elastic, alpha=(1,1),p=.75),
-        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.75),
-        K.Resize((original_height, original_width))
+        K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
+        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
     )
 ```
 The following shows you how the images are getting modified.
 
 The model is saved in a directory of the name:
 ```python
-f"training_n2{number_of_n2}_isat{number_of_isat}_power{input_power}"
+f"training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}"
 ```
 This directory contains 4 files:
 
 - Model:
 ```python
-f"n2_net_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_power{input_power}.pth"
+f"n2_net_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.pth"
 ```
 - Plot of the losses:
 
 The two parameters that are measured during training are the training loss and the validation loss.
 Prior to training the model was splitted into 3 arrays (80% for training, 10% validation, 10% test). The goal is that while the training is going and the 80% are used to compute the good parameters for the model, the model also computes the loss on the 10% of the validation. The validation loss is not use to update the model but rather as a measure for us to check that the model is not overfitting. Namely, that it is not learning by heart the training set and its noise as well rather than generalising.
 ```python
-f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_power{input_power}.pth"
+f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.pth"
 ```
 On this it was computed with small numbers of $n_2$ and $I_{sat}$ so it converges really fast.
 ![image info](./img/losses_w256_n25_isat5.png)
@@ -395,10 +396,6 @@ The `sandbox_parameters.py` contains this code.
 You can just choose your parameters and launch the code.
 
 ```python
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# @author: Louis Rossignol
-
 from engine.nlse_sandbox import sandbox
 
 saving_path="/your/saving/path/"
@@ -415,14 +412,12 @@ cell_length=20e-2 #m
 resolution_training = 256
 
 ###Parameter spaces:
-number_of_n2 = 1
-number_of_isat = 1
-n2 = -5e-9 #m/W^2 #switch this to an actual range using numpy to launch the real simulation 
-isat = 1e5 #W/m^2 #switch this to an actual range using numpy to launch the real simulation
+n2 = -5.76008677482605e-09 #switch this to an actual range using numpy to launch the real simulation 
+isat = 135309.72599983215 #switch this to an actual range using numpy to launch the real simulation
+alpha = 31.8 #switch this to an actual range using numpy to launch the real simulation
 
 ###Laser Parameters:
 input_power = 1.05 #W
-alpha = 22 #m^-1
 waist_input_beam = 2.3e-3 #m
 non_locality_length = 0 #m
 
@@ -442,8 +437,10 @@ graph TD
     B --> C{generate}
     C --> |True| sub1
     C --> |False| D[Loads data: \n It implies the dataset has already been created\n and matches the naming convention]
-    sub1 --> sub2
-    D --> sub2
+    sub1 --> L[generate_labels]
+
+    L --> sub2
+    D --> L
     sub2 --> G{create_visual}
     G --> |True| sub5
     G --> |False| E{training}
