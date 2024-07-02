@@ -266,11 +266,10 @@ The `parameters.py` script is where you store the parameters for the data genera
 python parameters.py
 ```
 
-The `sandbox_parameters.py` script is where you use the same parameters as for the data generation, training, and parameter estimation processes and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into 
-real `parameters.py` script.
+The `sandbox_parameters.py` script is where you use the same parameters as for the data generation, training, and parameter estimation processes and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into the `parameters.py` script.
 
 ```bash
-python parameters.py
+python sandbox_parameters.py
 ```
 ## Parameters
 
