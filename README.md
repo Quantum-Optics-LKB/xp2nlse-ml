@@ -286,15 +286,15 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `generate`: Set to `True` to generate new data using NLSE.
 
 ### <ins>Data Generation Parameters using NLSE <ins>
-- `cell_length`: Length of the rubidium cell ($m$).
+- `cell_length`: Length of the rubidium cell (m).
 - `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
-- `output_pixel_size`: Size of pixels of the output camera ($m$).
+- `output_pixel_size`: Size of pixels of the output camera (m).
 
 - `resolution_input_beam`: Resolution of the input beam. (default 512) (Note that it is better to keep it a power of 2)
-- `window_input`: Window size of the input beam ($m$). (default $20\cdot10^{-3}$ $m$)
+- `window_input`: Window size of the input beam ($m$). (default $20\cdot10^{-3}$ m)
 - `resolution_training`: Resolution of images when saved and for training. (default 256)
-- `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ $m$)
-- `non_locality_length`: Length of non locality ($m$). (default $0$ $m$)
+- `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ m)
+- `non_locality_length`: Length of non locality ($m$). (default $0$ m)
 
 
 ### <ins>Parameter Spaces<ins>
@@ -303,12 +303,12 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `number_of_alpha`: Number of different $\alpha$ values for training.
 - `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
-- `alpha`: Range of $\alpha$ values the absorption parameter ($m^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `alpha`: Range of $\alpha$ values the absorption parameter (m$^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
 
 
 ### <ins>Laser Parameters<ins>
-- `input_power`: Input power of the laser ($W$).
-- `waist_input_beam`: Waist $\sigma$ ($m$) of the input gaussian beam: $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
+- `input_power`: Input power of the laser (W).
+- `waist_input_beam`: Waist $\sigma$ (m) of the input gaussian beam: $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
 
 For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
 
@@ -351,13 +351,13 @@ The accumulator variable is a multiplier that does that.
 You choose your parameters.
 We pick here:
 - `output_camera_resolution` = $2056$
-- `output_pixel_size` = $3.45\cdot10^{-6}m$
-- `cell_length` = $20\cdot10^{-2}m$
-- `n2` $\in$ [$-1\cdot10^{-8}$; $-1\cdot10^{-9}$] $m^2/W$
-- `isat` $\in$ [$6\cdot10^{3}$; $6\cdot10^{6}$] $W/m^2$
-- `alpha` $\in$ [$25$; $45$] $m^{-1}$
-- `input_power` = $0.570 W$
-- `waist_input_beam`= $3.564\cdot10^{-3}m$
+- `output_pixel_size` = $3.45\cdot10^{-6}$ m
+- `cell_length` = $20\cdot10^{-2}$ m
+- `n2` $\in$ [ $-1\cdot10^{-8}$ ; $-1\cdot10^{-9}$ ] m $^2$/W
+- `isat` $\in$ [ $6\cdot10^{3}$ ; $6\cdot10^{6}$ ] W/m $^2$
+- `alpha` $\in$ [ $25$ ;  $45$ ] m $^{-1}$
+- `input_power` = $0.570$ W
+- `waist_input_beam`= $3.564\cdot10^{-3}$ m
 
 ## Sandbox
 When you train, (trust me I have been through it) you want to be sure your dataset represents the experimental data. It implies checking that the edge cases of your range triplet ($n_2$, $I_{sat}$ and $\alpha$) converge and make sense. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
@@ -492,7 +492,7 @@ Then, each image has a 20% chance of being affected by the salt and pepper noise
 
 Here the transforms where applied on all the images.
 
-The combined version of the images has a 10% change of affecting the images.
+The combined version of the modification has a 10% change of affecting the images.
 
 #### Density 
 ![Density](img/all_density.gif)
