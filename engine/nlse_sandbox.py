@@ -31,7 +31,7 @@ def experiment(
 
 
 def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, resolution_training, window_out,
-                 n2, isat, alpha, input_power, non_locality_length, saving_path):
+                 n2, isat, alpha, input_power, saving_path):
     
     output_shape = (resolution_training, resolution_training)
     label_x = np.around(np.asarray([-window_out/2, 0.0 ,window_out/2])/1e-3,2)
@@ -47,12 +47,10 @@ def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, res
     isat_u = r"$W$/$m^2$"
     puiss_str = r"$p$"
     puiss_u = r"$W$"
-    nl_str = r"$nl$"
-    nl_u = r"$m$"
     alpha_str = r"$\alpha$"
     alpha_u = r"$m^{-1}$"
 
-    title = f"{n2_str} = {n2:.2e}{n2_u}, {isat_str} = {isat:.2e}{isat_u}, {puiss_str} = {input_power:.2e}{puiss_u}, {alpha_str} = {alpha:.2e}{alpha_u}, {nl_str} = {non_locality_length:.2e}{nl_u}"
+    title = f"{n2_str} = {n2:.2e}{n2_u}, {isat_str} = {isat:.2e}{isat_u}, {puiss_str} = {input_power:.2e}{puiss_u}, {alpha_str} = {alpha:.2e}{alpha_u}"
     fig.suptitle(title)
 
     fig.suptitle(title)
@@ -173,5 +171,4 @@ def sandbox(device: int,
     density_experiment, phase_experiment, uphase_experiment = experiment(resolution_training, exp_image_path)
 
     plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment,
-                 resolution_training, window_out, n2, isat, alpha, input_power, 
-                 non_locality_length, saving_path)  
+                 resolution_training, window_out, n2, isat, alpha, input_power, saving_path)  
