@@ -290,10 +290,10 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `output_pixel_size`: Size of pixels of the output camera (m).
 
 - `resolution_input_beam`: Resolution of the input beam. (default 512) (Note that it is better to keep it a power of 2)
-- `window_input`: Window size of the input beam ($m$). (default $20\cdot10^{-3}$ m)
+- `window_input`: Window size of the input beam (m). (default $20\cdot10^{-3}$ m)
 - `resolution_training`: Resolution of images when saved and for training. (default 256)
-- `delta_z`: Step of the propagation in the split-step method ($m$). (default $1\cdot10^{-4}$ m)
-- `non_locality_length`: Length of non locality ($m$). (default $0$ m)
+- `delta_z`: Step of the propagation in the split-step method (m). (default $1\cdot10^{-4}$ m)
+- `non_locality_length`: Length of non locality (m). (default $0$ m)
 
 
 ### <ins>Parameter Spaces<ins>
@@ -302,7 +302,7 @@ This will help the model generalize the fitting of the parameters regardless of 
 - `number_of_alpha`: Number of different $\alpha$ values for training.
 - `n2`: Range of n2 values (we use logspaces to ensure that that all parameters are represented).
 - `isat`: Range of Isat values (we use logspaces to ensure that that all parameters are represented).
-- `alpha`: Range of $\alpha$ values the absorption parameter (m$^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
+- `alpha`: Range of $\alpha$ values the absorption parameter (m $^{-1}$) such that $I = I_0 \cdot e^{-\alpha \cdot L}$.
 
 
 ### <ins>Laser Parameters<ins>
