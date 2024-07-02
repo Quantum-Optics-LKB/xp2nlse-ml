@@ -78,15 +78,6 @@ def get_parameters(
     computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
     computed_alpha = outputs_alpha[0,0].cpu().numpy()*max_alpha
 
-    n2_str = r"$n_2$"
-    n2_u = r"$m^2$/$W$"
-    isat_str = r"$I_{sat}$"
-    isat_u = r"$W$/$m^2$"
-    puiss_str = r"$p$"
-    puiss_u = r"$W$"
-    alpha_str = r"$\alpha$"
-    alpha_u = r"$m^{-1}$"
-
     print(f"n2 = {computed_n2} m^2/W")
     print(f"Isat = {computed_isat} W/m^2")
     print(f"alpha = {computed_alpha} m^-1")
@@ -101,10 +92,19 @@ def get_parameters(
 
 def plot_results(E, density_experiment, phase_experiment, uphase_experiment, numbers, cameras, number_of_n2, number_of_isat, number_of_alpha, saving_path):
 
+    n2_str = r"$n_2$"
+    n2_u = r"$m^2$/$W$"
+    isat_str = r"$I_{sat}$"
+    isat_u = r"$W$/$m^2$"
+    puiss_str = r"$p$"
+    puiss_u = r"$W$"
+    alpha_str = r"$\alpha$"
+    alpha_u = r"$m^{-1}$"
+    
     computed_n2, in_power, computed_alpha, computed_isat, waist, nl_length, delta_z, length = numbers 
-    n2 = computed_n2[0]
-    alpha = computed_alpha[0]
-    isat = computed_isat[0]
+    computed_n2 = computed_n2[0]
+    computed_alpha = computed_alpha[0]
+    computed_isat = computed_isat[0]
     resolution_in, window_in, window_out, resolution_training = cameras
     
     output_shape = (resolution_training, resolution_training)
@@ -202,8 +202,6 @@ def plot_results(E, density_experiment, phase_experiment, uphase_experiment, num
     axs[2, 1].set_yticks([0, output_shape[0]//2, output_shape[0]])
     axs[2, 1].set_yticklabels(label_y)
     axs[2, 1].set_ylabel(r"y (mm)")
-
-
 
     axs[0, 0].tick_params(axis='both', which='major', pad=15)
     axs[1, 0].tick_params(axis='both', which='major', pad=15)
