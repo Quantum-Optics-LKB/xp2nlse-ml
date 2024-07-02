@@ -7,7 +7,6 @@ import numpy as np
 from tqdm import tqdm
 from engine.seed_settings import set_seed
 from engine.treament import elastic_saltpepper
-
 set_seed(10)
 
 def save_checkpoint(state,new_path):

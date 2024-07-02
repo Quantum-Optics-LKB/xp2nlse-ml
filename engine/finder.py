@@ -12,9 +12,9 @@ from engine.loss_plot import plotter
 from torch.utils.data import DataLoader
 from engine.seed_settings import set_seed
 from engine.model import Inception_ResNetv2
-from engine.training import load_checkpoint, network_training
 from engine.field_dataset import FieldDataset
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from engine.training import load_checkpoint, network_training
 set_seed(10)
 
 def data_split(

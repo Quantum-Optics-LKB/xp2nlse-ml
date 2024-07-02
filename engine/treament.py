@@ -6,7 +6,6 @@ import random
 import numpy as np
 import kornia.augmentation as K
 from engine.seed_settings import set_seed
-
 set_seed(10)
 
 def normalize_data(
@@ -48,14 +47,6 @@ def experiment_noise(
 
     noisy_beam = noisy_beam.astype(np.complex64)
     return noisy_beam
-
-def salt_and_pepper_noise(image, noise_level):
-    # Function to add salt and pepper noise to an image
-    noisy = image.copy()
-    probs = np.random.rand(*image.shape)
-    noisy[probs < noise_level / 2] = 0
-    noisy[probs > 1 - noise_level / 2] = np.max(image)
-    return noisy
 
 def line_noise(
         image: np.ndarray,

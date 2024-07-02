@@ -6,11 +6,12 @@ import cupy as cp
 import numpy as np
 from scipy.ndimage import zoom
 import matplotlib.pyplot as plt
+from engine.seed_settings import set_seed
 from engine.generate import data_creation
 from skimage.restoration import unwrap_phase
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from engine.treament import general_extrema, normalize_data
-
+set_seed(10)
 
 def experiment(
         resolution_training: int,
@@ -20,7 +21,7 @@ def experiment(
     density_experiment = normalize_data(zoom(np.abs(field), 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
     phase_experiment = np.angle(field)
-    uphase_experiment = general_extrema(unwrap_phase(phase_experiment))
+    uphase_experiment = general_extrema(unwrap_phase(phase_experiment, rng=10))
     uphase_experiment = normalize_data(zoom(uphase_experiment, 
                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
     phase_experiment = normalize_data(zoom(phase_experiment, 

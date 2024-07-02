@@ -11,7 +11,6 @@ from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 from engine.treament import general_extrema, normalize_data
-
 set_seed(10)
 
 def get_parameters(
@@ -44,7 +43,7 @@ def get_parameters(
         density = normalize_data(zoom(np.abs(field), 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         phase = np.angle(field)
-        uphase = general_extrema(unwrap_phase(phase))
+        uphase = general_extrema(unwrap_phase(phase, rng=10))
         uphase = normalize_data(zoom(uphase, 
                     (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
         phase = normalize_data(zoom(phase, 
