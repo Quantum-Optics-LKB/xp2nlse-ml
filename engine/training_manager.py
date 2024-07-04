@@ -8,54 +8,14 @@ import torch
 import numpy as np
 import torch.nn as nn
 from engine.test import exam
-from engine.loss_plot import plotter
+from engine.utils import set_seed
 from torch.utils.data import DataLoader
-from engine.seed_settings import set_seed
 from engine.model import Inception_ResNetv2
 from engine.field_dataset import FieldDataset
+from engine.utils import data_split, plot_loss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.training import load_checkpoint, network_training
 set_seed(10)
-
-def data_split(
-        E: np.ndarray, 
-        n2_labels: np.ndarray,
-        isat_labels: np.ndarray,
-        alpha_labels: np.ndarray,
-        train_ratio: float = 0.8, 
-        validation_ratio: float = 0.1, 
-        test_ratio: float = 0.1
-        ) -> tuple:
-    assert train_ratio + validation_ratio + test_ratio == 1
-    
-    np.random.seed(0)
-    indices = np.arange(E.shape[0])
-    np.random.shuffle(indices)
-    
-    train_index = int(len(indices) * train_ratio)
-    validation_index = int(len(indices) * (train_ratio + validation_ratio))
-
-    training_indices = indices[:train_index]
-    validation_indices = indices[train_index:validation_index]
-    test_indices = indices[validation_index:]
-
-    train = E[training_indices,:,:,:]
-    validation = E[validation_indices,:,:,:]
-    test = E[test_indices,:,:,:]
-
-    train_n2 = n2_labels[training_indices]
-    validation_n2 = n2_labels[validation_indices]
-    test_n2 = n2_labels[test_indices]
-
-    train_isat = isat_labels[training_indices]
-    validation_isat = isat_labels[validation_indices]
-    test_isat = isat_labels[test_indices]
-
-    train_alpha = alpha_labels[training_indices]
-    validation_alpha = alpha_labels[validation_indices]
-    test_alpha = alpha_labels[test_indices]
-
-    return (train, train_n2, train_isat, train_alpha), (validation, validation_n2, validation_isat, validation_alpha), (test, test_n2, test_isat, test_alpha)
 
 def create_loaders(
         sets: np.ndarray, 
@@ -108,7 +68,7 @@ def prepare_training(
         ) -> tuple:
     
     device = torch.device(f"cuda:{device_number}")
-    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
+    _, input_power, _, _, _, _, _, _ = nlse_settings
 
     number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values = labels
     
@@ -116,7 +76,7 @@ def prepare_training(
     isat_values_normalized = isat_values/np.max(isat_values)
     alpha_values_normalized = alpha_values/np.max(alpha_values)
 
-    new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}"
+    new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}"
 
     os.makedirs(new_path, exist_ok=True)
 
@@ -148,12 +108,11 @@ def manage_training(
         model_settings: tuple, 
         nlse_settings: tuple, 
         new_path: str, 
-        resolution: int, 
         labels: tuple
         ) -> None:
 
-    number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values = labels
-    n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
+    number_of_n2, _, number_of_isat, _, number_of_alpha, resolution_training = labels
+    n2, in_power, alpha, isat, _, _, _, _ = nlse_settings
     cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device = model_settings
 
     orig_stdout = sys.stdout
@@ -177,7 +136,9 @@ def manage_training(
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list)
     
     print("---- MODEL SAVING ----")
-    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth')
+    directory_path = f'{new_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}/'
+    directory_path += f'n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth'
+    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth')
 
     file_name = f"{new_path}/params.txt"
     classes = {
@@ -186,7 +147,7 @@ def manage_training(
         'alpha' : tuple(map(str, alpha))
     }
     with open(file_name, "a") as file:
-        file.write(f"resolution: {resolution}\n")
+        file.write(f"resolution: {resolution_training}\n")
         file.write(f"accumulator: {accumulation_steps}\n")
         file.write(f"num_of_n2: {number_of_n2}\n")
         file.write(f"in_power: {in_power}\n")
@@ -197,7 +158,7 @@ def manage_training(
         file.write(f"model: {Inception_ResNetv2}\n")
         file.write(f"classes: {classes}\n")
 
-    plotter(loss_list,val_loss_list, new_path, resolution,number_of_n2,number_of_isat, number_of_alpha)
+    plot_loss(loss_list,val_loss_list, new_path, resolution_training,number_of_n2,number_of_isat, number_of_alpha)
 
     exam(cnn, testloader, device)
 

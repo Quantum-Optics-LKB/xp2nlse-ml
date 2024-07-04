@@ -5,7 +5,7 @@
 
 import torch
 import torch.nn as nn
-from engine.seed_settings import set_seed
+from engine.utils import set_seed
 set_seed(10)
 
 class Conv2d(nn.Module):

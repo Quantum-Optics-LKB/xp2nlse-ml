@@ -9,11 +9,11 @@ import numpy as np
 from tqdm import tqdm
 from NLSE import NLSE
 import kornia.augmentation as K
+from engine.utils import set_seed
 from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
-from engine.seed_settings import set_seed
 from skimage.restoration import unwrap_phase
-from engine.treament import experiment_noise, normalize_data
+from engine.utils import experiment_noise, normalize_data
 set_seed(10)
 
 def data_creation(
@@ -45,8 +45,7 @@ def data_creation(
     E = np.zeros((number_of_n2*number_of_isat*number_of_alpha,3, resolution_training, resolution_training), dtype=np.float16)
       
 
-    for index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", 
-                                total=number_of_n2, unit="n2"):
+    for index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", total=number_of_n2, unit="n2"):
 
       simu = NLSE(power=in_power, alpha=alpha, window=window_in, n2=n2_value, 
                      V=None, L=length, NX=resolution_in, NY=resolution_in, 
