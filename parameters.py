@@ -30,11 +30,11 @@ waist_input_beam = 3.564e-3 #m
 training=True
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/your/experiment/path/experiment.npy"
+exp_image_path="data/field.npy"
 use=True
 plot_generate_compare=True
 
 manager(generate, training, create_visual, use, plot_generate_compare,
          window_out, n2, number_of_n2, alpha, number_of_alpha, isat, number_of_isat, 
          input_power, waist_input_beam, cell_length, 
-         saving_path, exp_image_path, device=1)
+         saving_path, exp_image_path)

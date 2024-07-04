@@ -6,6 +6,7 @@ import os
 import torch
 import random
 import numpy as np
+import kornia.augmentation as K
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -60,35 +61,13 @@ def line_noise(
         amplitude: float, 
         angle: float
         ) -> np.ndarray:
-    """
-    Applies a pattern of lines at a specified angle across the image.
-
-    Parameters:
-        image (np.ndarray): The original image to which noise will be added.
-        num_lines (int): The number of lines (complete sine wave cycles) to be applied.
-        amplitude (float): The amplitude of the lines pattern, determining the intensity variation.
-        angle (float): The angle of the lines in degrees, measured counter-clockwise from the horizontal axis.
-
-    Returns:
-        np.ndarray: The image with the applied lines pattern.
-    """
     height, width = image.shape
-    # Convert the angle from degrees to radians
     angle_rad = np.radians(angle)
-    
-    # Create a grid of coordinates
     X, Y = np.meshgrid(np.arange(width), np.arange(height))
-    
-    # Rotate the coordinate system by the specified angle
     X_rotated = X * np.cos(angle_rad) + Y * np.sin(angle_rad)
-    
-    # Calculate the wave frequency for the desired number of lines
     diagonal_length = np.sqrt(width**2 + height**2)
     wave_frequency = (num_lines * 2 * np.pi) / diagonal_length
-    
-    # Apply the sine function to create the lines pattern
     lines_pattern =  amplitude*np.sin(X_rotated * wave_frequency)
-    
     noisy_image = image.copy() + lines_pattern
     
     return noisy_image
@@ -158,11 +137,8 @@ def plot_loss(
     plt.rcParams['font.size'] = 12
 
     ax.plot(np.log(y_train), label="Training Loss", marker='^', linestyle='-', color='blue', mfc='lightblue', mec='indigo', markersize=10, mew=2)
-
     ax.plot(np.log(y_val), label="Validation Loss", marker='^', linestyle='-', color='orange', mfc='#FFEDA0', mec='darkorange', markersize=10, mew=2)
-
     ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
-
     ax.set_xlabel("Epochs")
     ax.set_ylabel("Log Loss")
     fig.suptitle("Training and Validation Log Losses")
@@ -176,7 +152,7 @@ def plot_generated_set(
         nlse_settings: tuple
         ) -> None:
     
-    n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length = nlse_settings
+    n2, input_power, alpha, isat, _, _, _, _ = nlse_settings
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
     number_of_alpha = len(alpha)
@@ -214,7 +190,6 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/density_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_density) 
 
-        # Plot phase channels for the current power value
         fig_phase, axes_phase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
         fig_phase.suptitle(f'Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
@@ -229,7 +204,6 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_phase)
 
-         # Plot phase channels for the current power value
         fig_uphase, axes_uphase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
         fig_uphase.suptitle(f'Unwrapped Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
