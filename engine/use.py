@@ -5,13 +5,13 @@
 import torch
 import numpy as np
 from scipy.ndimage import zoom
+from engine.utils import set_seed
 from matplotlib import pyplot as plt
-from engine.nlse_sandbox import scientific_formatter
 from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
+from engine.utils import scientific_formatter
 from engine.utils import general_extrema, normalize_data
-from engine.utils import set_seed
 set_seed(10)
 
 def get_parameters(
