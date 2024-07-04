@@ -71,6 +71,7 @@ graph LR
         J --> K[Output]
         K --> L[n<sub>2</sub>]
         K --> M[I<sub>sat</sub>]
+        K --> N[$$\alpha$$]
     end
 
 ```
