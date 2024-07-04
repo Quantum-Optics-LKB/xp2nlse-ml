@@ -367,7 +367,7 @@ You can just choose your parameters and launch the code.
 ```python
 from engine.nlse_sandbox import sandbox
 
-saving_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN"
+saving_path="data"
 device = 0
 
 ###Data generation Parameters:
@@ -391,13 +391,17 @@ waist_input_beam = 3.564e-3 #m
 non_locality_length = 0 #m
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/home/louis/LEON/DATA/Atoms/2024/PINNS2/CNN/field.npy"
+exp_image_path="data/field.npy"
 
 sandbox(device, resolution_input_beam, window_input, window_out,
         resolution_training, n2, input_power, alpha,
         isat, waist_input_beam, non_locality_length, delta_z,
         cell_length, exp_image_path, saving_path)
 ```
+This should save the ouptut figure as [`sandbox.png`](/data/sandbox.png):
+
+![`sandbox.png`](/data/sandbox.png)
+
 ## LAUNCH !
 Once the edge cases are checked you can launch `parameters.py` with your parameters.
 

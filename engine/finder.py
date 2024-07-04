@@ -39,21 +39,21 @@ def data_split(
     validation_indices = indices[train_index:validation_index]
     test_indices = indices[validation_index:]
 
-    train = E[training_indices,:,:,:].copy()
-    validation = E[validation_indices,:,:,:].copy()
-    test = E[test_indices,:,:,:].copy()
+    train = E[training_indices,:,:,:]
+    validation = E[validation_indices,:,:,:]
+    test = E[test_indices,:,:,:]
 
-    train_n2 = n2_labels[training_indices].copy()
-    validation_n2 = n2_labels[validation_indices].copy()
-    test_n2 = n2_labels[test_indices].copy()
+    train_n2 = n2_labels[training_indices]
+    validation_n2 = n2_labels[validation_indices]
+    test_n2 = n2_labels[test_indices]
 
-    train_isat = isat_labels[training_indices].copy()
-    validation_isat = isat_labels[validation_indices].copy()
-    test_isat = isat_labels[test_indices].copy()
+    train_isat = isat_labels[training_indices]
+    validation_isat = isat_labels[validation_indices]
+    test_isat = isat_labels[test_indices]
 
-    train_alpha = alpha_labels[training_indices].copy()
-    validation_alpha = alpha_labels[validation_indices].copy()
-    test_alpha = alpha_labels[test_indices].copy()
+    train_alpha = alpha_labels[training_indices]
+    validation_alpha = alpha_labels[validation_indices]
+    test_alpha = alpha_labels[test_indices]
 
     return (train, train_n2, train_isat, train_alpha), (validation, validation_n2, validation_isat, validation_alpha), (test, test_n2, test_isat, test_alpha)
 

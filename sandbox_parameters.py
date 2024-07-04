@@ -4,7 +4,7 @@
 
 from engine.nlse_sandbox import sandbox
 
-saving_path="/your/saving/path/"
+saving_path="data"
 device = 0
 
 ###Data generation Parameters:
@@ -28,7 +28,7 @@ waist_input_beam = 3.564e-3 #m
 non_locality_length = 0 #m
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/your/experiment/path/experiment.npy"
+exp_image_path="data/field.npy"
 
 sandbox(device, resolution_input_beam, window_input, window_out,
         resolution_training, n2, input_power, alpha,
