@@ -108,10 +108,11 @@ def manage_training(
         model_settings: tuple, 
         nlse_settings: tuple, 
         new_path: str, 
+        resolution_training: int,
         labels: tuple
         ) -> None:
 
-    number_of_n2, _, number_of_isat, _, number_of_alpha, resolution_training = labels
+    number_of_n2, _, number_of_isat, _, number_of_alpha, _ = labels
     n2, in_power, alpha, isat, _, _, _, _ = nlse_settings
     cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device = model_settings
 

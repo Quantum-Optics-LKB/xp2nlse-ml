@@ -64,7 +64,7 @@ def manager(generate: bool,
             del E
             gc.collect()
             manage_training(trainloader, validationloader, testloader, model_settings, 
-                            nlse_settings, new_path, labels)
+                            nlse_settings, new_path, resolution_training, labels)
     
     if not generate and not training and create_visual:
         E = np.load(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}.npy')
