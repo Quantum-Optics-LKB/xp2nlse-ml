@@ -28,12 +28,9 @@ def elastic_saltpepper() -> torch.nn.Sequential:
     elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
     elastic_alpha = (1, 1)
     salt_pepper = random.uniform(0.01, .11)
-    translate = (random.uniform(0.075, .15), random.uniform(0.05, .1))
-    shear = (-random.uniform(1, 10), random.uniform(1, 10), -random.uniform(1, 10), random.uniform(1, 10))
     return torch.nn.Sequential(
         K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
         K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
-        K.RandomAffine(degrees=0, shear=shear, translate=translate, padding_mode=1, keepdim=True, p=.25)
     )
 
 def experiment_noise(
