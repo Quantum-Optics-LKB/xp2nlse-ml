@@ -171,13 +171,13 @@ class Inception_ResNetv2(nn.Module):
         super(Inception_ResNetv2, self).__init__()
         blocks = []
         blocks.append(Stem(in_channels))
-        for i in range(20): #10
+        for i in range(20):
             blocks.append(Inception_ResNet_A(320, 0.17))
         blocks.append(Reduction_A(320, k, l, m, n))
-        for i in range(30): #20
+        for i in range(30):
             blocks.append(Inception_ResNet_B(1088, 0.10))
         blocks.append(Reduciton_B(1088))
-        for i in range(20): #9
+        for i in range(20):
             blocks.append(Inception_ResNet_C(2080, 0.20))
         blocks.append(Inception_ResNet_C(2080, activation=False))
         self.features = nn.Sequential(*blocks)

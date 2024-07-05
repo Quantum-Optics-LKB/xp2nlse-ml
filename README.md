@@ -187,30 +187,31 @@ graph TD
     
     subgraph sub1[Generate data]
         C1[generate.py] --> C2(data_creation)
-        C2 --> C3[noise_generator.py]
+        C2 --> C3[utils.py]
         C3 --> C4(experiment_noise)
         C4 --> C5(NLSE)
         
     end
     subgraph sub2[Augment data]
         F1[augment.py] --> F2(data_augmentation)  
-        F2 --> F3[treament_methods.py]
+        F2 --> F3[utils.py]
         F3 --> F5(line_noise)
 
     end
     
     subgraph sub3[Training the model]
-        D1[finder.py]
+        D1[training_manager.py]
         D1 --> D2[prep_training]
         D2 --> D3(network_init)
-        D3 --> D4(data_split)
-        D4 --> D5(data_treatment)
+        D3 --> D15[utils.py]
+        D15 --> D4(data_split)
+        D4 --> D5(create_loaders)
         D5 --> D6(manage_training)
         D6 --> D7[training.py] 
         D7 --> D8(network_training)
-        D8 --> D9[loss_plot.py]
-        D9 --> D10(plotter)
-        D10 --> D11[test.py]
+        D8 --> D16[utils.py]
+        D16 --> D9[loss_plot]
+        D9 --> D11[test.py]
         D11 --> D12(exam)
         D12 --> D13(count_parameters_pandas)
         D13 --> D14(test_model)
@@ -219,13 +220,15 @@ graph TD
 
     subgraph sub4[Use the model]
         E1[use.py]
-        E1 --> E2{plot_generate_compare}
+        E1 --> E4[utils.py]
+        E4 --> E2{plot_results}
         E2 --> |True| E3[Creates a comparison plot \n between your experimental data and \nthe parameters the model computed]
 
     end
 
     subgraph sub5[Visualize training data]
-        G1[visualize.py]
+        G1[utils.py]
+        G1 --> G2(plot_generated_set)
     end
 ```
 
@@ -261,13 +264,13 @@ cd nlse_parameter_nn
 
 # Usage
 
-The `parameters.py` script is where you store the parameters for the data generation, training, and parameter estimation processes:
+The [`parameters.py`](/parameters.py) script is where you store the parameters for the data generation, training, and parameter estimation processes:
 
 ```bash
 python parameters.py
 ```
 
-The `sandbox_parameters.py` script is where you use the same parameters as for the data generation, training, and parameter estimation processes and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into the `parameters.py` script.
+The [`sandbox_parameters.py`](/sandbox_parameters.py) script is where you use the same parameters as for the data generation, training, and parameter estimation processes and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into the [`parameters.py`](/parameters.py) script.
 
 ```bash
 python sandbox_parameters.py
@@ -280,7 +283,7 @@ python sandbox_parameters.py
 
 ### <ins>Data Generation <ins>
 When you generate the data there are two steps.
-First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles and salt and pepper noise. 
+First you generate using NLSE you propagate the beam with your parameters at the given parameters. Then your data is augmented. Meaning the program adds fringes at different angles. 
 This will help the model generalize the fitting of the parameters regardless of the noise.
 
 - `generate`: Set to `True` to generate new data using NLSE.
@@ -362,7 +365,7 @@ We pick here:
 ## Sandbox
 When you train, (trust me I have been through it) you want to be sure your dataset represents the experimental data. It implies checking that the edge cases of your range triplet ($n_2$, $I_{sat}$ and $\alpha$) converge and make sense. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `delta_z`, `resolution_input_beam`, `window_input` or `non_locality_length`.
 
-The `sandbox_parameters.py` contains this code.
+The [`sandbox_parameters.py`](/sandbox_parameters.py) contains this code.
 You can just choose your parameters and launch the code.
 
 ```python
@@ -404,12 +407,12 @@ This should save the ouptut figure as [`sandbox.png`](/data/sandbox.png):
 ![`sandbox.png`](/data/sandbox.png)
 
 ## LAUNCH !
-Once the edge cases are checked you can launch `parameters.py` with your parameters.
+Once the edge cases are checked you can launch [`parameters.py`](/parameters.py) with your parameters.
 
 ```python
 import numpy as np
 from engine.parameter_manager import manager
-saving_path="/your/saving/path/"
+saving_path="data"
 
 ###Data generation Parameters:
 output_camera_resolution = 2056
@@ -435,7 +438,7 @@ waist_input_beam = 3.564e-3 #m
 training=True
 
 ###Find your parameters (n2 and Isat):
-exp_image_path="/your/experiment/path/experiment.npy"
+exp_image_path="data/field.npy"
 use=True
 plot_generate_compare=True
 
@@ -465,45 +468,50 @@ Using the `create_visual` variable you can get:
 
 These images will be augmented.
 Each image will be cloned as it is already 16 times.
-Then each image will be added 8 different fringes.
+Then, each image will be added 8 different fringes (different angles and number of fringes).
 At the end of this process your array will be of shape (24 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
-#IMAGES WITH FRINGES
+![fringes](img/fringes_n25_isat5_alpha5_power0.57.png)
 
 
 Once the augmentations are done, the array goes to training.
 During training, on the spot modifications are applied to help the model generalize.
+
+#### Elastic transform
 Each image has a 50% chance of being affected by the elastic transform.
-#### Density 
+- Density 
 ![Density](img/elastic_density.gif)
-#### Phase
+- Phase
 ![Phase](img/elastic_phase.gif)
-#### Unwrapped Phase
+- Unwrapped phase
 ![Unwrapped Phase](img/elastic_uphase.gif)
 
 <ins>Note<ins>:
 
 Here the transforms where applied on all the images.
 
+#### Salt and pepper transform
 Then, each image has a 20% chance of being affected by the salt and pepper noise transform.
-#### Density 
+- Density
 ![Density](img/sp_density.gif)
-#### Phase
+- Phase
 ![Phase](img/sp_phase.gif)
-#### Unwrapped Phase
+- Unwrapped Phase
 ![Unwrapped Phase](img/sp_uphase.gif)
 
 <ins>Note<ins>:
 
 Here the transforms where applied on all the images.
 
+#### All transforms
 The combined version of the modification has a 10% change of affecting the images.
 
-#### Density 
+- Density 
 ![Density](img/all_density.gif)
-#### Phase
+- Phase
 ![Phase](img/all_phase.gif)
-#### Unwrapped Phase
+- Unwrapped Phase
 ![Unwrapped Phase](img/all_uphase.gif)
+
 ### Training
 The model is saved in a directory of the name:
 ```python
@@ -598,3 +606,10 @@ In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated thr
 Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
 
 ![Results](img/prediction_n210_isat10_alpha10_power0.57.png)
+
+
+# Future improvements:
+
+- Do more tests on what types of noises improve training
+- Do more tests on model like change parameters
+- Implement different propagators (CNLSE with more parameters)

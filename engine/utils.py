@@ -176,7 +176,7 @@ def plot_generated_set(
 
     for alpha_index, alpha_value in enumerate(alpha):
         
-        fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
+        fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
         fig_density.suptitle(f'Density Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
         for n2_index, n2_value in enumerate(n2):
@@ -190,7 +190,7 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/density_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_density) 
 
-        fig_phase, axes_phase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
+        fig_phase, axes_phase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
         fig_phase.suptitle(f'Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
         for n2_index, n2_value in enumerate(n2):
@@ -200,11 +200,10 @@ def plot_generated_set(
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
 
-        plt.tight_layout()
         plt.savefig(f'{saving_path}/phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_phase)
 
-        fig_uphase, axes_uphase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2))
+        fig_uphase, axes_uphase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
         fig_uphase.suptitle(f'Unwrapped Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
         for n2_index, n2_value in enumerate(n2):
@@ -214,7 +213,6 @@ def plot_generated_set(
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
 
-        plt.tight_layout()
         plt.savefig(f'{saving_path}/unwrapped_phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_phase)
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-
 import torch
 import numpy as np
 from engine.utils import set_seed
