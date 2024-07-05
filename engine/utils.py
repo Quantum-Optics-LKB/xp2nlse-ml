@@ -10,7 +10,18 @@ import kornia.augmentation as K
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-def scientific_formatter(x):
+def scientific_formatter(
+        x: float
+        ) -> str:
+    """
+    Format a number in scientific notation for LaTeX display.
+
+    Parameters:
+    - x (float): Number to be formatted.
+
+    Returns:
+    - str: Formatted string in LaTeX format with scientific notation.
+    """
     a, b = "{:.2e}".format(x).split("e")
     b = int(b)
     return r"${}\times 10^{{{}}}$".format(a, b)
@@ -18,11 +29,31 @@ def scientific_formatter(x):
 def normalize_data(
         data: np.ndarray,
         ) -> np.ndarray: 
+    """
+    Normalize data to the range [0, 1] across the last two dimensions.
+
+    Parameters:
+    - data (np.ndarray): Input data array.
+
+    Returns:
+    - np.ndarray: Normalized data array.
+    """
     data -= np.min(data, axis=(-2, -1), keepdims=True)
     data /= np.max(data, axis=(-2, -1), keepdims=True)
     return data
 
-def general_extrema(E):
+def general_extrema(
+        E: np.ndarray
+        ) -> np.ndarray:
+    """
+    Adjust phase array E to ensure non-negative values.
+
+    Parameters:
+    - E (np.ndarray): Input phase array.
+
+    Returns:
+    - np.ndarray: Adjusted phase array with non-negative values.
+    """
     if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
         E -= np.max(E)
     elif E[E.shape[-2]//2, E.shape[-1]//2] < 0:
@@ -31,6 +62,12 @@ def general_extrema(E):
     return E
 
 def elastic_saltpepper() -> torch.nn.Sequential:
+    """
+    Create a sequential transformation pipeline for elastic and salt-pepper noise.
+
+    Returns:
+    - torch.nn.Sequential: Sequential transformation pipeline.
+    """
     
     elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
     elastic_alpha = (1, 1)
@@ -45,6 +82,17 @@ def experiment_noise(
         poisson_noise_lam: float,
         normal_noise_sigma: float
           )-> np.ndarray:
+    """
+    Add Poisson and normal noise to an input beam array.
+
+    Parameters:
+    - beam (np.ndarray): Input beam array.
+    - poisson_noise_lam (float): Lambda parameter for Poisson noise.
+    - normal_noise_sigma (float): Standard deviation for normal noise.
+
+    Returns:
+    - np.ndarray: Noisy beam array.
+    """
         
     poisson_noise = np.random.poisson(lam=poisson_noise_lam, size=(beam.shape))*poisson_noise_lam*0.75
     normal_noise = np.random.normal(0, normal_noise_sigma, (beam.shape))
@@ -61,6 +109,18 @@ def line_noise(
         amplitude: float, 
         angle: float
         ) -> np.ndarray:
+    """
+    Add sinusoidal lines pattern noise to an image.
+
+    Parameters:
+    - image (np.ndarray): Input image array.
+    - num_lines (int): Number of lines.
+    - amplitude (float): Amplitude of the lines pattern.
+    - angle (float): Angle of the lines pattern (degrees).
+
+    Returns:
+    - np.ndarray: Noisy image array.
+    """
     height, width = image.shape
     angle_rad = np.radians(angle)
     X, Y = np.meshgrid(np.arange(width), np.arange(height))
@@ -75,6 +135,15 @@ def line_noise(
 def set_seed(
         seed: int
         ) -> None:
+    """
+    Set random seed for reproducibility in NumPy, Torch, and CUDA.
+
+    Parameters:
+    - seed (int): Seed value.
+
+    Returns:
+    - None
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -93,6 +162,22 @@ def data_split(
         validation_ratio: float = 0.1, 
         test_ratio: float = 0.1
         ) -> tuple:
+    
+    """
+    Split data and labels into training, validation, and test sets.
+
+    Parameters:
+    - E (np.ndarray): Input data array.
+    - n2_labels (np.ndarray): Labels for n2 parameter.
+    - isat_labels (np.ndarray): Labels for isat parameter.
+    - alpha_labels (np.ndarray): Labels for alpha parameter.
+    - train_ratio (float): Ratio of training data (default: 0.8).
+    - validation_ratio (float): Ratio of validation data (default: 0.1).
+    - test_ratio (float): Ratio of test data (default: 0.1).
+
+    Returns:
+    - tuple: Tuple of training, validation, and test data and labels.
+    """
     assert train_ratio + validation_ratio + test_ratio == 1
     
     indices = np.arange(E.shape[0])
@@ -130,7 +215,21 @@ def plot_loss(
     number_of_isat: int,
     number_of_alpha: int,
     ) -> None:
-    
+    """
+    Plot training and validation loss curves and save the figure.
+
+    Parameters:
+    - y_train (np.ndarray): Training loss data.
+    - y_val (np.ndarray): Validation loss data.
+    - path (str): Path to save the plot.
+    - resolution (int): Resolution of the plot.
+    - number_of_n2 (int): Number of n2 parameters.
+    - number_of_isat (int): Number of isat parameters.
+    - number_of_alpha (int): Number of alpha parameters.
+
+    Returns:
+    - None
+    """
     fig, ax = plt.subplots(figsize=(10, 6))
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
@@ -151,7 +250,17 @@ def plot_generated_set(
         saving_path: str, 
         nlse_settings: tuple
         ) -> None:
-    
+    """
+    Plot and save generated sets of density, phase, and unwrapped phase channels.
+
+    Parameters:
+    - data (np.ndarray): Generated data array.
+    - saving_path (str): Path to save the plots.
+    - nlse_settings (tuple): Settings tuple containing n2, input_power, alpha, isat, etc.
+
+    Returns:
+    - None
+    """
     n2, input_power, alpha, isat, _, _, _, _ = nlse_settings
     number_of_n2 = len(n2)
     number_of_isat = len(isat)
@@ -216,8 +325,36 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/unwrapped_phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_phase)
 
-def plot_results(E, density_experiment, phase_experiment, uphase_experiment, 
-                 numbers, cameras, number_of_n2, number_of_isat, number_of_alpha, saving_path):
+def plot_results(
+        E: np.ndarray,
+        density_experiment: np.ndarray, 
+        phase_experiment: np.ndarray, 
+        uphase_experiment: np.ndarray, 
+        numbers: tuple, 
+        cameras: tuple, 
+        number_of_n2: int, 
+        number_of_isat: int, 
+        number_of_alpha: int, 
+        saving_path: str
+        ) -> None:
+    """
+    Plot and save experimental results of density, phase, and unwrapped phase.
+
+    Parameters:
+    - E (np.ndarray): Experimental data.
+    - density_experiment (np.ndarray): Experimental density data.
+    - phase_experiment (np.ndarray): Experimental phase data.
+    - uphase_experiment (np.ndarray): Experimental unwrapped phase data.
+    - numbers (tuple): Tuple containing computed_n2, input_power, computed_alpha, computed_isat, etc.
+    - cameras (tuple): Tuple containing _, _, window_out, resolution_training.
+    - number_of_n2 (int): Number of n2 parameters.
+    - number_of_isat (int): Number of isat parameters.
+    - number_of_alpha (int): Number of alpha parameters.
+    - saving_path (str): Path to save the plots.
+
+    Returns:
+    - None
+    """
 
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"
@@ -276,8 +413,35 @@ def plot_results(E, density_experiment, phase_experiment, uphase_experiment,
     
     plt.savefig(f"{saving_path}/prediction_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.png")
 
-def plot_sandbox(E, density_experiment, phase_experiment, uphase_experiment, window_out,
-                 n2, isat, alpha, input_power, saving_path):
+def plot_sandbox(
+        E: np.ndarray, 
+        density_experiment: np.ndarray, 
+        phase_experiment: np.ndarray, 
+        uphase_experiment: np.ndarray, 
+        window_out: float,
+        n2: float, 
+        isat: float, 
+        alpha: float, 
+        input_power: float, 
+        saving_path: str):
+    """
+    Plot and save sandbox experimental results of density, phase, and unwrapped phase.
+
+    Parameters:
+    - E (np.ndarray): Experimental data.
+    - density_experiment (np.ndarray): Experimental density data.
+    - phase_experiment (np.ndarray): Experimental phase data.
+    - uphase_experiment (np.ndarray): Experimental unwrapped phase data.
+    - window_out (float): Window size.
+    - n2 (float): n2 parameter.
+    - isat (float): isat parameter.
+    - alpha (float): alpha parameter.
+    - input_power (float): Input power parameter.
+    - saving_path (str): Path to save the plots.
+
+    Returns:
+    - None
+    """
     extent = [-window_out/2*1e3, window_out/2*1e3, -window_out/2*1e3, window_out/2*1e3]
     
     n2_str = r"$n_2$"

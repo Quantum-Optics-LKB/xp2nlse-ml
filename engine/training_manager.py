@@ -21,6 +21,19 @@ def create_loaders(
         sets: np.ndarray, 
         batch_size: int
         ) -> DataLoader:
+    """
+    Creates a DataLoader for a given dataset.
+
+    Args:
+        sets (np.ndarray): A tuple containing the dataset and corresponding labels (n2label, isatlabel, alphalabel).
+        batch_size (int): The batch size for DataLoader.
+
+    Returns:
+        DataLoader: A PyTorch DataLoader object containing the dataset split into batches.
+
+    Description:
+        This function creates a FieldDataset instance using the provided dataset and labels, then initializes a DataLoader object with the specified batch size and shuffle set to True. It returns the DataLoader object.
+    """
     
     set, n2label, isatlabel, alphalabel= sets 
     fieldset = FieldDataset(set, n2label, isatlabel, alphalabel)
@@ -36,16 +49,16 @@ def network_init(
     """
     Initializes the neural network model, criterion, optimizer, and scheduler.
 
-    Parameters:
-    - learning_rate (float): The initial learning rate for the optimizer.
-    - channels (int): The number of channels in the input data.
-    - model (torch.nn.Module class): The neural network model class to be initialized.
+    Args:
+        learning_rate (float): The initial learning rate for the optimizer.
+        channels (int): The number of channels in the input data.
+        model (torch.nn.Module class): The neural network model class to be initialized.
 
     Returns:
-    - cnn (torch.nn.Module): The initialized neural network model.
-    - optimizer (torch.optim.Optimizer): The Adam optimizer initialized with the model parameters.
-    - criterion (torch.nn.Module): The CrossEntropyLoss criterion for the model's output.
-    - scheduler (torch.optim.lr_scheduler): A ReduceLROnPlateau learning rate scheduler.
+        tuple: A tuple containing the initialized neural network model, optimizer, criterion, and scheduler.
+
+    Description:
+        This function initializes the neural network model (specified by `model`), creates an Adam optimizer with the specified learning rate, initializes Mean Squared Error (MSE) loss criterion, and sets up a ReduceLROnPlateau scheduler for the optimizer. It returns these initialized components as a tuple.
     """
     cnn = model(channels)
     weight_decay = 1e-5
@@ -66,6 +79,27 @@ def prepare_training(
         accumulation_steps: int,
         device_number: torch.device
         ) -> tuple:
+
+    """
+    Prepares the training process by splitting data, initializing the model, and creating data loaders.
+
+    Args:
+        nlse_settings (tuple): Tuple containing NLSE settings (n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length).
+        labels (tuple): Tuple containing labels (number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values).
+        E (np.ndarray): Input data array of shape (samples, channels, height, width).
+        path (str): Path for saving training outputs.
+        learning_rate (float): Initial learning rate for the optimizer.
+        batch_size (int): Batch size for training.
+        num_epochs (int): Number of epochs for training.
+        accumulation_steps (int): Number of steps to accumulate gradients before optimizing.
+        device_number (torch.device): Device number for training (e.g., GPU device).
+
+    Returns:
+        tuple: A tuple containing trainloader, validationloader, testloader, model_settings, and new_path.
+
+    Description:
+        This function initializes the model using `network_init`, splits the data into training, validation, and test sets, creates DataLoader objects for each set, and prepares model settings for training. It returns these components as a tuple.
+    """
     
     device = torch.device(f"cuda:{device_number}")
     _, input_power, _, _, _, _, _, _ = nlse_settings
@@ -111,6 +145,25 @@ def manage_training(
         resolution_training: int,
         labels: tuple
         ) -> None:
+    """
+    Manages the training process, including model initialization, training loop, and evaluation.
+
+    Args:
+        trainloader (DataLoader): DataLoader for training dataset.
+        validationloader (DataLoader): DataLoader for validation dataset.
+        testloader (DataLoader): DataLoader for test dataset.
+        model_settings (tuple): Tuple containing model, optimizer, criterion, scheduler, num_epochs, accumulation_steps, and device.
+        nlse_settings (tuple): Tuple containing NLSE settings (n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length).
+        new_path (str): Path for saving training outputs.
+        resolution_training (int): Resolution of the training data.
+        labels (tuple): Tuple containing labels (number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values).
+
+    Returns:
+        None
+
+    Description:
+        This function manages the entire training process, including model initialization, training loop execution using `network_training`, model saving, and evaluation using `exam`. It also saves training parameters and plots loss curves.
+    """
 
     number_of_n2, _, number_of_isat, _, number_of_alpha, _ = labels
     n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length = nlse_settings

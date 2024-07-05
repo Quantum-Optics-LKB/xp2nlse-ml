@@ -21,6 +21,33 @@ def get_parameters(
         cameras: tuple, 
         plot_generate_compare: bool
         ) -> tuple:
+    """
+    Perform parameter computation and visualization based on experimental data and model predictions.
+
+    Parameters:
+    - exp_path (str): Path to the experimental data.
+    - saving_path (str): Directory where model checkpoints and results will be saved.
+    - resolution_out (int): Output resolution for the computed parameters.
+    - nlse_settings (tuple): Tuple containing NLSE-related settings: (n2, in_power, alpha, isat, waist, nl_length, delta_z, length).
+    - device_number (int): GPU device number for computation.
+    - cameras (tuple): Tuple containing camera settings: (_, _, _, resolution_training).
+    - plot_generate_compare (bool): Flag indicating whether to plot comparison results.
+
+    Returns:
+    - tuple: Tuple containing computed parameters (computed_n2, computed_isat, computed_alpha).
+
+    Performs the following steps:
+    1. Initializes the neural network model (Inception_ResNetv2) and loads its pretrained weights.
+    2. Loads experimental data from exp_path and preprocesses it (normalization, phase unwrapping, etc.).
+    3. Computes predictions (outputs_n2, outputs_isat, outputs_alpha) using the loaded model.
+    4. Computes actual physical parameters (computed_n2, computed_isat, computed_alpha) from the model outputs.
+    5. Optionally, generates and plots comparison results between computed and experimental data.
+
+    Note:
+    - Assumes the model's state_dict is saved at saving_path based on resolution_out and nlse_settings.
+    - Assumes exp_path contains experimental data that can be loaded using np.load().
+    - Assumes data_creation() and plot_results() functions are defined elsewhere for data generation and visualization.
+    """
     n2, in_power, alpha, isat, waist, nl_length, delta_z, length = nlse_settings
     _, _, _, resolution_training = cameras
     
@@ -75,4 +102,3 @@ def get_parameters(
         plot_results(E, density_experiment, phase_experiment, uphase_experiment,numbers, cameras, number_of_n2, number_of_isat, number_of_alpha, saving_path)
     
     return computed_n2, computed_isat, computed_alpha
-

@@ -7,7 +7,27 @@ from engine.utils import set_seed
 from torch.utils.data import DataLoader
 set_seed(10)
 
-def exam(model, loader,device ):
+def exam(
+        model: torch.nn.Module,
+        loader: DataLoader,
+        device: torch.device 
+        ) -> None:
+    """
+    Conducts an examination of the given model, including parameter counting and testing.
+
+    Args:
+        model (torch.nn.Module): The model to be analyzed and tested.
+        loader (DataLoader): DataLoader for loading the test dataset.
+        device (int): The device to run the model on (e.g., GPU id).
+
+    Returns:
+        None
+
+    Description:
+        This function performs two main tasks:
+        1. Counts and prints the number of trainable parameters in the model.
+        2. Tests the model using the provided DataLoader and prints the Mean Squared Error (MSE) and Mean Absolute Error (MAE) for the model's predictions on `n2`, `isat`, and `alpha` values.
+    """
     print("---- MODEL ANALYSIS ----")
     count_parameters_pandas(model)
 
@@ -18,7 +38,22 @@ def exam(model, loader,device ):
 def test_model(
         totalloader: DataLoader, 
         net: torch.nn.Module,
-        device: int):
+        device: int
+        ) -> None:
+    """
+    Tests the model on a given dataset and computes evaluation metrics.
+
+    Args:
+        totalloader (DataLoader): DataLoader for loading the test dataset.
+        net (torch.nn.Module): The model to be tested.
+        device (int): The device to run the model on (e.g., GPU id).
+
+    Returns:
+        None
+
+    Description:
+        This function tests the model using the provided DataLoader and computes the Mean Squared Error (MSE) and Mean Absolute Error (MAE) for the model's predictions on `n2`, `isat`, and `alpha` values. It prints the average MSE and MAE for these predictions.
+    """
     
     mse_loss = torch.nn.MSELoss(reduction='sum')
     mae_loss = torch.nn.L1Loss(reduction='sum')
@@ -65,6 +100,18 @@ def test_model(
 def count_parameters_pandas(
         model: torch.nn.Module
         ) -> int:
+    """
+    Counts and prints the number of trainable parameters in a given model.
+
+    Args:
+        model (torch.nn.Module): The model to count parameters for.
+
+    Returns:
+        int: The total number of trainable parameters in the model.
+
+    Description:
+        This function iterates over the parameters of the provided model, counts the total number of trainable parameters, and prints the total count. It also returns this count.
+    """
     data = []
     total_params = 0
 

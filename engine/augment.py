@@ -13,6 +13,41 @@ def data_augmentation(
     E: np.ndarray,
     labels: tuple,
     ) -> np.ndarray:
+    """
+    Perform data augmentation on the provided dataset by adding fringes at random rotations, to the images.
+
+    Args:
+        E (np.ndarray): A 4D numpy array containing the image data with dimensions 
+            (number_of_images, channels, height, width).
+        labels (tuple): A tuple containing the number of each type of label and the 
+            labels themselves. Expected to be in the format:
+            (number_of_n2, n2_labels, number_of_isat, isat_labels, number_of_alpha, alpha_labels).
+
+    Returns:
+        np.ndarray: A 4D numpy array containing the augmented image data with dimensions 
+            (augmented_number_of_images, channels, height, width).
+        tuple: A tuple containing the augmented labels in the same format as the input labels.
+
+    Description:
+        This function augments the input image dataset by generating new images through 
+        the following methods:
+        - Fringes perturbations with fixed line counts (50 and 100) at different noises and angles.
+
+        The augmentation process involves creating copies of the original images and 
+        applying the aforementioned transformations to generate additional augmented images.
+
+    Steps:
+        1. Extract the individual label sets and counts from the input labels.
+        2. Generate random angles and noise levels for augmentation.
+        3. Determine the total number of augmented images to be created.
+        4. Shuffle the original dataset and labels to ensure randomness.
+        5. Repeat the labels to match the size of the augmented dataset.
+        6. Initialize an array to hold the augmented data.
+        7. Iterate through each image in the dataset:
+            - Add original images without modifications.
+            - Apply fringes at different angles perturbations to create augmented images.
+        8. Return the augmented dataset and corresponding labels.
+    """
     
     number_of_n2, n2_labels, number_of_isat, isat_labels, number_of_alpha, alpha_labels = labels
 
