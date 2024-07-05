@@ -17,9 +17,9 @@ class FieldDataset(Dataset):
             isat_values: np.ndarray,
             alpha_values: np.ndarray):
         
-        self.n2_values = torch.from_numpy(n2_values).to(torch.float16).unsqueeze(1)
-        self.isat_values = torch.from_numpy(isat_values).to(torch.float16).unsqueeze(1)
-        self.alpha_values = torch.from_numpy(alpha_values).to(torch.float16).unsqueeze(1)
+        self.n2_values = torch.from_numpy(n2_values).to(torch.float32).unsqueeze(1)
+        self.isat_values = torch.from_numpy(isat_values).to(torch.float32).unsqueeze(1)
+        self.alpha_values = torch.from_numpy(alpha_values).to(torch.float32).unsqueeze(1)
         self.data = torch.from_numpy(data).to(torch.float16)
 
     def __len__(

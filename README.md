@@ -595,6 +595,6 @@ Average MAE for 'alpha': 0.0850
 In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
 
 ## Results
-Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [[NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
+Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
 
 ![Results](img/prediction_n210_isat10_alpha10_power0.57.png)
