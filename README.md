@@ -468,6 +468,8 @@ Using the `create_visual` variable you can get:
 
 These images will be augmented.
 Each image will be cloned as it is already 16 times.
+
+#### Fringes noise
 Then, each image will be added 8 different fringes (different angles and number of fringes).
 At the end of this process your array will be of shape (24 * `number_of_n2` * `number_of_isat`, 3, `resolution_training`, `resolution_training`)
 ![fringes](img/fringes_n25_isat5_alpha5_power0.57.png)
