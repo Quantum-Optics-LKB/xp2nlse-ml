@@ -457,11 +457,11 @@ This data set has shape:
 The first channel ([:, 0, :, :]) is the density. The second channel ([:, 1, :, :]) is the phase. The third channel ([:, 2, :, :]) is the unwrapped phase.
 
 Using the `create_visual` variable you can get:
-#### Density 
+- Density 
 ![Density](img/density.gif)
-#### Phase
+- Phase
 ![Phase](img/phase.gif)
-#### Unwrapped Phase
+- Unwrapped Phase
 ![Unwrapped Phase](img/unwrapped_phase.gif)
 
 ### Augmentations
