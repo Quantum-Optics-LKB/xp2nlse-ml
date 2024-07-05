@@ -184,25 +184,21 @@ def data_split(
     train_index = int(len(indices) * train_ratio)
     validation_index = int(len(indices) * (train_ratio + validation_ratio))
 
-    training_indices = indices[:train_index]
-    validation_indices = indices[train_index:validation_index]
-    test_indices = indices[validation_index:]
+    train = E[:train_index,:,:,:]
+    validation = E[train_index:validation_index,:,:,:]
+    test = E[validation_index:,:,:,:]
 
-    train = E[training_indices,:,:,:]
-    validation = E[validation_indices,:,:,:]
-    test = E[test_indices,:,:,:]
+    train_n2 = n2_labels[:train_index]
+    validation_n2 = n2_labels[train_index:validation_index]
+    test_n2 = n2_labels[validation_index:]
 
-    train_n2 = n2_labels[training_indices]
-    validation_n2 = n2_labels[validation_indices]
-    test_n2 = n2_labels[test_indices]
+    train_isat = isat_labels[:train_index]
+    validation_isat = isat_labels[train_index:validation_index]
+    test_isat = isat_labels[validation_index:]
 
-    train_isat = isat_labels[training_indices]
-    validation_isat = isat_labels[validation_indices]
-    test_isat = isat_labels[test_indices]
-
-    train_alpha = alpha_labels[training_indices]
-    validation_alpha = alpha_labels[validation_indices]
-    test_alpha = alpha_labels[test_indices]
+    train_alpha = alpha_labels[:train_index]
+    validation_alpha = alpha_labels[train_index:validation_index]
+    test_alpha = alpha_labels[validation_index:]
 
     return (train, train_n2, train_isat, train_alpha), (validation, validation_n2, validation_isat, validation_alpha), (test, test_n2, test_isat, test_alpha)
 

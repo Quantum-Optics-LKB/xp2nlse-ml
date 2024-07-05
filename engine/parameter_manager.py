@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import gc
 import cupy as cp
 import numpy as np
 from engine.use import get_parameters
@@ -107,8 +106,6 @@ def manager(
             trainloader, validationloader, testloader, model_settings, new_path = prepare_training(nlse_settings, labels, E, saving_path, 
                                                                                                    learning_rate, batch_size, num_epochs, 
                                                                                                     accumulator, device)
-            del E
-            gc.collect()
             manage_training(trainloader, validationloader, testloader, model_settings, 
                             nlse_settings, new_path, resolution_training, labels)
     
