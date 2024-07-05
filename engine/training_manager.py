@@ -113,7 +113,7 @@ def manage_training(
         ) -> None:
 
     number_of_n2, _, number_of_isat, _, number_of_alpha, _ = labels
-    n2, in_power, alpha, isat, _, _, _, _ = nlse_settings
+    n2, input_power, alpha, isat, waist_input_beam, non_locality_length, delta_z, cell_length = nlse_settings
     cnn, optimizer, criterion, scheduler, num_epochs, accumulation_steps, device = model_settings
 
     orig_stdout = sys.stdout
@@ -137,27 +137,26 @@ def manage_training(
     loss_list, val_loss_list, cnn = network_training(cnn, optimizer, criterion, scheduler,start_epoch, num_epochs, trainloader, validationloader, accumulation_steps, device, new_path, loss_list, val_loss_list)
     
     print("---- MODEL SAVING ----")
-    directory_path = f'{new_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}/'
-    directory_path += f'n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth'
-    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}.pth')
+    directory_path = f'{new_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}/'
+    directory_path += f'n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}.pth'
+    torch.save(cnn.state_dict(), f'{new_path}/n2_net_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}.pth')
 
     file_name = f"{new_path}/params.txt"
-    classes = {
-        'n2': tuple(map(str, n2)),
-        'isat' : tuple(map(str, isat)),
-        'alpha' : tuple(map(str, alpha))
-    }
     with open(file_name, "a") as file:
-        file.write(f"resolution: {resolution_training}\n")
-        file.write(f"accumulator: {accumulation_steps}\n")
+        file.write(f"n2: {n2} \n")
+        file.write(f"alpha: {alpha}\n")
+        file.write(f"Isat: {isat}\n")
         file.write(f"num_of_n2: {number_of_n2}\n")
-        file.write(f"in_power: {in_power}\n")
         file.write(f"num_of_isat: {number_of_isat}\n")
         file.write(f"num_of_alpha: {number_of_alpha}\n")
+        file.write(f"in_power: {input_power}\n")
+        file.write(f"waist_input_beam: {waist_input_beam} m\n")
+        file.write(f"non_locality_length: {non_locality_length} m\n")
         file.write(f"num_epochs: {num_epochs}\n")
-        file.write(f"file: {file}\n")
         file.write(f"model: {Inception_ResNetv2}\n")
-        file.write(f"classes: {classes}\n")
+        file.write(f"resolution: {resolution_training}\n")
+        file.write(f"accumulator: {accumulation_steps}\n")
+        
 
     plot_loss(loss_list,val_loss_list, new_path, resolution_training,number_of_n2,number_of_isat, number_of_alpha)
 
