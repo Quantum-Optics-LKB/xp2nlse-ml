@@ -4,12 +4,14 @@
 
 import torch
 import numpy as np
+import torch.nn as nn
 from scipy.ndimage import zoom
 from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 from engine.utils import plot_results, set_seed
 from engine.utils import general_extrema, normalize_data
+from torchvision.models import resnet50, resnet101, resnet152
 set_seed(10)
 
 def get_parameters(
@@ -58,9 +60,13 @@ def get_parameters(
     min_n2 = n2.min()
     max_isat = isat.max()
     max_alpha = alpha.max()
+    max_n2 = n2.max()
+    min_isat = isat.min()
+    min_alpha = alpha.min()
 
-    device = torch.device(f"cuda:{device_number}")
-    cnn = Inception_ResNetv2(in_channels=3)
+    device = torch.device("cpu")#(f"cuda:{device_number}")
+    cnn = Inception_ResNetv2()
+    # cnn.fc = nn.Linear(2048, 3)
     cnn.to(device)
 
     directory_path = f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}/'
@@ -78,18 +84,18 @@ def get_parameters(
     phase_experiment = normalize_data(zoom(phase_experiment, 
                 (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
     
-    E = np.zeros((1, 3, 256, 256), dtype=np.float16)
+    E = np.zeros((1, 3, resolution_training, resolution_training), dtype=np.float16)
     E[0, 0, :, :] = density_experiment
     E[0, 1, :, :] = phase_experiment
     E[0, 2, :, :] = uphase_experiment
     
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
-        outputs_n2, outputs_isat, outputs_alpha = cnn(images)
+        outputs = cnn(images)
     
-    computed_n2 = outputs_n2[0,0].cpu().numpy()*min_n2
-    computed_isat = outputs_isat[0,0].cpu().numpy()*max_isat
-    computed_alpha = outputs_alpha[0,0].cpu().numpy()*max_alpha
+    computed_n2 = outputs[0,0].cpu().numpy()*(min_n2 - max_n2) + max_n2
+    computed_isat = outputs[0,1].cpu().numpy()*(max_isat - min_isat) + min_isat
+    computed_alpha = outputs[0,2].cpu().numpy()*(max_alpha - min_alpha) + min_alpha
 
     print(f"n2 = {computed_n2} m^2/W")
     print(f"Isat = {computed_isat} W/m^2")

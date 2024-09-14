@@ -15,6 +15,7 @@ from engine.field_dataset import FieldDataset
 from engine.utils import data_split, plot_loss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.training import load_checkpoint, network_training
+from torchvision.models import resnet50, resnet101, resnet152
 set_seed(10)
 
 def create_loaders(
@@ -60,11 +61,12 @@ def network_init(
     Description:
         This function initializes the neural network model (specified by `model`), creates an Adam optimizer with the specified learning rate, initializes Mean Squared Error (MSE) loss criterion, and sets up a ReduceLROnPlateau scheduler for the optimizer. It returns these initialized components as a tuple.
     """
-    cnn = model(channels)
+    cnn = model()
+    # cnn.fc = nn.Linear(2048, channels)
     weight_decay = 1e-5
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min')
+    scheduler = ReduceLROnPlateau(optimizer, mode='min' )
 
     return cnn, optimizer, criterion, scheduler
 
@@ -101,14 +103,14 @@ def prepare_training(
         This function initializes the model using `network_init`, splits the data into training, validation, and test sets, creates DataLoader objects for each set, and prepares model settings for training. It returns these components as a tuple.
     """
     
-    device = torch.device(f"cuda:{device_number}")
+    device = torch.device("cpu")#(f"cuda:{device_number}")
     _, input_power, _, _, _, _, _, _ = nlse_settings
 
     number_of_n2, n2_values, number_of_isat, isat_values, number_of_alpha, alpha_values = labels
     
-    n2_values_normalized = n2_values/np.min(n2_values)
-    isat_values_normalized = isat_values/np.max(isat_values)
-    alpha_values_normalized = alpha_values/np.max(alpha_values)
+    n2_values_normalized = (n2_values - np.max(n2_values))/(np.min(n2_values) - np.max(n2_values))
+    isat_values_normalized = (isat_values - np.min(isat_values))/(np.max(isat_values) - np.min(isat_values))
+    alpha_values_normalized =(alpha_values - np.min(alpha_values))/(np.max(alpha_values) - np.min(alpha_values))
 
     new_path = f"{path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}"
 

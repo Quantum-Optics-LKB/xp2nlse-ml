@@ -167,7 +167,7 @@ class Inception_ResNet_C(nn.Module):
 
 
 class Inception_ResNetv2(nn.Module):
-    def __init__(self, in_channels, k=256, l=256, m=384, n=384):
+    def __init__(self, in_channels=3, k=256, l=256, m=384, n=384):
         super(Inception_ResNetv2, self).__init__()
         blocks = []
         blocks.append(Stem(in_channels))
@@ -183,16 +183,22 @@ class Inception_ResNetv2(nn.Module):
         self.features = nn.Sequential(*blocks)
         self.conv = Conv2d(2080, 1536, 1, stride=1, padding=0, bias=False) 
         self.global_average_pooling = nn.AdaptiveAvgPool2d((1, 1))
-        self.linear_n2 = nn.Linear(1536, 1)
-        self.linear_isat = nn.Linear(1536, 1)
-        self.linear_alpha = nn.Linear(1536, 1)
+        self.linear_1 = nn.Linear(1536, 512)
+        self.linear_2 = nn.Linear(512, 256)
+        self.linear_3 = nn.Linear(256, 128)
+        self.linear_4 = nn.Linear(128, 64)
+        self.linear_5 = nn.Linear(64, 3)
+
+
 
     def forward(self, x):
         x = self.features(x)
         x = self.conv(x)
         x = self.global_average_pooling(x)
         x = x.view(x.size(0), -1)
-        x_n2 = self.linear_n2(x)
-        x_isat = self.linear_isat(x)
-        x_alpha = self.linear_alpha(x)
-        return x_n2, x_isat, x_alpha
+        x = self.linear_1(x)
+        x = self.linear_2(x)
+        x = self.linear_3(x)
+        x = self.linear_4(x)
+        x = self.linear_5(x)
+        return x

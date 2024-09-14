@@ -97,21 +97,19 @@ def network_training(
             isat_values = isat_values.to(device = device, dtype=torch.float32)
             alpha_values = alpha_values.to(device = device, dtype=torch.float32)
             
-            optimizer.zero_grad()
-            outputs_n2, outputs_isat, outputs_alpha = net(images)
+            values = torch.cat((n2_values,isat_values, alpha_values), dim=1)
 
-            loss_n2 = criterion(outputs_n2, n2_values)
-            loss_isat = criterion(outputs_isat, isat_values)
-            loss_alpha = criterion(outputs_alpha, alpha_values)
-            loss_n2.backward(retain_graph=True)
-            loss_isat.backward(retain_graph=True)
-            loss_alpha.backward()
+            optimizer.zero_grad()
+            outputs = net(images)
+
+            loss = criterion(outputs, values)
+            loss.backward()
 
             if (i + 1) % accumulation_steps == 0 or accumulation_steps == 1:
                 optimizer.step()
                 optimizer.zero_grad()  # Clear gradients after updating weights
 
-            running_loss += loss_n2.item() + loss_isat.item()
+            running_loss += loss.item()
         
         # Validation loop
         val_running_loss = 0.0
@@ -123,12 +121,12 @@ def network_training(
                 isat_values = isat_values.to(device = device, dtype=torch.float32)
                 alpha_values = alpha_values.to(device = device, dtype=torch.float32)
 
-                outputs_n2, outputs_isat, outputs_alpha = net(images)
-                loss_n2 = criterion(outputs_n2, n2_values)
-                loss_isat = criterion(outputs_isat, isat_values)
-                loss_alpha = criterion(outputs_alpha, alpha_values)
+                values = torch.cat((n2_values,isat_values, alpha_values), dim=1)
+
+                outputs = net(images)
+                loss = criterion(outputs, values)
                 
-                val_running_loss += loss_n2.item() + loss_isat.item() + loss_alpha.item()
+                val_running_loss += loss.item()
 
         avg_val_loss = val_running_loss / len(validationloader)
         scheduler.step(avg_val_loss)

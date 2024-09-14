@@ -10,6 +10,12 @@ import kornia.augmentation as K
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+def sigmospace(array, a):
+    normalized_array = (array - np.min(array))/(np.max(array) - np.min(array))
+    normalized_array = normalized_array**(a) / (normalized_array**(a) + (1-normalized_array)**a)
+    
+    return normalized_array * (np.max(array) - np.min(array)) + np.min(array)
+
 def scientific_formatter(
         x: float
         ) -> str:
