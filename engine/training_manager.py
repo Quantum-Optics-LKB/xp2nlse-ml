@@ -15,7 +15,6 @@ from engine.field_dataset import FieldDataset
 from engine.utils import data_split, plot_loss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.training import load_checkpoint, network_training
-from torchvision.models import resnet50, resnet101, resnet152
 set_seed(10)
 
 def create_loaders(

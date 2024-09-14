@@ -17,3 +17,5 @@ sandbox_parameters_dev.py
 noise_examples.py
 
 .gitignore
+
+new_distribution.py

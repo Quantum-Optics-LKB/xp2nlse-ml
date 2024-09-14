@@ -4,14 +4,12 @@
 
 import torch
 import numpy as np
-import torch.nn as nn
 from scipy.ndimage import zoom
 from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
 from skimage.restoration import unwrap_phase
 from engine.utils import plot_results, set_seed
 from engine.utils import general_extrema, normalize_data
-from torchvision.models import resnet50, resnet101, resnet152
 set_seed(10)
 
 def get_parameters(
