@@ -3,17 +3,13 @@
 # @author: Louis Rossignol
 
 import gc
-import torch
 import cupy as cp
 import numpy as np
 from tqdm import tqdm
 from NLSE import NLSE
-import kornia.augmentation as K
-from engine.utils import set_seed
 from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
-from skimage.restoration import unwrap_phase
-from engine.utils import experiment_noise, normalize_data
+from engine.utils import experiment_noise, set_seed
 set_seed(10)
 
 def data_creation(
@@ -70,65 +66,53 @@ def data_creation(
     number_of_isat = len(isat)
     number_of_alpha = len(alpha)
     
-    alpha = alpha[np.newaxis, :, np.newaxis, np.newaxis]
-    isat = isat[:, np.newaxis, np.newaxis, np.newaxis]
+    alpha = alpha[:, np.newaxis, np.newaxis]
 
-    X = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float32)
-    Y = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float32)
+    X = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float64)
+    Y = np.linspace(-window_in / 2, window_in / 2, num=resolution_in, endpoint=False, dtype=np.float64)
     XX, YY = np.meshgrid(X, Y)
     
-    beam = np.ones((number_of_isat, number_of_alpha, resolution_in, resolution_in), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / waist**2)
+    beam = np.ones((number_of_alpha, resolution_in, resolution_in), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / waist**2)
     poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
     beam = experiment_noise(beam, poisson_noise_lam, normal_noise_sigma)
-    E = np.zeros((number_of_n2*number_of_isat*number_of_alpha,3, resolution_training, resolution_training), dtype=np.float16)
-      
+    E = np.zeros((number_of_n2*number_of_isat*number_of_alpha,2, resolution_training, resolution_training), dtype=np.float64)
 
-    for index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", total=number_of_n2, unit="n2"):
+    for n2_index, n2_value in tqdm(enumerate(n2),desc=f"NLSE", total=number_of_n2, unit="n2"):
+      for isat_index, isat_value in enumerate(isat):
 
-      simu = NLSE(power=input_power, alpha=alpha, window=window_in, n2=n2_value, 
-                     V=None, L=length, NX=resolution_in, NY=resolution_in, 
-                     Isat=isat, nl_length=non_locality_length)
-      
-      if non_locality_length != 0:
-        simu.nl_profile =  simu.nl_profile[np.newaxis, np.newaxis, :,:]
-      simu.delta_z = delta_z
-      A = simu.out_field(beam, z=length, verbose=False, plot=False, normalize=True, precision="single")
-      A = A.reshape(number_of_isat*number_of_alpha,resolution_in,resolution_in)
+        simu = NLSE(power=input_power, alpha=alpha, window=window_in, n2=n2_value, 
+                      V=None, L=length, NX=resolution_in, NY=resolution_in, 
+                      Isat=isat_value, nl_length=non_locality_length)
+        
+        if non_locality_length != 0:
+          simu.nl_profile =  simu.nl_profile[np.newaxis, np.newaxis, :,:]
+        simu.delta_z = delta_z
+        A = simu.out_field(beam, z=length, verbose=False, plot=False, normalize=True, precision="single")
 
-      density = np.abs(A)**2 * c * epsilon_0 / 2
-      phase = np.angle(A)
-      uphase = unwrap_phase(phase, rng=10)
-      
-      if crop != 0:
-        density = density[:,crop:-crop,crop:-crop]
-        phase = phase[:,crop:-crop,crop:-crop] 
-        uphase = uphase[:,crop:-crop,crop:-crop] 
+        density = np.abs(A)**2 * c * epsilon_0 / 2
+        phase = np.angle(A)
+        
+        if crop != 0:
+          density = density[:,crop:-crop,crop:-crop]
+          phase = phase[:,crop:-crop,crop:-crop] 
 
-      zoom_factor = resolution_training / phase.shape[-1]
-      density_cp = zoom(cp.asarray(density), (1, zoom_factor, zoom_factor),order=3)
-      density = normalize_data(density_cp.get()).astype(np.float16)  
+        zoom_factor = resolution_training / phase.shape[-1]
+        density_cp = zoom(cp.asarray(density), (1, zoom_factor, zoom_factor),order=3)
+        density = density_cp.get()
 
-      phase_cp = zoom(cp.asarray(phase), (1, zoom_factor, zoom_factor),order=3)
-      phase = normalize_data(phase_cp.get()).astype(np.float16)
+        phase_cp = zoom(cp.asarray(phase), (1, zoom_factor, zoom_factor),order=3)
+        phase = phase_cp.get()
 
-      uphase_cp = zoom(cp.asarray(uphase), (1, zoom_factor, zoom_factor),order=3)
-      uphase = normalize_data(uphase_cp.get()).astype(np.float16)
+        del density_cp
+        del phase_cp
 
-      del density_cp
-      del phase_cp
-      del uphase_cp
+        gc.collect()
+        cp.get_default_memory_pool().free_all_blocks()
 
-      gc.collect()
-      cp.get_default_memory_pool().free_all_blocks()
-
-      start_index = number_of_isat * number_of_alpha * index
-      end_index = number_of_isat * number_of_alpha * (index + 1)
-      E[start_index:end_index,0,:,:] = density
-      E[start_index:end_index,1,:,:] = phase
-      E[start_index:end_index,2,:,:] = uphase
-    
-      gaussian_blur = K.RandomGaussianBlur(kernel_size=(51, 51), sigma=(100, 100), p=1.0)
-      E[:,2,:,:] = gaussian_blur(torch.from_numpy(E[:,2:3,:,:]).float().to(device)).cpu().numpy()[:,0,:,:]
+        start_index = number_of_alpha * number_of_isat * n2_index + number_of_alpha * isat_index
+        end_index = number_of_alpha * number_of_isat * (n2_index) + number_of_alpha * (isat_index + 1)
+        E[start_index:end_index,0,:,:] = density
+        E[start_index:end_index,1,:,:] = phase
 
     if saving_path != "":
       np.save(f'{saving_path}/Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power:.2f}', E)

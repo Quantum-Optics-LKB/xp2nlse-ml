@@ -7,6 +7,7 @@ from tqdm import tqdm
 from engine.utils import set_seed
 from torch.utils.data import DataLoader
 from engine.utils import elastic_saltpepper
+from engine.field_dataset import FieldDataset
 set_seed(10)
 
 def save_checkpoint(
@@ -52,8 +53,7 @@ def network_training(
         scheduler: torch.optim.lr_scheduler,
         start_epoch: int, 
         num_epochs: int, 
-        trainloader: DataLoader, 
-        validationloader: DataLoader, 
+        fieldset: FieldDataset, 
         accumulation_steps: int, 
         device: torch.device, 
         new_path: str, 
@@ -84,18 +84,26 @@ def network_training(
     Description:
         This function performs the training loop for a neural network model. It iterates through each epoch, performing forward and backward passes on the training data, optimizing the model parameters, and evaluating the model on the validation set. It updates the learning rate based on validation loss using the scheduler and saves a checkpoint after each epoch. It returns the updated loss lists and the trained model.
     """
+    fieldset.flag = "training"
+    training_loader = DataLoader(fieldset, batch_size=fieldset.batch_size, shuffle=True)
+    fieldset.flag = "validation"
+    validation_loader = DataLoader(fieldset, batch_size=fieldset.batch_size, shuffle=True)
 
     augment = elastic_saltpepper()
     for epoch in tqdm(range(start_epoch, num_epochs),desc=f"Training", 
                                 total=num_epochs - start_epoch, unit="Epoch"):  
         running_loss = 0.0
         net.train()
+    
         
-        for i, (images, n2_values, isat_values, alpha_values) in enumerate(trainloader, 0):            
-            images = augment(images.to(device = device, dtype=torch.float32))
-            n2_values = n2_values.to(device = device, dtype=torch.float32)
-            isat_values = isat_values.to(device = device, dtype=torch.float32)
-            alpha_values = alpha_values.to(device = device, dtype=torch.float32)
+        for i, (images, n2_values, isat_values, alpha_values) in enumerate(training_loader, 0):            
+            images = images.to(device = device, dtype=torch.float64)
+            dummy_channel = torch.ones(images.shape[0], 1, images.shape[2], images.shape[3],dtype=torch.float64)
+            images = augment(torch.cat((images, dummy_channel), dim=1))[:,0:2,:,:]
+
+            n2_values = n2_values.to(device = device, dtype=torch.float64)
+            isat_values = isat_values.to(device = device, dtype=torch.float64)
+            alpha_values = alpha_values.to(device = device, dtype=torch.float64)
             
             values = torch.cat((n2_values,isat_values, alpha_values), dim=1)
 
@@ -114,12 +122,13 @@ def network_training(
         # Validation loop
         val_running_loss = 0.0
         net.eval()
+        
         with torch.no_grad(): 
-            for images, n2_values, isat_values, alpha_values in validationloader:
-                images = images.to(device = device, dtype=torch.float32)
-                n2_values = n2_values.to(device = device, dtype=torch.float32)
-                isat_values = isat_values.to(device = device, dtype=torch.float32)
-                alpha_values = alpha_values.to(device = device, dtype=torch.float32)
+            for images, n2_values, isat_values, alpha_values in validation_loader:
+                images = images.to(device = device, dtype=torch.float64)
+                n2_values = n2_values.to(device = device, dtype=torch.float64)
+                isat_values = isat_values.to(device = device, dtype=torch.float64)
+                alpha_values = alpha_values.to(device = device, dtype=torch.float64)
 
                 values = torch.cat((n2_values,isat_values, alpha_values), dim=1)
 
@@ -128,13 +137,13 @@ def network_training(
                 
                 val_running_loss += loss.item()
 
-        avg_val_loss = val_running_loss / len(validationloader)
+        avg_val_loss = val_running_loss / len(validation_loader)
         scheduler.step(avg_val_loss)
 
-        current_lr = scheduler.get_last_lr()  # Get current learning rate after update
-        print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(trainloader):.4f}, Validation Loss: {avg_val_loss:.4f}, Current LR: {current_lr[0]}')
+        current_lr = scheduler.get_last_lr()
+        print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(training_loader)}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}')
 
-        loss_list.append(running_loss / len(trainloader))
+        loss_list.append(running_loss / len(training_loader))
         val_loss_list.append(avg_val_loss)
 
         save_checkpoint({

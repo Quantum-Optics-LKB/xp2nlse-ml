@@ -12,7 +12,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def sigmospace(array, a):
     normalized_array = (array - np.min(array))/(np.max(array) - np.min(array))
-    normalized_array = normalized_array**(a) / (normalized_array**(a) + (1-normalized_array)**a)
+    normalized_array = normalized_array**(a) / (normalized_array**(a) + np.abs(1-normalized_array)**a)
     
     return normalized_array * (np.max(array) - np.min(array)) + np.min(array)
 
@@ -32,7 +32,7 @@ def scientific_formatter(
     b = int(b)
     return r"${}\times 10^{{{}}}$".format(a, b)
 
-def normalize_data(
+def standardize_data(
         data: np.ndarray,
         ) -> np.ndarray: 
     """
@@ -44,28 +44,11 @@ def normalize_data(
     Returns:
     - np.ndarray: Normalized data array.
     """
-    data -= np.min(data, axis=(-2, -1), keepdims=True)
-    data /= np.max(data, axis=(-2, -1), keepdims=True)
+    # data -= np.min(data, axis=(-2, -1), keepdims=True)
+    # data /= np.max(data, axis=(-2, -1), keepdims=True)
+    data -= np.mean(data,axis=(0, -2, -1), keepdims=True) 
+    data /= np.std(data, axis=(0, -2, -1), keepdims=True)
     return data
-
-def general_extrema(
-        E: np.ndarray
-        ) -> np.ndarray:
-    """
-    Adjust phase array E to ensure non-negative values.
-
-    Parameters:
-    - E (np.ndarray): Input phase array.
-
-    Returns:
-    - np.ndarray: Adjusted phase array with non-negative values.
-    """
-    if E[E.shape[-2]//2, E.shape[-1]//2] > E[0, 0]:
-        E -= np.max(E)
-    elif E[E.shape[-2]//2, E.shape[-1]//2] < 0:
-        E -= np.min(E)
-    E = np.abs(E)
-    return E
 
 def elastic_saltpepper() -> torch.nn.Sequential:
     """
@@ -75,12 +58,18 @@ def elastic_saltpepper() -> torch.nn.Sequential:
     - torch.nn.Sequential: Sequential transformation pipeline.
     """
     
+    
     elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
+    salt_pepper = random.uniform(0.05, 0.15)  # More aggressive noise
+    rotation_degrees = 30  # Higher degree for more diverse augmentation
     elastic_alpha = (1, 1)
-    salt_pepper = random.uniform(0.01, .11)
     return torch.nn.Sequential(
         K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
-        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.2),
+        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.4),
+        K.RandomRotation(degrees=rotation_degrees, p=0.5),
+        K.RandomHorizontalFlip(p=.6),
+        K.RandomVerticalFlip(p=.6),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.5, .5), p=0.25)
     )
 
 def experiment_noise(
@@ -109,35 +98,6 @@ def experiment_noise(
     noisy_beam = noisy_beam.astype(np.complex64)
     return noisy_beam
 
-def line_noise(
-        image: np.ndarray,
-        num_lines: int, 
-        amplitude: float, 
-        angle: float
-        ) -> np.ndarray:
-    """
-    Add sinusoidal lines pattern noise to an image.
-
-    Parameters:
-    - image (np.ndarray): Input image array.
-    - num_lines (int): Number of lines.
-    - amplitude (float): Amplitude of the lines pattern.
-    - angle (float): Angle of the lines pattern (degrees).
-
-    Returns:
-    - np.ndarray: Noisy image array.
-    """
-    height, width = image.shape
-    angle_rad = np.radians(angle)
-    X, Y = np.meshgrid(np.arange(width), np.arange(height))
-    X_rotated = X * np.cos(angle_rad) + Y * np.sin(angle_rad)
-    diagonal_length = np.sqrt(width**2 + height**2)
-    wave_frequency = (num_lines * 2 * np.pi) / diagonal_length
-    lines_pattern =  amplitude*np.sin(X_rotated * wave_frequency)
-    noisy_image = image.copy() + lines_pattern
-    
-    return noisy_image
-
 def set_seed(
         seed: int
         ) -> None:
@@ -160,10 +120,7 @@ def set_seed(
     os.environ['PYTHONHASHSEED'] = str(seed)
 
 def data_split(
-        E: np.ndarray, 
-        n2_labels: np.ndarray,
-        isat_labels: np.ndarray,
-        alpha_labels: np.ndarray,
+        indices: np.ndarray,
         train_ratio: float = 0.8, 
         validation_ratio: float = 0.1, 
         test_ratio: float = 0.1
@@ -186,27 +143,14 @@ def data_split(
     """
     assert train_ratio + validation_ratio + test_ratio == 1
     
-    indices = np.arange(E.shape[0])
     train_index = int(len(indices) * train_ratio)
     validation_index = int(len(indices) * (train_ratio + validation_ratio))
 
-    train = E[:train_index,:,:,:]
-    validation = E[train_index:validation_index,:,:,:]
-    test = E[validation_index:,:,:,:]
+    train_indices = indices[:train_index]
+    validation_indices = indices[train_index:validation_index]
+    test_indices = indices[validation_index:]
 
-    train_n2 = n2_labels[:train_index]
-    validation_n2 = n2_labels[train_index:validation_index]
-    test_n2 = n2_labels[validation_index:]
-
-    train_isat = isat_labels[:train_index]
-    validation_isat = isat_labels[train_index:validation_index]
-    test_isat = isat_labels[validation_index:]
-
-    train_alpha = alpha_labels[:train_index]
-    validation_alpha = alpha_labels[train_index:validation_index]
-    test_alpha = alpha_labels[validation_index:]
-
-    return (train, train_n2, train_isat, train_alpha), (validation, validation_n2, validation_isat, validation_alpha), (test, test_n2, test_isat, test_alpha)
+    return train_indices, validation_indices, test_indices
 
 def plot_loss(
     y_train: np.ndarray, 
@@ -268,10 +212,9 @@ def plot_generated_set(
     number_of_isat = len(isat)
     number_of_alpha = len(alpha)
 
-    field = data.copy().reshape(number_of_n2, number_of_isat, number_of_alpha, 3, data.shape[-2], data.shape[-2])
+    field = data.copy().reshape(number_of_n2, number_of_isat, number_of_alpha, 2, data.shape[-2], data.shape[-2])
     density_channels = field[:,  :, :, 0, :, :]
     phase_channels = field[:, :, :, 1, :, :]
-    uphase_channels = field[:, :, :, 2, :, :]
     
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"
@@ -283,11 +226,11 @@ def plot_generated_set(
     alpha_u = r"$m^{-1}$"
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
-    plt.rcParams['font.size'] = 50
+    plt.rcParams['font.size'] = 1
 
     for alpha_index, alpha_value in enumerate(alpha):
         
-        fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
+        fig_density, axes_density = plt.subplots(number_of_n2, number_of_isat, figsize=(number_of_isat,number_of_n2), layout="tight")
         fig_density.suptitle(f'Density Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
         for n2_index, n2_value in enumerate(n2):
@@ -301,7 +244,7 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/density_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_density) 
 
-        fig_phase, axes_phase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
+        fig_phase, axes_phase = plt.subplots(number_of_n2, number_of_isat, figsize=(number_of_isat,number_of_n2), layout="tight")
         fig_phase.suptitle(f'Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
 
         for n2_index, n2_value in enumerate(n2):
@@ -314,24 +257,10 @@ def plot_generated_set(
         plt.savefig(f'{saving_path}/phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
         plt.close(fig_phase)
 
-        fig_uphase, axes_uphase = plt.subplots(number_of_n2, number_of_isat, figsize=(10*number_of_isat,10*number_of_n2), layout="tight")
-        fig_uphase.suptitle(f'Unwrapped Phase Channels - {puiss_str} = {input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
-
-        for n2_index, n2_value in enumerate(n2):
-            for isat_index, isat_value in enumerate(isat):
-                ax = axes_uphase if number_of_n2 == 1 and number_of_isat == 1 else (axes_uphase[n2_index, isat_index] if number_of_n2 > 1 and number_of_isat > 1 else (axes_uphase[n2_index] if number_of_n2 > 1 else axes_uphase[isat_index]))
-                ax.imshow(uphase_channels[n2_index, isat_index, alpha_index, :, :], cmap='viridis')
-                ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
-                ax.axis('off')
-
-        plt.savefig(f'{saving_path}/unwrapped_phase_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_{alpha_value}_power{input_power:.2f}.png')
-        plt.close(fig_phase)
-
 def plot_results(
         E: np.ndarray,
         density_experiment: np.ndarray, 
         phase_experiment: np.ndarray, 
-        uphase_experiment: np.ndarray, 
         numbers: tuple, 
         cameras: tuple, 
         number_of_n2: int, 
@@ -383,7 +312,7 @@ def plot_results(
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 10
 
-    fig, axs = plt.subplots(3, 2, figsize=(10, 15), layout="tight")
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10), layout="tight")
     fig.suptitle(title)
 
     ims = []
@@ -391,8 +320,6 @@ def plot_results(
     ims.append(axs[0, 1].imshow(density_experiment, cmap="viridis", extent=extent))
     ims.append(axs[1, 0].imshow(E[0, 1, :, :], cmap="twilight_shifted", extent=extent))
     ims.append(axs[1, 1].imshow(phase_experiment, cmap="twilight_shifted", extent=extent))
-    ims.append(axs[2, 0].imshow(E[0, 2, :, :], cmap="viridis", extent=extent))
-    ims.append(axs[2, 1].imshow(uphase_experiment, cmap="viridis", extent=extent))
     
     dividers = []
     for ax in axs.flatten():
@@ -405,10 +332,8 @@ def plot_results(
 
     axs[0, 0].set_title("Density")
     axs[1, 0].set_title("Normalized phase")
-    axs[2, 0].set_title("Normalized unwrapped phase")
     axs[0, 1].set_title("Experimental density")
     axs[1, 1].set_title("Experimental normalized phase")
-    axs[2, 1].set_title("Experimental unwrapped phase")
     for ax in axs.flatten():
         ax.set_xlabel(r"x (mm)")
         ax.set_ylabel(r"y (mm)")
@@ -419,7 +344,6 @@ def plot_sandbox(
         E: np.ndarray, 
         density_experiment: np.ndarray, 
         phase_experiment: np.ndarray, 
-        uphase_experiment: np.ndarray, 
         window_out: float,
         n2: float, 
         isat: float, 
@@ -460,15 +384,14 @@ def plot_sandbox(
     title += f" {puiss_str} = {scientific_formatter(input_power)}{puiss_u},"
     title+= f"{alpha_str} = {scientific_formatter(alpha)}{alpha_u}"
 
-    fig, axs = plt.subplots(3, 2, figsize=(10, 15), layout="tight")
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10), layout="tight")
     fig.suptitle(title)
     ims = []
     ims.append(axs[0, 0].imshow(E[0, 0, :, :], cmap="viridis", extent=extent))
     ims.append(axs[0, 1].imshow(density_experiment, cmap="viridis", extent=extent))
     ims.append(axs[1, 0].imshow(E[0, 1, :, :], cmap="twilight_shifted", extent=extent))
     ims.append(axs[1, 1].imshow(phase_experiment, cmap="twilight_shifted", extent=extent))
-    ims.append(axs[2, 0].imshow(E[0, 2, :, :], cmap="viridis", extent=extent))
-    ims.append(axs[2, 1].imshow(uphase_experiment, cmap="viridis", extent=extent))
+
     dividers = []
     for ax in axs.flatten():
         dividers.append(make_axes_locatable(ax))
@@ -480,12 +403,33 @@ def plot_sandbox(
 
     axs[0, 0].set_title("Density")
     axs[1, 0].set_title("Normalized phase")
-    axs[2, 0].set_title("Normalized unwrapped phase")
     axs[0, 1].set_title("Experimental density")
     axs[1, 1].set_title("Experimental normalized phase")
-    axs[2, 1].set_title("Experimental unwrapped phase")
     for ax in axs.flatten():
         ax.set_xlabel(r"x (mm)")
         ax.set_ylabel(r"y (mm)")
 
     plt.savefig(f"{saving_path}/sandbox.png")
+
+def plot_prediction(true_values, predictions, path):
+    
+    plt.rcParams['font.family'] = 'DejaVu Serif'
+    plt.rcParams['font.size'] = 10
+
+    n2_str = r"$n_2$"
+    n2_u = r"$m^2$/$W$"
+    isat_str = r"$I_{sat}$"
+    isat_u = r"$W$/$m^2$"
+    alpha_str = r"$\alpha$"
+    alpha_u = r"$m^{-1}$"
+    variables = [n2_str, isat_str, alpha_str]
+    units = [n2_u, isat_u, alpha_u]
+
+    for i in range(3):
+        plt.figure(figsize=(10, 10))
+        plt.scatter(true_values[:, i], predictions[:, i], alpha=0.5)
+        plt.plot(np.linspace(0, 1,100),np.linspace(0, 1,100), 'r')  # Assuming normalized targets
+        plt.xlabel(f'True {variables[i]} ({units[i]})')
+        plt.ylabel(f'Predicted {variables[i]} ({units[i]})')
+        plt.title(f'Predicted vs True for {variables[i]}')
+        plt.savefig(f"{path}/predictedvstrue_{variables[i]}.png")

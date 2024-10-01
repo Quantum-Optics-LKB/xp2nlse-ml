@@ -44,6 +44,10 @@ class FieldDataset(Dataset):
     def __init__(
             self, 
             data: np.ndarray, 
+            training_indices: np.ndarray,
+            validation_indices: np.ndarray,
+            test_indices: np.ndarray,
+            batch_size: int,
             n2_values: np.ndarray, 
             isat_values: np.ndarray,
             alpha_values: np.ndarray
@@ -57,11 +61,16 @@ class FieldDataset(Dataset):
             isat_values (np.ndarray): A 1D numpy array containing the isat values.
             alpha_values (np.ndarray): A 1D numpy array containing the alpha values.
         """
-        
-        self.n2_values = torch.from_numpy(n2_values).to(torch.float32).unsqueeze(1)
-        self.isat_values = torch.from_numpy(isat_values).to(torch.float32).unsqueeze(1)
-        self.alpha_values = torch.from_numpy(alpha_values).to(torch.float32).unsqueeze(1)
-        self.data = torch.from_numpy(data).to(torch.float16)
+        self.flag = ""
+        self.batch_size = batch_size
+        self.training_indices = torch.from_numpy(training_indices).to(torch.int)
+        self.validation_indices = torch.from_numpy(validation_indices).to(torch.int)
+        self.test_indices = torch.from_numpy(test_indices).to(torch.int)
+
+        self.n2_values = torch.from_numpy(n2_values).to(torch.float64).unsqueeze(1)
+        self.isat_values = torch.from_numpy(isat_values).to(torch.float64).unsqueeze(1)
+        self.alpha_values = torch.from_numpy(alpha_values).to(torch.float64).unsqueeze(1)
+        self.data = torch.from_numpy(data).to(torch.float64)
 
     def __len__(
             self
@@ -72,7 +81,13 @@ class FieldDataset(Dataset):
         Returns:
             int: The number of images.
         """
-        return len(self.data)
+        if self.flag == "training":
+            return len(self.training_indices)
+        elif self.flag == "validation":
+            return len(self.validation_indices)
+        elif self.flag == "test":
+            return len(self.test_indices)
+        
 
     def __getitem__(
             self, 
@@ -88,6 +103,14 @@ class FieldDataset(Dataset):
             tuple: A tuple containing the image data (torch.Tensor) and the associated 
                    n2 (torch.Tensor), isat (torch.Tensor), and alpha (torch.Tensor) labels.
         """
+        if self.flag == "training":
+            idx = self.training_indices[idx].item()
+        elif self.flag == "validation":
+            idx = self.validation_indices[idx].item()
+        elif self.flag == "test":
+            idx = self.test_indices[idx].item()
+            
+        
         data_item = self.data[idx,:,:,:]
         n2_label = self.n2_values[idx]
         isat_label = self.isat_values[idx]

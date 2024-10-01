@@ -7,9 +7,7 @@ import numpy as np
 from scipy.ndimage import zoom
 from engine.generate import data_creation
 from engine.model import Inception_ResNetv2
-from skimage.restoration import unwrap_phase
-from engine.utils import plot_results, set_seed
-from engine.utils import general_extrema, normalize_data
+from engine.utils import plot_results, set_seed, standardize_data
 set_seed(10)
 
 def get_parameters(
@@ -62,9 +60,8 @@ def get_parameters(
     min_isat = isat.min()
     min_alpha = alpha.min()
 
-    device = torch.device("cpu")#(f"cuda:{device_number}")
+    device = torch.device("cpu")
     cnn = Inception_ResNetv2()
-    # cnn.fc = nn.Linear(2048, 3)
     cnn.to(device)
 
     directory_path = f'{saving_path}/training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{in_power:.2f}/'
@@ -73,25 +70,18 @@ def get_parameters(
     
     field = np.load(exp_path)
 
-    density_experiment = normalize_data(zoom(np.abs(field), 
-                (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
-    phase_experiment = np.angle(field)
-    uphase_experiment = general_extrema(unwrap_phase(phase_experiment, rng=10))
-    uphase_experiment = normalize_data(zoom(uphase_experiment, 
-                (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
-    phase_experiment = normalize_data(zoom(phase_experiment, 
-                (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float16)
+    density_experiment = standardize_data(zoom(np.abs(field), (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float64)
+    phase_experiment = standardize_data(zoom(np.angle(field), (resolution_training/field.shape[-2], resolution_training/field.shape[-1]))).astype(np.float64)
     
-    E = np.zeros((1, 3, resolution_training, resolution_training), dtype=np.float16)
+    E = np.zeros((1, 2, resolution_training, resolution_training), dtype=np.float64)
     E[0, 0, :, :] = density_experiment
     E[0, 1, :, :] = phase_experiment
-    E[0, 2, :, :] = uphase_experiment
     
     with torch.no_grad():
         images = torch.from_numpy(E).float().to(device)
         outputs = cnn(images)
     
-    computed_n2 = outputs[0,0].cpu().numpy()*(min_n2 - max_n2) + max_n2
+    computed_n2 = outputs[0,0].cpu().numpy()*(max_n2 - min_n2) + min_n2
     computed_isat = outputs[0,1].cpu().numpy()*(max_isat - min_isat) + min_isat
     computed_alpha = outputs[0,2].cpu().numpy()*(max_alpha - min_alpha) + min_alpha
 
@@ -103,6 +93,6 @@ def get_parameters(
 
         numbers = np.array([computed_n2]), in_power, np.array([computed_alpha]), np.array([computed_isat]), waist, nl_length, delta_z, length
         E = data_creation(numbers, cameras, device_number)
-        plot_results(E, density_experiment, phase_experiment, uphase_experiment,numbers, cameras, number_of_n2, number_of_isat, number_of_alpha, saving_path)
+        plot_results(E, density_experiment, phase_experiment,numbers, cameras, number_of_n2, number_of_isat, number_of_alpha, saving_path)
     
     return computed_n2, computed_isat, computed_alpha
