@@ -7,7 +7,7 @@ import cupy as cp
 import numpy as np
 from tqdm import tqdm
 from NLSE import NLSE
-from engine.utils import set_seed
+from engine.utils import experiment_noise, set_seed
 from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
 from engine.engine_dataset import EngineDataset
@@ -25,8 +25,10 @@ def simulation(
     XX, YY = np.meshgrid(X, Y)
     
     beam = np.ones((dataset.number_of_alpha, dataset.resolution_simulation, dataset.resolution_simulation), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / dataset.waist**2)
+    poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
+    beam = experiment_noise(beam, poisson_noise_lam, normal_noise_sigma)
 
-    for n2_index, n2_value in tqdm(enumerate(dataset.n2_values),desc=f"NLSE", total=dataset.number_of_n2, unit="n2"):
+    for n2_index, n2_value in tqdm(enumerate(dataset.n2_values),desc=f"NLSE", total=len(dataset.n2_values), unit="n2"):
       for isat_index, isat_value in enumerate(dataset.isat_values):
 
         simu = NLSE(power=dataset.input_power, alpha=alpha, window=dataset.window_simulation, n2=n2_value, 
@@ -38,32 +40,24 @@ def simulation(
         simu.delta_z = dataset.delta_z
         A = simu.out_field(beam, z=dataset.length, verbose=False, plot=False, normalize=True, precision="single")
 
-        # density = np.log1p(np.abs(A)**2 * c * epsilon_0 / 2)
+        if crop != 0:
+          A = A[:,crop:-crop,crop:-crop]
+
+        zoom_factor = dataset.resolution_training / A.shape[-1]
+        A = zoom(cp.asarray(A), (1, zoom_factor, zoom_factor),order=5).get()
+
         density = np.abs(A)**2 * c * epsilon_0 / 2
         phase = np.angle(A)
         
-        if crop != 0:
-          density = density[:,crop:-crop,crop:-crop]
-          phase = phase[:,crop:-crop,crop:-crop] 
-
-        zoom_factor = dataset.resolution_training / phase.shape[-1]
-        density_cp = zoom(cp.asarray(density), (1, zoom_factor, zoom_factor),order=3)
-        density = density_cp.get()
-
-        phase_cp = zoom(cp.asarray(phase), (1, zoom_factor, zoom_factor),order=3)
-        phase = phase_cp.get()
-
-        del density_cp
-        del phase_cp
-
-        gc.collect()
-        cp.get_default_memory_pool().free_all_blocks()
-
         start_index = dataset.number_of_alpha * dataset.number_of_isat * n2_index + dataset.number_of_alpha * isat_index
         end_index = dataset.number_of_alpha * dataset.number_of_isat * (n2_index) + dataset.number_of_alpha * (isat_index + 1)
+
         dataset.field[start_index:end_index,0,:,:] = density
         dataset.field[start_index:end_index,1,:,:] = phase
 
+    dataset.field[:,0,:,:] -= np.min(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
+    dataset.field[:,0,:,:] /= np.max(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
+    
     if dataset.saving_path != "":
       path = f'{dataset.saving_path}/Es_w{dataset.resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}'
       np.save(path, dataset.field)

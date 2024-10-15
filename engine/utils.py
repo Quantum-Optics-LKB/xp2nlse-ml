@@ -4,12 +4,51 @@
 
 import os
 import torch
+import torch.nn as nn
 import random
 import numpy as np
 import kornia.augmentation as K
 from matplotlib import pyplot as plt
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from skimage.feature import hog
+
+
+class RandomPhaseShift(nn.Module):
+    def __init__(self, shift_range=(-np.pi, np.pi), p=0.5):
+        """
+        Random Phase Shift Augmentation for Kornia.
+
+        Parameters:
+        - shift_range (tuple): Range from which to sample the phase shift value.
+        - p (float): Probability of applying the phase shift.
+        """
+        super(RandomPhaseShift, self).__init__()
+        self.shift_range = shift_range
+        self.p = p
+
+    def forward(self, x):
+        if torch.rand(1).item() < self.p:
+            x = x * np.pi
+            phase_shift = torch.FloatTensor(1).uniform_(*self.shift_range).to(x.device)
+            # Add the phase shift to all images in the batch
+            x = x + phase_shift
+            # Wrap phase values to be in the range [-pi, pi]
+            x = torch.fmod(x + np.pi, 2 * np.pi) - np.pi
+            x = x/np.pi
+        return x
+
+def apply_hog(image, pixels_per_cell=(4, 4), cells_per_block=(2, 2), orientations=9, channels=False):
+    if channels:
+        for i in range(image.shape[0]):
+            hog_features, image[i, :, :] = hog(image[i, :, :], pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, 
+                                        orientations=orientations, visualize=True, block_norm='L2-Hys')
+
+    else:
+        hog_features, image = hog(image, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, 
+                                    orientations=orientations, visualize=True, block_norm='L2-Hys')
+    return image
+
 
 def sigmospace(array, a):
     normalized_array = (array - np.min(array))/(np.max(array) - np.min(array))
@@ -51,26 +90,32 @@ def standardize_data(
     data /= np.std(data, axis=(0, -2, -1), keepdims=True)
     return data
 
-def elastic_saltpepper() -> torch.nn.Sequential:
+def augmentation_density(elastic_sigma, elastic_alpha, rotation_degrees) -> torch.nn.Sequential:
     """
     Create a sequential transformation pipeline for elastic and salt-pepper noise.
 
     Returns:
     - torch.nn.Sequential: Sequential transformation pipeline.
     """
+    gamma = np.random.uniform(1, 4.5, 1)[0]
     
-    
-    elastic_sigma = (random.randrange(35, 42, 2), random.randrange(35, 42, 2))
-    salt_pepper = random.uniform(0.05, 0.15)  # More aggressive noise
-    rotation_degrees = 30  # Higher degree for more diverse augmentation
-    elastic_alpha = (1, 1)
     return torch.nn.Sequential(
-        K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.5),
-        K.RandomSaltAndPepperNoise(amount=salt_pepper,salt_vs_pepper=(.5, .5), p=.4),
-        K.RandomRotation(degrees=rotation_degrees, p=0.5),
-        K.RandomHorizontalFlip(p=.6),
-        K.RandomVerticalFlip(p=.6),
-        K.RandomAffine(degrees=rotation_degrees, translate=(.5, .5), p=0.25)
+         K.RandomGaussianBlur(kernel_size=51,sigma=(1, 1), p=.5, keepdim=True),
+        #  K.RandomGamma(gamma=(gamma, gamma), p=.15, keepdim=True),
+        #  K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.15, keepdim=True),
+        #  K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True),
+    )
+def augmentation_phase(elastic_sigma, elastic_alpha, rotation_degrees) -> torch.nn.Sequential:
+    """
+    Create a sequential transformation pipeline for elastic and salt-pepper noise.
+
+    Returns:
+    - torch.nn.Sequential: Sequential transformation pipeline.
+    """
+    return torch.nn.Sequential(
+         RandomPhaseShift(shift_range=(0, np.pi/2), p=1),
+        #  K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.15, keepdim=True),
+        #  K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.25, keepdim=True),
     )
 
 def experiment_noise(
@@ -147,11 +192,11 @@ def data_split(
     train_index = int(len(indices) * train_ratio)
     validation_index = int(len(indices) * (train_ratio + validation_ratio))
 
-    train_indices = indices[:train_index]
-    validation_indices = indices[train_index:validation_index]
-    test_indices = indices[validation_index:]
+    # train_indices = indices[:train_index]
+    # validation_indices = indices[train_index:validation_index]
+    # test_indices = indices[validation_index:]
 
-    return train_indices, validation_indices, test_indices
+    return train_index, validation_index
 
 def plot_loss(
     y_train: np.ndarray, 
@@ -365,9 +410,9 @@ def plot_sandbox(
         fig.colorbar(im, cax=cax)
 
     axs[0, 0].set_title("Density")
-    axs[1, 0].set_title("Normalized phase")
+    axs[1, 0].set_title("phase")
     axs[0, 1].set_title("Experimental density")
-    axs[1, 1].set_title("Experimental normalized phase")
+    axs[1, 1].set_title("Experimental phase")
     for ax in axs.flatten():
         ax.set_xlabel(r"x (mm)")
         ax.set_ylabel(r"y (mm)")

@@ -17,46 +17,44 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from engine.training import load_checkpoint, network_training
 set_seed(10)
 
+
 def prepare_training(
         dataset: EngineDataset,
         ) -> tuple:
     
     
-    device = torch.device("cpu")#dataset.device_number)
+    device = torch.device(dataset.device_number)#"cpu")#
     new_path = f"{dataset.saving_path}/training_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}"
     os.makedirs(new_path, exist_ok=True)
 
     print("---- MODEL INITIALIZING ----")
-    model = network().double()
-    weight_decay = 1e-6
-    criterion = nn.MSELoss()
+    model = network()
+    weight_decay =  1e-4
+    criterion = nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=dataset.learning_rate, weight_decay=weight_decay)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', patience = 5,factor = 0.5)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10, eta_min=1e-6)
+    #scheduler = ReduceLROnPlateau(optimizer, mode='min', patience = 5,factor = 0.5)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10, eta_min=1e-6)
     model = model.to(device)
     
     print("---- DATA TREATMENT ----")
     indices = np.arange(len(dataset.n2_labels))
-    training_indices, validation_indices, test_indices = data_split(indices, 0.5, 0.25, 0.25)
+    train_index, validation_index = data_split(indices, 0.90, 0.05, 0.05)
 
-    training_field = dataset.field[training_indices,:,:,:]
-    validation_field = dataset.field[validation_indices,:,:,:]
-    test_field = dataset.field[test_indices,:,:,:]
+    training_field = dataset.field[:train_index,:,:,:]
+    validation_field = dataset.field[train_index:validation_index,:,:,:]
+    test_field = dataset.field[:validation_index,:,:,:]
 
-    training_n2_labels = dataset.n2_labels[training_indices]
-    training_isat_labels = dataset.isat_labels[training_indices]
-    training_alpha_labels = dataset.alpha_labels[training_indices]
+    training_n2_labels = dataset.n2_labels[:train_index]
+    training_isat_labels = dataset.isat_labels[:train_index]
+    training_alpha_labels = dataset.alpha_labels[:train_index]
 
-    validation_n2_labels = dataset.n2_labels[validation_indices]
-    validation_isat_labels = dataset.isat_labels[validation_indices]
-    validation_alpha_labels = dataset.alpha_labels[validation_indices]
+    validation_n2_labels = dataset.n2_labels[train_index:validation_index]
+    validation_isat_labels = dataset.isat_labels[train_index:validation_index]
+    validation_alpha_labels = dataset.alpha_labels[train_index:validation_index]
 
-    test_n2_labels = dataset.n2_labels[test_indices]
-    test_isat_labels = dataset.isat_labels[test_indices]
-    test_alpha_labels = dataset.alpha_labels[test_indices]
-
-    dataset.mean_standard = np.mean(training_field, axis=(0, -1, -2), keepdims=True)
-    dataset.std_standard = np.std(training_field, axis=(0, -1, -2), keepdims=True)
+    test_n2_labels = dataset.n2_labels[validation_index:]
+    test_isat_labels = dataset.isat_labels[validation_index:]
+    test_alpha_labels = dataset.alpha_labels[validation_index:]
     
     dataset.n2_min_standard = np.min(training_n2_labels)
     dataset.n2_max_standard = np.max(training_n2_labels)
@@ -94,15 +92,6 @@ def prepare_training(
     test_alpha_labels -= dataset.alpha_min_standard
     test_alpha_labels /= dataset.alpha_max_standard - dataset.alpha_min_standard
 
-    training_field -= dataset.mean_standard
-    training_field /= dataset.std_standard
-
-    validation_field -= dataset.mean_standard
-    validation_field /= dataset.std_standard
-
-    test_field -= dataset.mean_standard
-    test_field /= dataset.std_standard
-
     training_set = NetworkDataset(set=training_field, 
                                   n2_labels=training_n2_labels, 
                                   isat_labels=training_isat_labels, 
@@ -118,7 +107,6 @@ def prepare_training(
                               isat_labels=test_isat_labels, 
                               alpha_labels=test_alpha_labels)
     
-    
     model_settings = model, optimizer, criterion, scheduler, device, new_path
 
     return training_set, validation_set, test_set, model_settings
@@ -133,9 +121,7 @@ def manage_training(
 
     model, optimizer, criterion, scheduler, device, new_path = model_settings
 
-    orig_stdout = sys.stdout
     f = open(f'{new_path}/testing.txt', 'a')
-    sys.stdout = f
 
     try:
         checkpoint = load_checkpoint(new_path)
@@ -152,10 +138,10 @@ def manage_training(
     
     print("---- MODEL TRAINING ----")
     model_settings = model, optimizer, criterion, scheduler, device, new_path, start_epoch
-    loss_list, val_loss_list, model = network_training(model_settings, dataset, training_set, validation_set, test_set, loss_list, val_loss_list)
+    loss_list, val_loss_list, model = network_training(model_settings, dataset, training_set, validation_set, loss_list, val_loss_list, f)
     
     print("---- MODEL SAVING ----")
-    directory_path = f'{new_path}/training_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}/'
+    directory_path = f'{new_path}/'
     directory_path += f'n2_net_w{dataset.resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}.pth'
     torch.save(model.state_dict(), directory_path)
 
@@ -180,10 +166,18 @@ def manage_training(
         file.write(f"accumulator: {dataset.accumulator}\n")
         file.write(f"batch size: {dataset.batch_size}\n")
         file.write(f"learning_rate: {dataset.learning_rate}\n")
+    
+    file_name = f"{new_path}/standardize.txt"
+    with open(file_name, "a") as file:
+        file.write(f"{dataset.n2_max_standard}\n")
+        file.write(f"{dataset.n2_min_standard}\n")
+        file.write(f"{dataset.isat_max_standard}\n")
+        file.write(f"{dataset.isat_min_standard}\n")
+        file.write(f"{dataset.alpha_max_standard}\n")
+        file.write(f"{dataset.alpha_min_standard}\n")
         
     plot_loss(loss_list,val_loss_list, new_path, dataset.resolution_training, dataset.number_of_n2, dataset.number_of_isat, dataset.number_of_alpha)
 
-    exam(model_settings, test_set, dataset)
+    exam(model_settings, test_set, dataset, f)
 
-    sys.stdout = orig_stdout
     f.close()   

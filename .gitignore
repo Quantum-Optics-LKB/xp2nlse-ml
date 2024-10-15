@@ -19,3 +19,7 @@ noise_examples.py
 .gitignore
 
 new_distribution_.py
+
+new_features.py
+new_features_1.py
+new_augment.py

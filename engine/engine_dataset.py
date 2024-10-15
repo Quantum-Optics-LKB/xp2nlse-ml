@@ -62,7 +62,7 @@ class EngineDataset(Dataset):
         self.window_training = window_training
         self.saving_path = saving_path
 
-        self.field = np.zeros((self.number_of_n2*self.number_of_isat*self.number_of_alpha,2, resolution_training, resolution_training), dtype=np.float64)
+        self.field = np.zeros((self.number_of_n2*self.number_of_isat*self.number_of_alpha,2, resolution_training, resolution_training), dtype=np.float32)
         self.mean_standard = 0
         self.std_standard = 0
 

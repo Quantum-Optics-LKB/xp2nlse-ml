@@ -7,7 +7,7 @@ import numpy as np
 from scipy.ndimage import zoom
 from engine.engine_dataset import EngineDataset
 from engine.generate import simulation
-from engine.utils import plot_sandbox, set_seed
+from engine.utils import apply_hog, plot_sandbox, set_seed
 set_seed(10)
 
 def experiment(
@@ -32,9 +32,15 @@ def experiment(
         and unwrapped phase, normalizes them, and resizes them to the specified resolution.
     """
     experiment_field = np.load(exp_image_path)
-    density_experiment = zoom(np.abs(experiment_field), (resolution_training/experiment_field.shape[-2], resolution_training/experiment_field.shape[-1])).astype(np.float64)
-    phase_experiment = zoom(np.angle(experiment_field), (resolution_training/experiment_field.shape[-2], resolution_training/experiment_field.shape[-1])).astype(np.float64)
 
+    experiment_field = zoom(experiment_field, (resolution_training/experiment_field.shape[-2], resolution_training/experiment_field.shape[-1]), order=5)
+    density_experiment = np.abs(experiment_field)
+    phase_experiment = np.angle(experiment_field) / np.pi
+
+
+    density_experiment -= np.min(density_experiment, axis=(-1, -2), keepdims=True)
+    density_experiment /= np.max(density_experiment, axis=(-1, -2), keepdims=True)
+    
     return density_experiment, phase_experiment
 
 def sandbox(
@@ -55,7 +61,7 @@ def sandbox(
         saving_path: str,
         ) -> None:
 
-    dataset = EngineDataset(n2_values=n2_values, alpha_values=alpha_values, isat_values=isat_values, 
+    dataset = EngineDataset(n2_values=np.asarray([n2_values]), alpha_values=np.asarray([alpha_values]), isat_values=np.asarray([isat_values]), 
                            input_power=input_power, waist=waist, non_locality=non_locality, delta_z=delta_z,
                            length=length, resolution_simulation=resolution_simulation, resolution_training=resolution_training, 
                            window_simulation=window_simulation, window_training=window_training, saving_path=saving_path, learning_rate=0, 
@@ -63,6 +69,7 @@ def sandbox(
         
     with cp.cuda.Device(device_number):
         simulation(dataset)
+        dataset.field[:,1,:,:] = dataset.field[:,1,:,:] / np.pi
 
     density_experiment, phase_experiment = experiment(resolution_training, exp_image_path)
     plot_sandbox(dataset, density_experiment, phase_experiment)  

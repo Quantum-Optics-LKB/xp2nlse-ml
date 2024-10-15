@@ -17,10 +17,10 @@ class NetworkDataset(Dataset):
             alpha_labels: np.ndarray,
             ) -> None:
 
-        self.n2_labels = torch.from_numpy(n2_labels).to(torch.float64).unsqueeze(1)
-        self.isat_labels = torch.from_numpy(isat_labels).to(torch.float64).unsqueeze(1)
-        self.alpha_labels = torch.from_numpy(alpha_labels).to(torch.float64).unsqueeze(1)
-        self.set = torch.from_numpy(set).to(torch.float64)
+        self.n2_labels = torch.from_numpy(n2_labels).to(torch.float32).unsqueeze(1)
+        self.isat_labels = torch.from_numpy(isat_labels).to(torch.float32).unsqueeze(1)
+        self.alpha_labels = torch.from_numpy(alpha_labels).to(torch.float32).unsqueeze(1)
+        self.set = torch.from_numpy(set).to(torch.float32)
 
     def __len__(
             self

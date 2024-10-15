@@ -51,6 +51,8 @@ def manager(
         else:
             path = f'{saving_path}/Es_w{resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{input_power:.2f}.npy'
             dataset.field = np.load(path)
+            dataset.field[:,1,:,:] = dataset.field[:,1,:,:] / np.pi
+
         if create_visual:
             plot_generated_set(dataset)
 
@@ -62,6 +64,7 @@ def manager(
     if not generate and not training and create_visual:
         path = f'{saving_path}/Es_w{resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{input_power:.2f}.npy'
         dataset.field = np.load(path)
+        dataset.field[:,1,:,:] = dataset.field[:,1,:,:] / np.pi
         plot_generated_set(dataset)
 
 
