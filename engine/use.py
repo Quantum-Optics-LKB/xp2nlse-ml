@@ -38,7 +38,7 @@ def get_parameters(
     experiment_field = np.load(exp_path)
     experiment_field = zoom(experiment_field, (dataset.resolution_training/experiment_field.shape[-2], dataset.resolution_training/experiment_field.shape[-1]), order=5)
     density_experiment = np.abs(experiment_field)
-    phase_experiment = np.angle(experiment_field) / np.pi
+    phase_experiment = (np.angle(experiment_field) + np.pi)/ (2*np.pi)
     
     density_experiment -= np.min(density_experiment, axis=(-1, -2), keepdims=True)
     density_experiment /= np.max(density_experiment, axis=(-1, -2), keepdims=True)
@@ -50,11 +50,11 @@ def get_parameters(
     
     with torch.no_grad():
         images = torch.from_numpy(experiment_field).to(device = device, dtype=torch.float32)
-        outputs = model(images)
+        outputs, cov_outputs = model(images)
     
-    computed_n2 = outputs[0,0].cpu().numpy()*(dataset.n2_max_standard - dataset.n2_min_standard) + dataset.n2_min_standard
-    computed_isat = outputs[0,1].cpu().numpy()*(dataset.isat_max_standard - dataset.isat_min_standard) + dataset.isat_min_standard
-    computed_alpha = outputs[0,2].cpu().numpy()*(dataset.alpha_max_standard - dataset.alpha_min_standard) + dataset.alpha_min_standard
+    computed_n2 = outputs[0, 0].cpu().numpy()*(dataset.n2_max_standard - dataset.n2_min_standard) + dataset.n2_min_standard
+    computed_isat = outputs[0, 1].cpu().numpy()*(dataset.isat_max_standard - dataset.isat_min_standard) + dataset.isat_min_standard
+    computed_alpha = outputs[0, 2].cpu().numpy()*(dataset.alpha_max_standard - dataset.alpha_min_standard) + dataset.alpha_min_standard
 
     print(f"n2 = {computed_n2} m^2/W")
     print(f"Isat = {computed_isat} W/m^2")

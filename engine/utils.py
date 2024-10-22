@@ -9,6 +9,7 @@ import random
 import numpy as np
 import kornia.augmentation as K
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.feature import hog
@@ -29,13 +30,13 @@ class RandomPhaseShift(nn.Module):
 
     def forward(self, x):
         if torch.rand(1).item() < self.p:
-            x = x * np.pi
+            x = x * 2 * np.pi - np.pi
             phase_shift = torch.FloatTensor(1).uniform_(*self.shift_range).to(x.device)
             # Add the phase shift to all images in the batch
             x = x + phase_shift
             # Wrap phase values to be in the range [-pi, pi]
             x = torch.fmod(x + np.pi, 2 * np.pi) - np.pi
-            x = x/np.pi
+            x = (x + np.pi)/(2*np.pi)
         return x
 
 def apply_hog(image, pixels_per_cell=(4, 4), cells_per_block=(2, 2), orientations=9, channels=False):
@@ -84,28 +85,21 @@ def standardize_data(
     Returns:
     - np.ndarray: Normalized data array.
     """
-    # data -= np.min(data, axis=(-2, -1), keepdims=True)
-    # data /= np.max(data, axis=(-2, -1), keepdims=True)
     data -= np.mean(data,axis=(0, -2, -1), keepdims=True) 
     data /= np.std(data, axis=(0, -2, -1), keepdims=True)
     return data
 
-def augmentation_density(elastic_sigma, elastic_alpha, rotation_degrees) -> torch.nn.Sequential:
+def augmentation_density(rotation_degrees) -> torch.nn.Sequential:
     """
     Create a sequential transformation pipeline for elastic and salt-pepper noise.
 
     Returns:
     - torch.nn.Sequential: Sequential transformation pipeline.
-    """
-    gamma = np.random.uniform(1, 4.5, 1)[0]
-    
+    """    
     return torch.nn.Sequential(
-         K.RandomGaussianBlur(kernel_size=51,sigma=(1, 1), p=.5, keepdim=True),
-        #  K.RandomGamma(gamma=(gamma, gamma), p=.15, keepdim=True),
-        #  K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.15, keepdim=True),
-        #  K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.75, keepdim=True),
     )
-def augmentation_phase(elastic_sigma, elastic_alpha, rotation_degrees) -> torch.nn.Sequential:
+def augmentation_phase(rotation_degrees) -> torch.nn.Sequential:
     """
     Create a sequential transformation pipeline for elastic and salt-pepper noise.
 
@@ -113,9 +107,8 @@ def augmentation_phase(elastic_sigma, elastic_alpha, rotation_degrees) -> torch.
     - torch.nn.Sequential: Sequential transformation pipeline.
     """
     return torch.nn.Sequential(
-         RandomPhaseShift(shift_range=(0, np.pi/2), p=1),
-        #  K.RandomElasticTransform(kernel_size=51, sigma=elastic_sigma, alpha=elastic_alpha ,p=.15, keepdim=True),
-        #  K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.25, keepdim=True),
+        RandomPhaseShift(shift_range=(0, np.pi/2), p=.5),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True),
     )
 
 def experiment_noise(
@@ -192,10 +185,6 @@ def data_split(
     train_index = int(len(indices) * train_ratio)
     validation_index = int(len(indices) * (train_ratio + validation_ratio))
 
-    # train_indices = indices[:train_index]
-    # validation_indices = indices[train_index:validation_index]
-    # test_indices = indices[validation_index:]
-
     return train_index, validation_index
 
 def plot_loss(
@@ -227,12 +216,12 @@ def plot_loss(
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 12
 
-    ax.plot(np.log(y_train), label="Training Loss", marker='^', linestyle='-', color='blue', mfc='lightblue', mec='indigo', markersize=10, mew=2)
-    ax.plot(np.log(y_val), label="Validation Loss", marker='^', linestyle='-', color='orange', mfc='#FFEDA0', mec='darkorange', markersize=10, mew=2)
+    ax.plot(y_train, label="Training Loss", marker='^', linestyle='-', color='blue', mfc='lightblue', mec='indigo', markersize=10, mew=2)
+    ax.plot(y_val, label="Validation Loss", marker='^', linestyle='-', color='orange', mfc='#FFEDA0', mec='darkorange', markersize=10, mew=2)
     ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
     ax.set_xlabel("Epochs")
-    ax.set_ylabel("Log Loss")
-    fig.suptitle("Training and Validation Log Losses")
+    ax.set_ylabel("Loss")
+    fig.suptitle("Training and Validation Losses")
     ax.legend()
     fig.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}.png")
     plt.close()
@@ -267,7 +256,8 @@ def plot_generated_set(
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
 
-    for alpha_index, alpha_value in enumerate(dataset.alpha_values):
+    progress_bar = tqdm(enumerate(dataset.alpha_values),desc=f"Plotting", total=len(dataset.alpha_values), unit="alpha")
+    for alpha_index, alpha_value in progress_bar:
         
         fig_density, axes_density = plt.subplots(dataset.number_of_n2, dataset.number_of_isat, figsize=(25, 25), layout="tight")
         fig_density.suptitle(f'Density Channels - {puiss_str} = {dataset.input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')

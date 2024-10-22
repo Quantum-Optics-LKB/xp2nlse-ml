@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
 
-import random
 import numpy as np
 from sklearn.metrics import r2_score
 import torch
+import torch.nn as nn
 from tqdm import tqdm
 from io import TextIOWrapper
 from engine.utils import set_seed
@@ -14,7 +14,6 @@ from torch.utils.data import DataLoader
 from engine.engine_dataset import EngineDataset
 from engine.network_dataset import NetworkDataset
 from engine.utils import augmentation_density, augmentation_phase
-from torch.amp import autocast, GradScaler
 
 
 set_seed(10)
@@ -65,7 +64,7 @@ def network_training(
         file: TextIOWrapper,
         ) -> tuple:
     
-    model, optimizer, criterion, scheduler, device, new_path, start_epoch = model_settings
+    model, optimizer, criterion, scheduler, device, new_path, start_epoch, weights = model_settings
     
     training_loader = DataLoader(training_set, batch_size=dataset.batch_size, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=dataset.batch_size, shuffle=True)
@@ -74,57 +73,43 @@ def network_training(
     patience = 10
     trigger_times = 0
 
-    elastic_sigma = (random.randrange(30, 72, 2), random.randrange(30, 72, 2))
-    elastic_alpha = (np.random.uniform(1, 3, 1)[0], np.random.uniform(1, 3, 1)[0])
     rotation_degrees = np.random.uniform(10, 25, 1)[0] 
-    augment_density = augmentation_density(elastic_sigma, elastic_alpha, rotation_degrees)
-    augment_phase = augmentation_phase(elastic_sigma, elastic_alpha, rotation_degrees)
-
-     
-    torch.cuda.current_device()
-    scaler = GradScaler()  # Gradient scaler for mixed precision training
+    augment_density = augmentation_density(rotation_degrees)
+    augment_phase = augmentation_phase(rotation_degrees)
 
     progress_bar = tqdm(range(start_epoch, dataset.num_epochs),desc=f"Training", total=dataset.num_epochs - start_epoch, unit="Epoch")
     for epoch in progress_bar:  
         running_loss = 0.0
         model.train()
-        
-        weights = torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32, requires_grad=False, device=device)
+
         for i, (images, n2_labels, isat_labels, alpha_labels) in enumerate(training_loader, 0):      
             
             images = images.to(device = device)
-            images[:,0, :, :] = augment_density(images[:,0, :, :])
-            images[:,1, :, :] = augment_phase(images[:,1, :, :])
-            
+            images[:,0, :, :] = augment_density(images[:,0, :, :]).to(device = device)
+            images[:,1, :, :] = augment_phase(images[:,1, :, :]).to(device = device)
 
             n2_labels = n2_labels.to(device = device)
             isat_labels = isat_labels.to(device = device)
-            alpha_labels = alpha_labels.to(device = device)    
+            alpha_labels = alpha_labels.to(device = device)   
+            labels = torch.cat((n2_labels, isat_labels, alpha_labels), dim=1)
             
-            labels = torch.cat((n2_labels,isat_labels, alpha_labels), dim=1)
+            outputs, cov_outputs = model(images)
 
+            loss = criterion(outputs, cov_outputs, labels)
+            loss.backward()
             
-            optimizer.zero_grad()
-            with autocast(device_type="cuda"):
-                outputs = model(images)
-                loss = criterion(outputs, labels)
-                loss = (loss * weights).mean()
-
-            # loss.backward()
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-            
-            nn_utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-            if (i + 1) % dataset.accumulator == 0 or dataset.accumulator == 1:
+            if i % dataset.accumulator == 0 or dataset.accumulator == 1:
+                nn_utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
                 optimizer.step()
                 optimizer.zero_grad()
 
             running_loss += loss.item()
         
+        avg_run_loss = running_loss / len(training_loader)
+        
         # Validation loop
         val_running_loss = 0.0
+        mae_values = torch.zeros(3, dtype=torch.float32, device=device)
         all_preds = []
         all_labels = []
 
@@ -135,18 +120,21 @@ def network_training(
                 n2_labels = n2_labels.to(device = device)
                 isat_labels = isat_labels.to(device = device)
                 alpha_labels = alpha_labels.to(device = device)
+                labels = torch.cat((n2_labels, isat_labels, alpha_labels), dim=1)
+            
+                outputs, cov_outputs = model(images)
+            
+                loss = criterion(outputs, cov_outputs, labels)
+                val_running_loss += loss.item()                
 
-                labels = torch.cat((n2_labels,isat_labels, alpha_labels), dim=1)
-
-                outputs = model(images)
-                loss = criterion(outputs, labels)
-                
-                val_running_loss += loss.item()
                 all_preds.append(outputs.cpu())
                 all_labels.append(labels.cpu())
 
+                mae_values += torch.abs(outputs - labels).sum(axis=0)
+
 
         avg_val_loss = val_running_loss / len(validation_loader)
+        mae_values /= len(validation_loader.dataset)
 
         all_preds_tensor = torch.cat(all_preds, dim=0)
         all_labels_tensor = torch.cat(all_labels, dim=0)
@@ -156,48 +144,32 @@ def network_training(
         r2_isat = r2_score(all_labels_tensor[:,1].numpy(), all_preds_tensor[:,1].numpy())
         r2_alpha = r2_score(all_labels_tensor[:,2].numpy(), all_preds_tensor[:,2].numpy())
         average_r2 = (r2_n2 + r2_isat + r2_alpha) / 3
-    
 
         scheduler.step(avg_val_loss)
 
         current_lr = scheduler.get_last_lr()
-        file.write(f'Epoch {epoch+1}, Train Loss: {running_loss / len(training_loader)}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2:.4f}, R2_Isat: {r2_isat:.4f}, R2_alpha: {r2_alpha:.4f}, Average R2: {average_r2:.4f}, Current Weights: {weights.tolist()}\n ')
-        print(f'Epoch {epoch+1}, Train Loss: {running_loss / len(training_loader)}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2:.4f}, R2_Isat: {r2_isat:.4f}, R2_alpha: {r2_alpha:.4f}, Average R2: {average_r2:.4f}, Current Weights: {weights.tolist()}\n')
+        file.write(f'Epoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}, Weights: {weights.tolist()}\n ')
+        print(f'\nEpoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}, Weights: {weights.tolist()}\n', flush=True)
 
-        loss_list.append(running_loss / len(training_loader))
+        loss_list.append(avg_run_loss)
         val_loss_list.append(avg_val_loss)
-
-        with torch.no_grad():
-            r2_scores = torch.tensor([r2_n2, r2_isat, r2_alpha], dtype=torch.float32, device=device)
-            # Use 1 - R2 to emphasize poor performance. Normalize to prevent negative weights.
-            new_weights = 1 - r2_scores
-            new_weights = torch.clamp(new_weights, min=0.1)  # Ensure weights are not negative or too small
-            weights = new_weights
 
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             trigger_times = 0
             save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict(),
-                'loss_list': loss_list,
-                'val_loss_list': val_loss_list
-            }, new_path)
-        else:
-            trigger_times += 1
-            if trigger_times >= patience:
-                print("Early stopping!")
-                break
-
-        save_checkpoint({
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'scheduler': scheduler.state_dict(),
             'loss_list': loss_list,
-            'val_loss_list': val_loss_list
-        },new_path)
+            'val_loss_list': val_loss_list,
+            'weights': weights
+        }, new_path)
+        else:
+            trigger_times += 1
+            if trigger_times >= patience:
+                print("Early stopping!")
+                break
     
     return loss_list, val_loss_list, model

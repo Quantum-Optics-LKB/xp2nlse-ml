@@ -35,7 +35,7 @@ def experiment(
 
     experiment_field = zoom(experiment_field, (resolution_training/experiment_field.shape[-2], resolution_training/experiment_field.shape[-1]), order=5)
     density_experiment = np.abs(experiment_field)
-    phase_experiment = np.angle(experiment_field) / np.pi
+    phase_experiment = (np.angle(experiment_field) + np.pi)/ (2*np.pi)
 
 
     density_experiment -= np.min(density_experiment, axis=(-1, -2), keepdims=True)
@@ -69,7 +69,11 @@ def sandbox(
         
     with cp.cuda.Device(device_number):
         simulation(dataset)
-        dataset.field[:,1,:,:] = dataset.field[:,1,:,:] / np.pi
+
+    dataset.field[:,0,:,:] = dataset.field[:,0,:,:] - np.min(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
+    dataset.field[:,0,:,:] = dataset.field[:,0,:,:] / np.max(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
+
+    dataset.field[:, 1, :, :] = (dataset.field[:, 1, :, :] + np.pi) / (2 * np.pi)
 
     density_experiment, phase_experiment = experiment(resolution_training, exp_image_path)
     plot_sandbox(dataset, density_experiment, phase_experiment)  

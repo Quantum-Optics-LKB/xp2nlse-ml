@@ -21,7 +21,7 @@ class EngineDataset(Dataset):
             window_simulation: float,
             window_training: float,
             saving_path: str,
-            learning_rate: float, 
+            learning_rate: list, 
             batch_size: int, 
             num_epochs: int, 
             accumulator: int,
@@ -45,7 +45,7 @@ class EngineDataset(Dataset):
         self.number_of_alpha = len(alpha_values)
         self.number_of_isat = len(isat_values)
 
-        N2_labels, ISAT_labels, ALPHA_labels = np.meshgrid(n2_values, isat_values, alpha_values) 
+        ALPHA_labels, N2_labels, ISAT_labels = np.meshgrid(alpha_values, n2_values, isat_values) 
 
         self.n2_labels = N2_labels.reshape(-1)
         self.isat_labels = ISAT_labels.reshape(-1)

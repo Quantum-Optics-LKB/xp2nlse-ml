@@ -19,7 +19,7 @@ def exam(
         dataset: EngineDataset,
         file: TextIOWrapper,
         ) -> None:
-    model, _, _, _, _, _, _ = model_settings
+    model, _, _, _, _, _, _, _ = model_settings
     test_loader = DataLoader(test_set, batch_size=dataset.batch_size, shuffle=True)
     
     print("---- MODEL ANALYSIS ----")
@@ -36,7 +36,7 @@ def test_model(
         file: TextIOWrapper,
         ) -> None:
    
-    model, _, _, _, device, new_path, _ = model_settings
+    model, _, _, _, device, new_path, _, _ = model_settings
 
     mse_loss = torch.nn.MSELoss(reduction='mean')
     mae_loss = torch.nn.L1Loss(reduction='mean')
@@ -55,7 +55,8 @@ def test_model(
             alpha_labels = alpha_labels.to(device = device)
             labels = torch.cat((n2_labels,isat_labels, alpha_labels), dim=1)
 
-            outputs = model(images)
+            outputs, cov_outputs = model(images)
+            
             predictions.append(outputs.cpu().numpy())
             true_labels.append(labels.cpu().numpy())
             
