@@ -98,8 +98,8 @@ def network_training(
             loss = criterion(outputs, cov_outputs, labels)
             loss.backward()
             
-            if i % dataset.accumulator == 0 or dataset.accumulator == 1:
-                nn_utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
+            if (i + 1) % dataset.accumulator == 0 or dataset.accumulator == 1:
+                nn_utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -145,15 +145,15 @@ def network_training(
         r2_alpha = r2_score(all_labels_tensor[:,2].numpy(), all_preds_tensor[:,2].numpy())
         average_r2 = (r2_n2 + r2_isat + r2_alpha) / 3
 
-        scheduler.step(avg_val_loss)
+        scheduler.step(epoch)
 
         current_lr = scheduler.get_last_lr()
-        file.write(f'Epoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}, Weights: {weights.tolist()}\n ')
-        print(f'\nEpoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}, Weights: {weights.tolist()}\n', flush=True)
+        file.write(f'Epoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}\n ')
+        print(f'\nEpoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}', flush=True)
 
         loss_list.append(avg_run_loss)
         val_loss_list.append(avg_val_loss)
-
+        
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
             trigger_times = 0
@@ -170,6 +170,9 @@ def network_training(
             trigger_times += 1
             if trigger_times >= patience:
                 print("Early stopping!")
+                print("Saving the best model so far!")
+                checkpoint = load_checkpoint(new_path)
+                model.load_state_dict(checkpoint['state_dict'])
                 break
     
     return loss_list, val_loss_list, model

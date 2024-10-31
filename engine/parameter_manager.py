@@ -7,7 +7,7 @@ import numpy as np
 from engine.use import get_parameters
 from engine.generate import simulation
 from engine.engine_dataset import EngineDataset
-from engine.utils import plot_generated_set, set_seed
+from engine.utils import plot_generated_set, set_seed, shuffle_dataset
 from engine.training_manager import manage_training, prepare_training
 set_seed(10)
 
@@ -52,6 +52,9 @@ def manager(
             path = f'{saving_path}/Es_w{resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{input_power:.2f}.npy'
             dataset.field = np.load(path)
         
+        if create_visual:
+            plot_generated_set(dataset)
+        
         min_values = np.min(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
         np.subtract(dataset.field[:,0,:,:], min_values, out=dataset.field[:,0,:,:])
 
@@ -60,8 +63,7 @@ def manager(
 
         dataset.field[:, 1, :, :] = (dataset.field[:, 1, :, :] + np.pi) / (2 * np.pi)
 
-        if create_visual:
-            plot_generated_set(dataset)
+        shuffle_dataset(dataset)
 
         if training:
             print("---- TRAINING ----")
@@ -71,14 +73,6 @@ def manager(
     if not generate and not training and create_visual:
         path = f'{saving_path}/Es_w{resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{input_power:.2f}.npy'
         dataset.field = np.load(path)
-
-        min_values = np.min(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
-        np.subtract(dataset.field[:,0,:,:], min_values, out=dataset.field[:,0,:,:])
-
-        max_values = np.max(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
-        np.divide(dataset.field[:,0,:,:], max_values, out=dataset.field[:,0,:,:])
-
-        dataset.field[:, 1, :, :] = (dataset.field[:, 1, :, :] + np.pi) / (2 * np.pi)
         plot_generated_set(dataset)
 
 

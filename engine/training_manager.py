@@ -22,17 +22,6 @@ class MultivariateNLLLoss(nn.Module):
         super(MultivariateNLLLoss, self).__init__()
 
     def forward(self, mean_predictions, cov_params, true_values):
-        """
-        Forward pass for the Multivariate Negative Log Likelihood (MNLL) loss function.
-
-        Args:
-        mean_predictions: Predicted means of shape [batch_size, 3].
-        cov_params: Covariance matrix predictions, lower triangular elements of shape [batch_size, 6].
-        true_values: Ground truth values for n2, Isat, alpha of shape [batch_size, 3].
-
-        Returns:
-        Loss: The negative log likelihood loss.
-        """
         # Construct the covariance matrix from the predicted parameters
         cov_matrix = self.construct_covariance_matrix(cov_params)
         cov_matrix = cov_matrix 
@@ -53,43 +42,34 @@ class MultivariateNLLLoss(nn.Module):
     @staticmethod
     def construct_covariance_matrix(cov_params):
         """
-        Construct a covariance matrix from the predicted lower triangular parameters.
-
+        Construct a covariance matrix using Cholesky decomposition from the predicted parameters.
+        
         Args:
         cov_params: tensor of shape [batch_size, 6], where 3 are the log variances, and 3 are covariances.
-
+        
         Returns:
-        cov_matrix: the batch covariance matrix of shape [batch_size, 3, 3].
+        cov_matrix: the batch covariance matrix of shape [batch_size, 3, 3], guaranteed to be positive semi-definite.
         """
         batch_size = cov_params.size(0)
 
         # Extract the predicted log variances and covariances
-        var_n2 = F.softplus(cov_params[:, 0])  # Ensure variance is positive with softplus
-        var_isat = F.softplus(cov_params[:, 1])
-        var_alpha = F.softplus(cov_params[:, 2])
+        var_n2 = F.softplus(cov_params[:, 0]) + 1e-6  # Ensure variance is positive
+        var_isat = F.softplus(cov_params[:, 1]) + 1e-6
+        var_alpha = F.softplus(cov_params[:, 2]) + 1e-6
         
-        cov_n2_isat = cov_params[:, 3]
-        cov_n2_alpha = cov_params[:, 4]
-        cov_isat_alpha = cov_params[:, 5]
+        # Cholesky decomposition requires constructing a lower triangular matrix L
+        L = torch.zeros(batch_size, 3, 3).to(cov_params.device)
 
-        # Construct the covariance matrix as lower triangular
-        cov_matrix = torch.zeros(batch_size, 3, 3).to(cov_params.device)
-        
-        # Fill diagonal (variances)
-        cov_matrix[:, 0, 0] = var_n2
-        cov_matrix[:, 1, 1] = var_isat
-        cov_matrix[:, 2, 2] = var_alpha
-        
-        
-        # Fill lower triangular (covariances)
-        cov_matrix[:, 1, 0] = cov_n2_isat
-        cov_matrix[:, 2, 0] = cov_n2_alpha
-        cov_matrix[:, 2, 1] = cov_isat_alpha
-        
-        # Copy to the upper triangular (since covariance matrices are symmetric)
-        cov_matrix[:, 0, 1] = cov_matrix[:, 1, 0]
-        cov_matrix[:, 0, 2] = cov_matrix[:, 2, 0]
-        cov_matrix[:, 1, 2] = cov_matrix[:, 2, 1]
+        # Fill the lower triangular matrix
+        L[:, 0, 0] = torch.sqrt(var_n2)  # sqrt of variance (Cholesky decomposition)
+        L[:, 1, 0] = cov_params[:, 3]  # Covariance between n2 and Isat
+        L[:, 1, 1] = torch.sqrt(var_isat)  # sqrt of variance
+        L[:, 2, 0] = cov_params[:, 4]  # Covariance between n2 and alpha
+        L[:, 2, 1] = cov_params[:, 5]  # Covariance between Isat and alpha
+        L[:, 2, 2] = torch.sqrt(var_alpha)  # sqrt of variance
+
+        # The covariance matrix is L * L^T (since it must be positive semi-definite)
+        cov_matrix = torch.matmul(L, L.transpose(1, 2))
         
         return cov_matrix
     
@@ -107,7 +87,7 @@ def prepare_training(
 
     training_field = dataset.field[:train_index,:,:,:]
     validation_field = dataset.field[train_index:validation_index,:,:,:]
-    test_field = dataset.field[:validation_index,:,:,:]
+    test_field = dataset.field[validation_index:,:,:,:]
 
     dataset.n2_min_standard = np.min(dataset.n2_labels)
     dataset.n2_max_standard = np.max(dataset.n2_labels)
@@ -156,10 +136,10 @@ def prepare_training(
 
     print("---- MODEL INITIALIZING ----")
     model = network()
-    weight_decay =  1e-4
+    weight_decay =  1e-5
     criterion = MultivariateNLLLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=dataset.learning_rate, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, epochs=50, steps_per_epoch=len(training_set))
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=7, T_mult=2)
     model = model.to(device)
     
     model_settings = model, optimizer, criterion, scheduler, device, new_path
@@ -191,10 +171,7 @@ def manage_training(
         start_epoch = 0
         loss_list = []
         val_loss_list = []
-
-        n2_ratio = dataset.n2_min_standard / dataset.n2_max_standard
-        isat_ratio = dataset.isat_max_standard / dataset.isat_min_standard
-        alpha_ratio = dataset.alpha_max_standard / dataset.alpha_min_standard
+        
         weights = torch.tensor([1, 1, 1], dtype=torch.float32, requires_grad=False, device=device)
         weights /= weights.max() 
     

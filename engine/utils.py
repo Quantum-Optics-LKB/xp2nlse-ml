@@ -12,8 +12,6 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from skimage.feature import hog
-
 
 class RandomPhaseShift(nn.Module):
     def __init__(self, shift_range=(-np.pi, np.pi), p=0.5):
@@ -38,17 +36,6 @@ class RandomPhaseShift(nn.Module):
             x = torch.fmod(x + np.pi, 2 * np.pi) - np.pi
             x = (x + np.pi)/(2*np.pi)
         return x
-
-def apply_hog(image, pixels_per_cell=(4, 4), cells_per_block=(2, 2), orientations=9, channels=False):
-    if channels:
-        for i in range(image.shape[0]):
-            hog_features, image[i, :, :] = hog(image[i, :, :], pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, 
-                                        orientations=orientations, visualize=True, block_norm='L2-Hys')
-
-    else:
-        hog_features, image = hog(image, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, 
-                                    orientations=orientations, visualize=True, block_norm='L2-Hys')
-    return image
 
 
 def sigmospace(array, a):
@@ -110,6 +97,18 @@ def augmentation_phase(rotation_degrees) -> torch.nn.Sequential:
         RandomPhaseShift(shift_range=(0, np.pi/2), p=.5),
         K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True),
     )
+
+
+def shuffle_dataset(
+        dataset: EngineDataset
+        ) -> None:
+    indices = np.arange(len(dataset.alpha_labels))
+    np.random.shuffle(indices)
+
+    dataset.field = dataset.field[indices, :, :, :]
+    dataset.n2_labels = dataset.n2_labels[indices]
+    dataset.isat_labels = dataset.isat_labels[indices]
+    dataset.alpha_labels = dataset.alpha_labels[indices]
 
 def experiment_noise(
         beam: np.ndarray, 
@@ -241,7 +240,7 @@ def plot_generated_set(
     - None
     """
 
-    field = dataset.field.copy().reshape(dataset.number_of_n2, dataset.number_of_isat, dataset.number_of_alpha, 2, dataset.field.shape[-2], dataset.field.shape[-2])
+    field = dataset.field.copy().reshape(dataset.number_of_alpha, dataset.number_of_n2, dataset.number_of_isat, 2, dataset.field.shape[-2], dataset.field.shape[-2])
     density_channels = field[:,  :, :, 0, :, :]
     phase_channels = field[:, :, :, 1, :, :]
     
@@ -265,7 +264,7 @@ def plot_generated_set(
         for n2_index, n2_value in enumerate(dataset.n2_values):
             for isat_index, isat_value in enumerate(dataset.isat_values):
                 ax = axes_density if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (axes_density[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_n2 > 1 else (axes_density[n2_index] if dataset.number_of_n2 > 1 else axes_density[isat_index]))
-                ax.imshow(density_channels[n2_index, isat_index, alpha_index, :, :], cmap='viridis')
+                ax.imshow(density_channels[alpha_index, n2_index, isat_index, :, :], cmap='viridis')
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
 
@@ -279,7 +278,7 @@ def plot_generated_set(
         for n2_index, n2_value in enumerate(dataset.n2_values):
             for isat_index, isat_value in enumerate(dataset.isat_values):
                 ax = axes_phase if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (axes_phase[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_isat > 1 else (axes_phase[n2_index] if dataset.number_of_n2 > 1 else axes_phase[isat_index]))
-                ax.imshow(phase_channels[n2_index, isat_index, alpha_index, :, :], cmap='twilight_shifted')
+                ax.imshow(phase_channels[alpha_index, n2_index, isat_index, :, :], cmap='twilight_shifted')
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
 

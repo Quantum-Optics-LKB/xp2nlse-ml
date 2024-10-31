@@ -24,14 +24,14 @@ def get_parameters(
     directory_path = f'{dataset.saving_path}/training_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}'
     standards_lines = open(f"{directory_path}/standardize.txt", "r").readlines()
     
-    dataset.mean_standard = np.asarray(standards_lines[0].split("\n")[0].split(";"), dtype=np.float64)[np.newaxis,:,np.newaxis, np.newaxis]
-    dataset.std_standard = np.asarray(standards_lines[1].split("\n")[0].split(";"), dtype=np.float64)[np.newaxis,:,np.newaxis, np.newaxis]
-    dataset.n2_max_standard = float(standards_lines[2])
-    dataset.n2_min_standard = float(standards_lines[3])
-    dataset.isat_max_standard = float(standards_lines[4])
-    dataset.isat_min_standard = float(standards_lines[5])
-    dataset.alpha_max_standard = float(standards_lines[6])
-    dataset.alpha_min_standard = float(standards_lines[7])
+    # dataset.mean_standard = np.asarray(standards_lines[0].split("\n")[0].split(";"), dtype=np.float64)[np.newaxis,:,np.newaxis, np.newaxis]
+    # dataset.std_standard = np.asarray(standards_lines[1].split("\n")[0].split(";"), dtype=np.float64)[np.newaxis,:,np.newaxis, np.newaxis]
+    dataset.n2_max_standard = float(standards_lines[0])
+    dataset.n2_min_standard = float(standards_lines[1])
+    dataset.isat_max_standard = float(standards_lines[2])
+    dataset.isat_min_standard = float(standards_lines[3])
+    dataset.alpha_max_standard = float(standards_lines[4])
+    dataset.alpha_min_standard = float(standards_lines[5])
     directory_path += f'/n2_net_w{dataset.resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}.pth'
     model.load_state_dict(torch.load(directory_path))
 
@@ -42,7 +42,6 @@ def get_parameters(
     
     density_experiment -= np.min(density_experiment, axis=(-1, -2), keepdims=True)
     density_experiment /= np.max(density_experiment, axis=(-1, -2), keepdims=True)
-    print( np.max(density_experiment, axis=(-1, -2), keepdims=True))
     
     experiment_field = np.zeros((2, 2, dataset.resolution_training, dataset.resolution_training), dtype=np.float64)
     experiment_field[0, 0, :, :] = density_experiment

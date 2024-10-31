@@ -51,7 +51,7 @@ def simulation(
         
         start_index = dataset.number_of_isat * dataset.number_of_n2 * alpha_index + dataset.number_of_isat * n2_index
         end_index = dataset.number_of_isat * dataset.number_of_n2 * (alpha_index) + dataset.number_of_isat * (n2_index + 1)
-
+          
         dataset.field[start_index:end_index,0,:,:] = density
         dataset.field[start_index:end_index,1,:,:] = phase
     
