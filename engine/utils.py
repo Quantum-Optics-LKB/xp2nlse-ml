@@ -13,29 +13,69 @@ from tqdm import tqdm
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+class CircularFilterAugmentation(nn.Module):
+    def __init__(self, radius_range: tuple, p: float = 0.5):
+        super(CircularFilterAugmentation, self).__init__()
+        self.radius_range = radius_range
+        self.p = p
+
+    def forward(self, images):
+        B, H, W = images.shape
+        device = images.device
+
+        # Randomly decide for each image if augmentation should be applied
+        apply_mask = torch.rand(B, device=device) < self.p
+
+        # Generate radii for each image where mask will be applied
+        random_radii = (torch.rand(B, device=device) * (self.radius_range[1] - self.radius_range[0]) + self.radius_range[0]) * min(H, W)
+        random_radii = random_radii.int()//2
+
+        # Prepare coordinate grids outside loop for efficiency
+        y, x = torch.meshgrid(torch.arange(H, device=device), torch.arange(W, device=device), indexing="ij")
+        center_y, center_x = H // 2, W // 2
+        distance_from_center = (x - center_x) ** 2 + (y - center_y) ** 2
+
+        # Apply circular masks for each image in batch
+        mask_batch = distance_from_center[None, :, :] <= random_radii[:, None, None] ** 2
+
+        # Apply mask only for images where apply_mask is True
+        images_augmented = torch.where(
+            apply_mask[:, None, None],  # Check which images need augmentation
+            images * mask_batch,  # Apply mask
+            images  # Leave image unmodified if not applying mask
+        )
+
+        return images_augmented
+
+
 class RandomPhaseShift(nn.Module):
     def __init__(self, shift_range=(-np.pi, np.pi), p=0.5):
-        """
-        Random Phase Shift Augmentation for Kornia.
-
-        Parameters:
-        - shift_range (tuple): Range from which to sample the phase shift value.
-        - p (float): Probability of applying the phase shift.
-        """
         super(RandomPhaseShift, self).__init__()
         self.shift_range = shift_range
         self.p = p
 
     def forward(self, x):
-        if torch.rand(1).item() < self.p:
-            x = x * 2 * np.pi - np.pi
-            phase_shift = torch.FloatTensor(1).uniform_(*self.shift_range).to(x.device)
-            # Add the phase shift to all images in the batch
-            x = x + phase_shift
-            # Wrap phase values to be in the range [-pi, pi]
-            x = torch.fmod(x + np.pi, 2 * np.pi) - np.pi
-            x = (x + np.pi)/(2*np.pi)
-        return x
+        B = x.shape[0]
+        device = x.device
+
+        # Apply phase shift with a probability
+        apply_shift = torch.rand(B, device=device) < self.p
+
+        # Scale images to range [-pi, pi]
+        x = x * 2 * np.pi - np.pi
+
+        # Generate random shifts for each image in the batch
+        phase_shifts = torch.empty(B, device=device).uniform_(*self.shift_range)
+        
+        # Apply unique phase shifts to each image
+        shifted_x = x + phase_shifts[:, None, None]
+
+        # Wrap phase values to be in the range [-pi, pi]
+        shifted_x = torch.fmod(shifted_x + np.pi, 2 * np.pi) - np.pi
+
+        # Rescale back to the range [0, 1] and apply conditionally
+        x = (shifted_x + np.pi) / (2 * np.pi)
+        return torch.where(apply_shift[:, None, None], x, x)
 
 
 def sigmospace(array, a):
@@ -95,9 +135,9 @@ def augmentation_phase(rotation_degrees) -> torch.nn.Sequential:
     """
     return torch.nn.Sequential(
         RandomPhaseShift(shift_range=(0, np.pi/2), p=.5),
-        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True),
+        CircularFilterAugmentation(radius_range=(.15, .75), p=.75),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.75, keepdim=True),
     )
-
 
 def shuffle_dataset(
         dataset: EngineDataset

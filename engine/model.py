@@ -10,20 +10,27 @@ class N2CondNet(nn.Module):
         
         # Embedding layers for Isat and alpha
         self.isat_embedding = nn.Sequential(
-            nn.Linear(1, 256),
-            nn.ReLU()
+            nn.Linear(1, 512),
+            nn.ReLU(),
+            nn.Dropout(p=0.1),
         )
         self.alpha_embedding = nn.Sequential(
-            nn.Linear(1, 256),
-            nn.ReLU()
+            nn.Linear(1, 512),
+            nn.ReLU(),
+            nn.Dropout(p=0.1),
         )
 
         # Main network for n2 prediction, conditioned on Isat and alpha embeddings
         self.n2_net = nn.Sequential(
-            nn.Linear(feature_dim + 2*256, 512),  # Combined dimension of image features and embeddings
+            nn.Linear(feature_dim + 2*512, 1024),  # Combined dimension of image features and embeddings
             nn.ReLU(),
+            nn.Dropout(p=0.1),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Dropout(p=0.1),
             nn.Linear(512, 512),
             nn.ReLU(),
+            nn.Dropout(p=0.1),
             nn.Linear(512, 1),
             nn.Sigmoid()
         )
@@ -69,15 +76,15 @@ class network(nn.Module):
             nn.Linear(768, 2048),
             nn.BatchNorm1d(2048),
             nn.ReLU(),
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.1),
             nn.Linear(2048, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.1),
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.1),
         )
         
         # Independent heads for Isat and alpha

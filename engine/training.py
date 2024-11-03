@@ -70,7 +70,7 @@ def network_training(
     validation_loader = DataLoader(validation_set, batch_size=dataset.batch_size, shuffle=True)
 
     best_val_loss = float('inf')
-    patience = 10
+    patience = 20
     trigger_times = 0
 
     rotation_degrees = np.random.uniform(10, 25, 1)[0] 
@@ -170,9 +170,10 @@ def network_training(
             trigger_times += 1
             if trigger_times >= patience:
                 print("Early stopping!")
-                print("Saving the best model so far!")
-                checkpoint = load_checkpoint(new_path)
-                model.load_state_dict(checkpoint['state_dict'])
+                print(f"Saving the best model so far with validation loss {best_val_loss}")
                 break
     
+    print(f"Saving the best model with validation loss {best_val_loss}")
+    checkpoint = load_checkpoint(new_path)
+    model.load_state_dict(checkpoint['state_dict'])
     return loss_list, val_loss_list, model

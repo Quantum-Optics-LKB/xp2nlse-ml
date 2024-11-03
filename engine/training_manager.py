@@ -53,9 +53,9 @@ class MultivariateNLLLoss(nn.Module):
         batch_size = cov_params.size(0)
 
         # Extract the predicted log variances and covariances
-        var_n2 = F.softplus(cov_params[:, 0]) + 1e-6  # Ensure variance is positive
-        var_isat = F.softplus(cov_params[:, 1]) + 1e-6
-        var_alpha = F.softplus(cov_params[:, 2]) + 1e-6
+        var_n2 = F.softplus(cov_params[:, 0]) + 1e-4  # Ensure variance is positive
+        var_isat = F.softplus(cov_params[:, 1]) + 1e-4
+        var_alpha = F.softplus(cov_params[:, 2]) + 1e-4
         
         # Cholesky decomposition requires constructing a lower triangular matrix L
         L = torch.zeros(batch_size, 3, 3).to(cov_params.device)
@@ -100,12 +100,15 @@ def prepare_training(
 
     dataset.n2_labels -= dataset.n2_min_standard
     dataset.n2_labels /= dataset.n2_max_standard - dataset.n2_min_standard
+    dataset.n2_labels = np.abs(dataset.n2_labels)
 
     dataset.isat_labels -= dataset.isat_min_standard
     dataset.isat_labels /= dataset.isat_max_standard - dataset.isat_min_standard
+    dataset.isat_labels = np.abs(dataset.isat_labels)
 
     dataset.alpha_labels -= dataset.alpha_min_standard
     dataset.alpha_labels /= dataset.alpha_max_standard - dataset.alpha_min_standard
+    dataset.alpha_labels = np.abs(dataset.alpha_labels)
 
     training_n2_labels = dataset.n2_labels[:train_index]
     training_isat_labels = dataset.isat_labels[:train_index]

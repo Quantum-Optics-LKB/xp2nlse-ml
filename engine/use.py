@@ -8,7 +8,7 @@ from scipy.ndimage import zoom
 from engine.model import network
 from engine.generate import simulation
 from engine.engine_dataset import EngineDataset
-from engine.utils import apply_hog, plot_results, set_seed
+from engine.utils import plot_results, set_seed
 set_seed(10)
 
 def get_parameters(
@@ -58,6 +58,11 @@ def get_parameters(
     print(f"n2 = {computed_n2} m^2/W")
     print(f"Isat = {computed_isat} W/m^2")
     print(f"alpha = {computed_alpha} m^-1")
+
+    experiment_field = np.load(exp_path)
+    experiment_field = zoom(experiment_field, (dataset.resolution_training/experiment_field.shape[-2], dataset.resolution_training/experiment_field.shape[-1]), order=5)
+    density_experiment = np.abs(experiment_field)
+    phase_experiment = np.angle(experiment_field)
 
     if plot_generate_compare:
         dataset.n2_values = np.array([computed_n2])
