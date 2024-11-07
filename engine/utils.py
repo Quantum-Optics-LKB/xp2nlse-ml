@@ -380,9 +380,9 @@ def plot_results(
         fig.colorbar(im, cax=cax)
 
     axs[0, 0].set_title("Density")
-    axs[1, 0].set_title("Normalized phase")
+    axs[1, 0].set_title("phase")
     axs[0, 1].set_title("Experimental density")
-    axs[1, 1].set_title("Experimental normalized phase")
+    axs[1, 1].set_title("Experimental phase")
     for ax in axs.flatten():
         ax.set_xlabel(r"x (mm)")
         ax.set_ylabel(r"y (mm)")
