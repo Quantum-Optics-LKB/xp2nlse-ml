@@ -27,7 +27,7 @@ This repository uses the ConvNext model dedicated to the estimation of parameter
 
 ### Source
 
-The code for back bone of this model is [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html). This adaptation is inspired by the paper ["A ConvNet for the 2020s by Zhuang Liu, et al., 2022](https://arxiv.org/abs/2201.03545).
+The code for back bone of this model is [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html). This adaptation is inspired by the paper ["A ConvNet for the 2020s" by Zhuang Liu, et al., 2022](https://arxiv.org/abs/2201.03545).
 
 ## Workflow
 
