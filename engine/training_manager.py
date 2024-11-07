@@ -142,7 +142,7 @@ def prepare_training(
     weight_decay =  1e-5
     criterion = MultivariateNLLLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=dataset.learning_rate, weight_decay=weight_decay)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=7, T_mult=2)
+    scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=5, )
     model = model.to(device)
     
     model_settings = model, optimizer, criterion, scheduler, device, new_path
@@ -169,17 +169,21 @@ def manage_training(
         start_epoch = checkpoint['epoch']
         loss_list = checkpoint['loss_list']
         val_loss_list = checkpoint['val_loss_list']
-        weights = checkpoint['weights']
+        loss_threshold = checkpoint["loss_threshold"] 
+        new_learning_rate = checkpoint["learning_rate"]
+        dataset.accumulator = checkpoint["accumulator"]
+
+        weight_decay =  1e-5
+        optimizer = torch.optim.AdamW(model.parameters(), lr=new_learning_rate, weight_decay=weight_decay)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5)
     except FileNotFoundError:
         start_epoch = 0
         loss_list = []
         val_loss_list = []
-        
-        weights = torch.tensor([1, 1, 1], dtype=torch.float32, requires_grad=False, device=device)
-        weights /= weights.max() 
+        loss_threshold = 0.05
     
     print("---- MODEL TRAINING ----")
-    model_settings = model, optimizer, criterion, scheduler, device, new_path, start_epoch, weights
+    model_settings = model, optimizer, criterion, scheduler, device, new_path, start_epoch, loss_threshold
     loss_list, val_loss_list, model = network_training(model_settings, dataset, training_set, validation_set, loss_list, val_loss_list, f)
     
     print("---- MODEL SAVING ----")

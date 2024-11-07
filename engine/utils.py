@@ -61,21 +61,23 @@ class RandomPhaseShift(nn.Module):
         # Apply phase shift with a probability
         apply_shift = torch.rand(B, device=device) < self.p
 
-        # Scale images to range [-pi, pi]
-        x = x * 2 * np.pi - np.pi
+        # Scale images from range [0, 1] to [-pi, pi] consistently
+        x = x * (2 * np.pi) - np.pi
 
         # Generate random shifts for each image in the batch
         phase_shifts = torch.empty(B, device=device).uniform_(*self.shift_range)
-        
-        # Apply unique phase shifts to each image
-        shifted_x = x + phase_shifts[:, None, None]
+
+        # Apply unique phase shifts to each image, ensuring consistent broadcasting
+        shifted_x = x + phase_shifts.view(B, 1, 1)
 
         # Wrap phase values to be in the range [-pi, pi]
-        shifted_x = torch.fmod(shifted_x + np.pi, 2 * np.pi) - np.pi
+        shifted_x = torch.remainder(shifted_x + np.pi, 2 * np.pi) - np.pi
 
-        # Rescale back to the range [0, 1] and apply conditionally
+        # Rescale back to [0, 1] and apply only where specified by apply_shift
         x = (shifted_x + np.pi) / (2 * np.pi)
-        return torch.where(apply_shift[:, None, None], x, x)
+        
+        # Apply the shift conditionally based on `apply_shift`
+        return torch.where(apply_shift.view(B, 1, 1), x, x)
 
 
 def sigmospace(array, a):
@@ -116,17 +118,20 @@ def standardize_data(
     data /= np.std(data, axis=(0, -2, -1), keepdims=True)
     return data
 
-def augmentation_density(rotation_degrees) -> torch.nn.Sequential:
+def augmentation_density(rotation_degrees, shear) -> torch.nn.Sequential:
     """
     Create a sequential transformation pipeline for elastic and salt-pepper noise.
 
     Returns:
     - torch.nn.Sequential: Sequential transformation pipeline.
     """    
+    alpha = (np.random.uniform(1, 2, 1)[0], np.random.uniform(1, 2, 1)[0])
     return torch.nn.Sequential(
-        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.75, keepdim=True),
+        K.RandomElasticTransform(kernel_size=(63, 63), sigma=(32.0, 32.0), alpha=alpha, p=0.25),
+        K.RandomAffine(degrees=0, shear=shear, p=0.25, keepdim=True, padding_mode="border"),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=0.5, keepdim=True, padding_mode="border"),
     )
-def augmentation_phase(rotation_degrees) -> torch.nn.Sequential:
+def augmentation_phase(rotation_degrees, shear) -> torch.nn.Sequential:
     """
     Create a sequential transformation pipeline for elastic and salt-pepper noise.
 
@@ -134,9 +139,10 @@ def augmentation_phase(rotation_degrees) -> torch.nn.Sequential:
     - torch.nn.Sequential: Sequential transformation pipeline.
     """
     return torch.nn.Sequential(
-        RandomPhaseShift(shift_range=(0, np.pi/2), p=.5),
-        CircularFilterAugmentation(radius_range=(.15, .75), p=.75),
-        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.75, keepdim=True),
+        RandomPhaseShift(shift_range=(np.pi/6, np.pi/2), p=0.75),
+        CircularFilterAugmentation(radius_range=(.5, .75), p=.25),
+        K.RandomAffine(degrees=0, shear=shear, p=.25, keepdim=True, padding_mode="border"),
+        K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=.5, keepdim=True, padding_mode="border"),
     )
 
 def shuffle_dataset(

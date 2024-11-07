@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+from torchvision.models import ConvNeXt_Tiny_Weights
 
 # Define the N2CondNet class for conditional prediction of n2
 class N2CondNet(nn.Module):
@@ -12,25 +13,28 @@ class N2CondNet(nn.Module):
         self.isat_embedding = nn.Sequential(
             nn.Linear(1, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
         )
         self.alpha_embedding = nn.Sequential(
             nn.Linear(1, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
         )
 
         # Main network for n2 prediction, conditioned on Isat and alpha embeddings
         self.n2_net = nn.Sequential(
             nn.Linear(feature_dim + 2*512, 1024),  # Combined dimension of image features and embeddings
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
+            nn.Linear(1024, 1024),
+            nn.ReLU(),
+            nn.Dropout(p=0.3),
             nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
             nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
             nn.Linear(512, 1),
             nn.Sigmoid()
         )
@@ -54,7 +58,7 @@ class SubModel(nn.Module):
         super(SubModel, self).__init__()
         
         # Load pre-trained ConvNeXt model and modify it for two-channel input
-        self.net = models.convnext_tiny(pretrained=True)
+        self.net = models.convnext_tiny(weights=ConvNeXt_Tiny_Weights.DEFAULT)
         self.net.features[0][0] = nn.Conv2d(2, self.net.features[0][0].out_channels, kernel_size=4, stride=4)
         self.net.classifier = nn.Identity()  # Remove the final classification layer
         
@@ -76,15 +80,15 @@ class network(nn.Module):
             nn.Linear(768, 2048),
             nn.BatchNorm1d(2048),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
             nn.Linear(2048, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=0.3),
         )
         
         # Independent heads for Isat and alpha
@@ -105,7 +109,9 @@ class network(nn.Module):
 
     def forward(self, input):
         # Feature extraction from input image
-        features = self.model(input)[:, :, 0, 0]
+
+        features = self.model(input)
+        features = features[:, :, 0, 0]
         features = self.shared_layers(features)
         
         # Predict Isat and alpha independently

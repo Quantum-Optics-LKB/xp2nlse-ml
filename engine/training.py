@@ -52,7 +52,8 @@ def load_checkpoint(
     Description:
         This function loads a previously saved checkpoint file ('checkpoint.pth.tar') from the specified directory path. It returns a dictionary containing the epoch, model state_dict, optimizer state_dict, scheduler state_dict, and lists of training and validation losses stored in the checkpoint.
     """
-    return torch.load(f"{new_path}/checkpoint.pth.tar")
+    return torch.load(f"{new_path}/checkpoint.pth.tar", weights_only=True)
+
 
 def network_training(
         model_settings: tuple,
@@ -64,18 +65,22 @@ def network_training(
         file: TextIOWrapper,
         ) -> tuple:
     
-    model, optimizer, criterion, scheduler, device, new_path, start_epoch, weights = model_settings
+    model, optimizer, criterion, scheduler, device, new_path, start_epoch, loss_threshold = model_settings
     
     training_loader = DataLoader(training_set, batch_size=dataset.batch_size, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=dataset.batch_size, shuffle=True)
+
+    batch_reduction_factor = 4 
 
     best_val_loss = float('inf')
     patience = 20
     trigger_times = 0
 
+    base_shear = np.random.uniform(3, 7, 1)[0]
+    shear = (base_shear, np.random.uniform(base_shear, 7, 1)[0])
     rotation_degrees = np.random.uniform(10, 25, 1)[0] 
-    augment_density = augmentation_density(rotation_degrees)
-    augment_phase = augmentation_phase(rotation_degrees)
+    augment_density = augmentation_density(rotation_degrees, shear)
+    augment_phase = augmentation_phase(rotation_degrees, shear)
 
     progress_bar = tqdm(range(start_epoch, dataset.num_epochs),desc=f"Training", total=dataset.num_epochs - start_epoch, unit="Epoch")
     for epoch in progress_bar:  
@@ -132,7 +137,6 @@ def network_training(
 
                 mae_values += torch.abs(outputs - labels).sum(axis=0)
 
-
         avg_val_loss = val_running_loss / len(validation_loader)
         mae_values /= len(validation_loader.dataset)
 
@@ -145,12 +149,29 @@ def network_training(
         r2_alpha = r2_score(all_labels_tensor[:,2].numpy(), all_preds_tensor[:,2].numpy())
         average_r2 = (r2_n2 + r2_isat + r2_alpha) / 3
 
-        scheduler.step(epoch)
+        scheduler.step(avg_val_loss)
 
         current_lr = scheduler.get_last_lr()
         file.write(f'Epoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}\n ')
         print(f'\nEpoch {epoch}, Train Loss: {avg_run_loss}, Validation Loss: {avg_val_loss}, Current LR: {current_lr[0]}, R2_n2: {r2_n2}, R2_Isat: {r2_isat}, R2_alpha: {r2_alpha}, Average R2: {average_r2:.4f}, MAE: {mae_values.tolist()}', flush=True)
 
+        if mae_values.tolist()[0] < loss_threshold:
+            if dataset.batch_size == dataset.batch_size*dataset.accumulator:
+                file.write(f"Batch size cannot be further reduced\n")
+                print(f"Batch size cannot be further reduced", flush=True)
+
+            else:
+                dataset.accumulator = max(dataset.accumulator // batch_reduction_factor, 1)
+                
+                weight_decay =  1e-5
+                optimizer = torch.optim.AdamW(model.parameters(), lr=current_lr[0] / batch_reduction_factor, weight_decay=weight_decay)
+                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5)
+                
+                loss_threshold *= 0.9
+                
+                file.write(f"Batch size reduced to {int(dataset.batch_size*dataset.accumulator)}")
+                print(f"Batch size reduced to {int(dataset.batch_size*dataset.accumulator)}", flush=True)
+        
         loss_list.append(avg_run_loss)
         val_loss_list.append(avg_val_loss)
         
@@ -164,13 +185,15 @@ def network_training(
             'scheduler': scheduler.state_dict(),
             'loss_list': loss_list,
             'val_loss_list': val_loss_list,
-            'weights': weights
+            "loss_threshold": loss_threshold,
+            "learning_rate": current_lr,
+            "accumulator": dataset.accumulator,
+
         }, new_path)
         else:
             trigger_times += 1
             if trigger_times >= patience:
                 print("Early stopping!")
-                print(f"Saving the best model so far with validation loss {best_val_loss}")
                 break
     
     print(f"Saving the best model with validation loss {best_val_loss}")
