@@ -4,12 +4,24 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.models as models
 from torchvision.models import ConvNeXt_Tiny_Weights
 
 # Define the N2CondNet class for conditional prediction of n2
 class N2CondNet(nn.Module):
+    """
+    A conditional network for predicting n2, based on features, Isat, and alpha.
+
+    Parameters:
+    -----------
+    feature_dim : int, optional
+        Dimensionality of the input feature vector, default is 512.
+
+    Methods:
+    --------
+    forward(features, isat, alpha):
+        Predicts n2 using input features and embedded representations of Isat and alpha.
+    """
     def __init__(self, feature_dim=512):
         super(N2CondNet, self).__init__()
         
@@ -58,6 +70,18 @@ class N2CondNet(nn.Module):
 
 # Define the feature extraction model
 class SubModel(nn.Module):
+    """
+    A feature extraction model based on a modified ConvNeXt-Tiny architecture.
+
+    This model:
+    - Modifies ConvNeXt to accept two-channel inputs.
+    - Removes the classification layer to output intermediate features.
+
+    Methods:
+    --------
+    forward(x):
+        Extracts features from the input image.
+    """
     def __init__(self):
         super(SubModel, self).__init__()
         
@@ -73,6 +97,20 @@ class SubModel(nn.Module):
 
 # Define the full model with shared feature extraction and heads for n2, Isat, and alpha
 class network(nn.Module):
+    """
+    The full neural network for predicting n2, Isat, and alpha, with covariance matrix estimation.
+
+    This model:
+    - Uses a shared feature extractor (`SubModel`) with fully connected layers.
+    - Predicts Isat and alpha independently using separate heads.
+    - Predicts n2 using a conditional network (`N2CondNet`) conditioned on Isat and alpha.
+    - Estimates the covariance matrix between predictions (n2, Isat, alpha).
+
+    Methods:
+    --------
+    forward(input):
+        Performs the forward pass to predict mean values (n2, Isat, alpha) and covariance elements.
+    """
     def __init__(self):
         super(network, self).__init__()
         

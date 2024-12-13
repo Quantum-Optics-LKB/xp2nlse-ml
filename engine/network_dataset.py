@@ -9,6 +9,28 @@ from torch.utils.data import Dataset
 set_seed(10)
 
 class NetworkDataset(Dataset):
+    """
+    A custom dataset class for managing field data and associated labels 
+    for training and evaluation of neural networks.
+
+    Parameters:
+    -----------
+    set : np.ndarray
+        The dataset containing field data, shape [num_samples, channels, height, width].
+    n2_labels : np.ndarray
+        Labels for n2, shape [num_samples].
+    isat_labels : np.ndarray
+        Labels for Isat, shape [num_samples].
+    alpha_labels : np.ndarray
+        Labels for alpha, shape [num_samples].
+
+    Methods:
+    --------
+    __len__():
+        Returns the total number of samples in the dataset.
+    __getitem__(idx):
+        Retrieves a sample and its corresponding labels by index.
+    """
     def __init__(
             self, 
             set: np.ndarray, 
@@ -16,7 +38,7 @@ class NetworkDataset(Dataset):
             isat_labels: np.ndarray,
             alpha_labels: np.ndarray,
             ) -> None:
-
+        
         self.n2_labels = torch.from_numpy(n2_labels).to(torch.float32).unsqueeze(1)
         self.isat_labels = torch.from_numpy(isat_labels).to(torch.float32).unsqueeze(1)
         self.alpha_labels = torch.from_numpy(alpha_labels).to(torch.float32).unsqueeze(1)
@@ -26,10 +48,12 @@ class NetworkDataset(Dataset):
             self
             ) -> int:
         """
-        Returns the total number of images in the dataset.
+        Returns the total number of samples in the dataset.
 
         Returns:
-            int: The number of images.
+        --------
+        int
+            The number of samples in the dataset.
         """
         return len(self.n2_labels)
         
@@ -39,14 +63,21 @@ class NetworkDataset(Dataset):
             idx: int
             ) -> tuple:
         """
-        Retrieves the image data and associated labels for the given index.
-        
-        Args:
-            idx (int): The index of the data item to retrieve.
+        Retrieves a sample and its associated labels by index.
+
+        Parameters:
+        -----------
+        idx : int
+            The index of the sample to retrieve.
 
         Returns:
-            tuple: A tuple containing the image data (torch.Tensor) and the associated 
-                   n2 (torch.Tensor), isat (torch.Tensor), and alpha (torch.Tensor) labels.
+        --------
+        tuple
+            A tuple containing:
+            - set_item (torch.Tensor): The field data for the sample, shape [channels, height, width].
+            - n2_label (torch.Tensor): The n2 label for the sample, shape [1].
+            - isat_label (torch.Tensor): The Isat label for the sample, shape [1].
+            - alpha_label (torch.Tensor): The alpha label for the sample, shape [1].
         """
         
         set_item = self.set[idx,:,:,:]

@@ -4,16 +4,31 @@
 
 import os
 import torch
-import torch.nn as nn
 import random
 import numpy as np
+import torch.nn as nn
+from tqdm import tqdm
 import kornia.augmentation as K
 from matplotlib import pyplot as plt
-from tqdm import tqdm
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class CircularFilterAugmentation(nn.Module):
+    """
+    Applies a circular mask with random radii to images with a probability `p`.
+
+    Parameters:
+    -----------
+    radius_range : tuple
+        Minimum and maximum radii as a fraction of the image size.
+    p : float, optional
+        Probability of applying the augmentation, default is 0.5.
+
+    Methods:
+    --------
+    forward(images):
+        Applies the circular filter augmentation to a batch of images.
+    """
     def __init__(self, radius_range: tuple, p: float = 0.5):
         super(CircularFilterAugmentation, self).__init__()
         self.radius_range = radius_range
@@ -49,6 +64,21 @@ class CircularFilterAugmentation(nn.Module):
 
 
 class RandomPhaseShift(nn.Module):
+    """
+    Randomly shifts the phase of an image within a specified range.
+
+    Parameters:
+    -----------
+    shift_range : tuple, optional
+        The range of phase shifts to apply, default is (-pi, pi).
+    p : float, optional
+        Probability of applying the phase shift, default is 0.5.
+
+    Methods:
+    --------
+    forward(x):
+        Applies the phase shift to a batch of images.
+    """
     def __init__(self, shift_range=(-np.pi, np.pi), p=0.5):
         super(RandomPhaseShift, self).__init__()
         self.shift_range = shift_range
@@ -81,6 +111,21 @@ class RandomPhaseShift(nn.Module):
 
 
 def sigmospace(array, a):
+    """
+    Apply a sigmoidal transformation to enhance the dynamic range of an array.
+
+    Parameters:
+    -----------
+    array : np.ndarray
+        Input array to transform.
+    a : float
+        Exponent controlling the steepness of the sigmoid.
+
+    Returns:
+    --------
+    np.ndarray
+        The transformed array with enhanced dynamic range.
+    """
     normalized_array = (array - np.min(array))/(np.max(array) - np.min(array))
     normalized_array = normalized_array**(a) / (normalized_array**(a) + np.abs(1-normalized_array)**a)
     
@@ -90,53 +135,60 @@ def scientific_formatter(
         x: float
         ) -> str:
     """
-    Format a number in scientific notation for LaTeX display.
+    Format a number in scientific notation for LaTeX-compatible display.
 
     Parameters:
-    - x (float): Number to be formatted.
+    -----------
+    x : float
+        The number to format.
 
     Returns:
-    - str: Formatted string in LaTeX format with scientific notation.
+    --------
+    str
+        The formatted number in LaTeX-compatible scientific notation.
     """
     a, b = "{:.2e}".format(x).split("e")
     b = int(b)
     return r"${}\times 10^{{{}}}$".format(a, b)
 
-def standardize_data(
-        data: np.ndarray,
-        ) -> np.ndarray: 
-    """
-    Normalize data to the range [0, 1] across the last two dimensions.
-
-    Parameters:
-    - data (np.ndarray): Input data array.
-
-    Returns:
-    - np.ndarray: Normalized data array.
-    """
-    data -= np.mean(data,axis=(0, -2, -1), keepdims=True) 
-    data /= np.std(data, axis=(0, -2, -1), keepdims=True)
-    return data
-
 def augmentation_density(rotation_degrees, shear) -> torch.nn.Sequential:
     """
-    Create a sequential transformation pipeline for elastic and salt-pepper noise.
+    Creates a sequential transformation pipeline for elastic and affine transformations.
+
+    Parameters:
+    -----------
+    rotation_degrees : float
+        Maximum rotation angle for the affine transformation.
+    shear : float
+        Shear factor for the affine transformation.
 
     Returns:
-    - torch.nn.Sequential: Sequential transformation pipeline.
-    """    
+    --------
+    torch.nn.Sequential
+        A sequence of random elastic and affine transformations.
+    """
     alpha = (np.random.uniform(1, 2, 1)[0], np.random.uniform(1, 2, 1)[0])
     return torch.nn.Sequential(
         K.RandomElasticTransform(kernel_size=(63, 63), sigma=(32.0, 32.0), alpha=alpha, p=0.25),
         K.RandomAffine(degrees=0, shear=shear, p=0.25, keepdim=True, padding_mode="border"),
         K.RandomAffine(degrees=rotation_degrees, translate=(.15, .15), p=0.5, keepdim=True, padding_mode="border"),
     )
+
 def augmentation_phase(rotation_degrees, shear) -> torch.nn.Sequential:
     """
-    Create a sequential transformation pipeline for elastic and salt-pepper noise.
+    Creates a sequential transformation pipeline with random phase shifts and affine transformations.
+
+    Parameters:
+    -----------
+    rotation_degrees : float
+        Maximum rotation angle for the affine transformation.
+    shear : float
+        Shear factor for the affine transformation.
 
     Returns:
-    - torch.nn.Sequential: Sequential transformation pipeline.
+    --------
+    torch.nn.Sequential
+        A sequence of phase shifts, circular masks, and affine transformations.
     """
     return torch.nn.Sequential(
         RandomPhaseShift(shift_range=(np.pi/6, np.pi/2), p=0.75),
@@ -148,13 +200,31 @@ def augmentation_phase(rotation_degrees, shear) -> torch.nn.Sequential:
 def shuffle_dataset(
         dataset: EngineDataset
         ) -> None:
+    """
+    Randomizes the order of the dataset fields and corresponding labels.
+
+    Parameters:
+    -----------
+    dataset : EngineDataset
+        The dataset object containing fields and labels to be shuffled.
+
+    Returns:
+    --------
+    None
+        This function modifies the dataset in place by shuffling its fields and labels.
+    """
+
+    # Generate an array of indices equal to the length of alpha labels
     indices = np.arange(len(dataset.alpha_labels))
+
+    # Shuffle these indices to create a random order
     np.random.shuffle(indices)
 
-    dataset.field = dataset.field[indices, :, :, :]
-    dataset.n2_labels = dataset.n2_labels[indices]
-    dataset.isat_labels = dataset.isat_labels[indices]
-    dataset.alpha_labels = dataset.alpha_labels[indices]
+    # Reorder the dataset's fields and labels using the shuffled indices
+    dataset.field = dataset.field[indices, :, :, :] # Shuffle the field data
+    dataset.n2_labels = dataset.n2_labels[indices] # Shuffle n2 labels
+    dataset.isat_labels = dataset.isat_labels[indices] # Shuffle isat labels
+    dataset.alpha_labels = dataset.alpha_labels[indices] # Shuffle alpha labels
 
 def experiment_noise(
         beam: np.ndarray, 
@@ -186,13 +256,17 @@ def set_seed(
         seed: int
         ) -> None:
     """
-    Set random seed for reproducibility in NumPy, Torch, and CUDA.
+    Set a global random seed for reproducibility in random number generation.
 
     Parameters:
-    - seed (int): Seed value.
+    -----------
+    seed : int
+        The random seed value to be used.
 
     Returns:
-    - None
+    --------
+    None
+        This function does not return any value. It configures the random seed for all relevant libraries.
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -211,19 +285,24 @@ def data_split(
         ) -> tuple:
     
     """
-    Split data and labels into training, validation, and test sets.
+    Splits data indices into training, validation, and test subsets.
 
     Parameters:
-    - E (np.ndarray): Input data array.
-    - n2_labels (np.ndarray): Labels for n2 parameter.
-    - isat_labels (np.ndarray): Labels for isat parameter.
-    - alpha_labels (np.ndarray): Labels for alpha parameter.
-    - train_ratio (float): Ratio of training data (default: 0.8).
-    - validation_ratio (float): Ratio of validation data (default: 0.1).
-    - test_ratio (float): Ratio of test data (default: 0.1).
+    -----------
+    indices : np.ndarray
+        Array of dataset indices to split.
+    train_ratio : float, optional
+        Proportion of data to allocate to the training set. Default is 0.8.
+    validation_ratio : float, optional
+        Proportion of data to allocate to the validation set. Default is 0.1.
+    test_ratio : float, optional
+        Proportion of data to allocate to the test set. Default is 0.1.
 
     Returns:
-    - tuple: Tuple of training, validation, and test data and labels.
+    --------
+    tuple
+        - train_index (int): Index marking the end of the training subset.
+        - validation_index (int): Index marking the end of the validation subset (start of the test subset).
     """
     assert train_ratio + validation_ratio + test_ratio == 1
     
@@ -242,19 +321,29 @@ def plot_loss(
     number_of_alpha: int,
     ) -> None:
     """
-    Plot training and validation loss curves and save the figure.
+    Plots and saves training and validation loss curves.
 
     Parameters:
-    - y_train (np.ndarray): Training loss data.
-    - y_val (np.ndarray): Validation loss data.
-    - path (str): Path to save the plot.
-    - resolution (int): Resolution of the plot.
-    - number_of_n2 (int): Number of n2 parameters.
-    - number_of_isat (int): Number of isat parameters.
-    - number_of_alpha (int): Number of alpha parameters.
+    -----------
+    y_train : np.ndarray
+        Array of training loss values over epochs.
+    y_val : np.ndarray
+        Array of validation loss values over epochs.
+    path : str
+        Directory path to save the loss plot.
+    resolution : int
+        Image resolution for the plot.
+    number_of_n2 : int
+        Number of n2 parameters in the dataset.
+    number_of_isat : int
+        Number of Isat parameters in the dataset.
+    number_of_alpha : int
+        Number of alpha parameters in the dataset.
 
     Returns:
-    - None
+    --------
+    None
+        Saves the plot as a PNG file in the specified path.
     """
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -275,21 +364,30 @@ def plot_generated_set(
         dataset: EngineDataset
         ) -> None:
     """
-    Plot and save generated sets of density, phase, and unwrapped phase channels.
+    Visualizes and saves density and phase channel plots for a dataset.
 
     Parameters:
-    - data (np.ndarray): Generated data array.
-    - saving_path (str): Path to save the plots.
-    - nlse_settings (tuple): Settings tuple containing n2, input_power, alpha, isat, etc.
+    -----------
+    dataset : EngineDataset
+        The dataset object containing field data and simulation parameters.
 
     Returns:
-    - None
+    --------
+    None
+        This function saves the generated plots to the dataset's saving path.
     """
 
-    field = dataset.field.copy().reshape(dataset.number_of_alpha, dataset.number_of_n2, dataset.number_of_isat, 2, dataset.field.shape[-2], dataset.field.shape[-2])
-    density_channels = field[:,  :, :, 0, :, :]
-    phase_channels = field[:, :, :, 1, :, :]
+    # Reshape the dataset field to separate alpha, n2, isat, and channel dimensions
+    field = dataset.field.copy().reshape(dataset.number_of_alpha,
+                                          dataset.number_of_n2, 
+                                          dataset.number_of_isat, 
+                                          2, 
+                                          dataset.field.shape[-2], 
+                                          dataset.field.shape[-2])
+    density_channels = field[:,  :, :, 0, :, :] # Density channel
+    phase_channels = field[:, :, :, 1, :, :] # Phase channel
     
+    # Set up unit and parameter labels for the plots
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"
     isat_str = r"$I_{sat}$"
@@ -301,15 +399,33 @@ def plot_generated_set(
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
 
-    progress_bar = tqdm(enumerate(dataset.alpha_values),desc=f"Plotting", total=len(dataset.alpha_values), unit="alpha")
+    # Loop over alpha values to generate plots for each alpha level
+    progress_bar = tqdm(enumerate(dataset.alpha_values),
+                        desc=f"Plotting", 
+                        total=len(dataset.alpha_values), 
+                        unit="alpha")
+    
     for alpha_index, alpha_value in progress_bar:
         
-        fig_density, axes_density = plt.subplots(dataset.number_of_n2, dataset.number_of_isat, figsize=(25, 25), layout="tight")
-        fig_density.suptitle(f'Density Channels - {puiss_str} = {dataset.input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
+        # Plot density channels
+        fig_density, axes_density = plt.subplots(dataset.number_of_n2, 
+                                                 dataset.number_of_isat, 
+                                                 figsize=(25, 25), 
+                                                 layout="tight")
+        fig_density.suptitle(
+            f'Density Channels - {puiss_str} = {dataset.input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}'
+            )
 
+        # Loop over n2 and isat values for density plots
         for n2_index, n2_value in enumerate(dataset.n2_values):
             for isat_index, isat_value in enumerate(dataset.isat_values):
-                ax = axes_density if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (axes_density[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_n2 > 1 else (axes_density[n2_index] if dataset.number_of_n2 > 1 else axes_density[isat_index]))
+
+                # Handle subplots based on the number of n2 and isat values
+                ax = axes_density if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (
+                    axes_density[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_n2 > 1 else (
+                        axes_density[n2_index] if dataset.number_of_n2 > 1 else axes_density[isat_index]
+                        )
+                    )
                 ax.imshow(density_channels[alpha_index, n2_index, isat_index, :, :], cmap='viridis')
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
@@ -317,13 +433,21 @@ def plot_generated_set(
         plt.tight_layout()
         plt.savefig(f'{dataset.saving_path}/density_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_{alpha_value}_power{dataset.input_power:.2f}.png')
         plt.close(fig_density) 
-
+        
+        # Plot phase channels
         fig_phase, axes_phase = plt.subplots(dataset.number_of_n2, dataset.number_of_isat, figsize=(25, 25), layout="tight")
-        fig_phase.suptitle(f'Phase Channels - {puiss_str} = {dataset.input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}')
+        fig_phase.suptitle(
+            f'Phase Channels - {puiss_str} = {dataset.input_power:.2e} {puiss_u} - {alpha_str} = {alpha_value:.2e} {alpha_u}'
+            )
 
+        # Loop over n2 and isat values for phase plots
         for n2_index, n2_value in enumerate(dataset.n2_values):
             for isat_index, isat_value in enumerate(dataset.isat_values):
-                ax = axes_phase if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (axes_phase[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_isat > 1 else (axes_phase[n2_index] if dataset.number_of_n2 > 1 else axes_phase[isat_index]))
+                ax = axes_phase if dataset.number_of_n2 == 1 and dataset.number_of_isat == 1 else (
+                    axes_phase[n2_index, isat_index] if dataset.number_of_n2 > 1 and dataset.number_of_isat > 1 else (
+                        axes_phase[n2_index] if dataset.number_of_n2 > 1 else axes_phase[isat_index]
+                        )
+                    )
                 ax.imshow(phase_channels[alpha_index, n2_index, isat_index, :, :], cmap='twilight_shifted')
                 ax.set_title(f'{n2_str} = {n2_value:.2e} {n2_u},\n{isat_str} = {isat_value:.2e} {isat_u}')
                 ax.axis('off')
@@ -394,24 +518,24 @@ def plot_sandbox(
         density_experiment: np.ndarray, 
         phase_experiment: np.ndarray):
     """
-    Plot and save sandbox experimental results of density, phase, and unwrapped phase.
+    Plot and save comparisons of simulated and experimental density and phase data.
 
     Parameters:
-    - E (np.ndarray): Experimental data.
-    - density_experiment (np.ndarray): Experimental density data.
-    - phase_experiment (np.ndarray): Experimental phase data.
-    - uphase_experiment (np.ndarray): Experimental unwrapped phase data.
-    - window_out (float): Window size.
-    - n2 (float): n2 parameter.
-    - isat (float): isat parameter.
-    - alpha (float): alpha parameter.
-    - input_power (float): Input power parameter.
-    - saving_path (str): Path to save the plots.
+    -----------
+    dataset : EngineDataset
+        The dataset containing simulated field data and associated metadata.
+    density_experiment : np.ndarray
+        The experimental density data, shape [resolution_training, resolution_training].
+    phase_experiment : np.ndarray
+        The experimental phase data, shape [resolution_training, resolution_training].
 
     Returns:
-    - None
+    --------
+    None
+        Saves the generated plot as "sandbox.png" in the dataset's saving path.
     """
-    extent = [-dataset.window_training/2*1e3, dataset.window_training/2*1e3, -dataset.window_training/2*1e3, dataset.window_training/2*1e3]
+    extent = [-dataset.window_training/2*1e3, dataset.window_training/2*1e3, 
+              -dataset.window_training/2*1e3, dataset.window_training/2*1e3]
     
     n2_str = r"$n_2$"
     n2_u = r"$m^2$/$W$"
@@ -422,6 +546,7 @@ def plot_sandbox(
     alpha_str = r"$\alpha$"
     alpha_u = r"$m^{-1}$"
     
+    # Generate title with formatted physical parameters
     title = f"{n2_str} = {scientific_formatter(dataset.n2_values[0])}{n2_u},"
     title += f" {isat_str} = {scientific_formatter(dataset.isat_values[0])}{isat_u},"
     title += f" {puiss_str} = {scientific_formatter(dataset.input_power)}{puiss_u},"
@@ -455,6 +580,23 @@ def plot_sandbox(
     plt.savefig(f"{dataset.saving_path}/sandbox.png")
 
 def plot_prediction(true_values, predictions, path):
+    """
+    Plot and save scatter plots of true vs. predicted values for n2, Isat, and alpha.
+
+    Parameters:
+    -----------
+    true_values : np.ndarray
+        Array of true parameter values, shape [num_samples, 3].
+    predictions : np.ndarray
+        Array of predicted parameter values, shape [num_samples, 3].
+    path : str
+        Path to save the generated plots.
+
+    Returns:
+    --------
+    None
+        Saves scatter plots for each parameter as PNG files in the specified path.
+    """
     
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 10
