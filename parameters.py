@@ -16,8 +16,8 @@ output_camera_resolution = 2000
 output_pixel_size = 3.45e-6 #m
 window_training = output_pixel_size * output_camera_resolution #m
 length=20e-2 #m
-generate = False
-create_visual = False
+generate = True
+create_visual = True
 
 ###Parameter spaces:
 number_of_n2 = 50
@@ -31,17 +31,16 @@ alpha_values = np.linspace(21, 30, number_of_alpha)
 ###Laser Parameters:
 input_power = 2.1 #W
 waist = 1.7e-3 #m
-non_locality = 0 #m
 
 ###Training Parameters:
-training = False
+training = True
 learning_rate=1e-4
 batch_size=128
 accumulator=32
 num_epochs=200
 
 ###Find your parameters (n2, Isat and alpha):
-exp_image_path="/home/louis/LEON/DATA/Atoms/2024/Stage_louis/paper/data/E_detuning9_power2.1_1000.npy"
+exp_image_path="data/field.npy"
 use = True
 plot_generate_compare = True
 
@@ -49,6 +48,6 @@ manager(generate=generate, training=training, create_visual=create_visual, use=u
         plot_generate_compare=plot_generate_compare, resolution_simulation=resolution_simulation,
           window_simulation=window_simulation, window_training=window_training,
           n2_values=n2_values, input_power=input_power, alpha_values=alpha_values, isat_values=isat_values, 
-          waist=waist, non_locality=non_locality, length=length, saving_path=saving_path, 
+          waist=waist, length=length, saving_path=saving_path, 
           exp_image_path=exp_image_path, learning_rate=learning_rate, batch_size=batch_size, num_epochs=num_epochs, 
           accumulator=accumulator)
