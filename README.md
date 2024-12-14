@@ -377,9 +377,11 @@ $$
 
 ### Key Concepts:
 - **Mahalanobis Distance**: Measures the distance between predicted and true parameters, considering their interdependencies via the covariance matrix.
+
 $$
 (\mathbf{x} - \mu)^\top \Sigma^{-1} (\mathbf{x} - \mu) 
 $$
+
 - **Uncertainty Quantification**: The model learns to predict both the parameter values and the associated uncertainties. This helps the model map properly the 3 correlated parameters.
 
 ---
