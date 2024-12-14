@@ -308,11 +308,7 @@ The data type is `np.float32`.
 - **Channel 1** (`[:, 0, :, :]`): The **density** values.
 - **Channel 2** (`[:, 1, :, :]`): The **phase** values.
 
-Using the `create_visual` variable you can get:
-- Density 
-![Density](img/density.gi)
-- Phase
-![Phase](img/phase.gi)
+Using the `create_visual` variable you can get Density and Phase with `n2` and `Isat` evolving at a specific `alpha`.
 
 
 ## Training preparation
