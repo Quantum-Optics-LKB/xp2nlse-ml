@@ -271,10 +271,11 @@ Here is a flowchart of the general structure of the code.
 ```mermaid
 graph TD
     A[parameters.py] --> B[parameter_manager.py]
-    B --> C{generate}
-    C --> |True| sub1
-    C --> |False| D[Loads data: \\n It implies the dataset has already been created\\n and matches the naming convention]
-    sub1 --> G{create_visual}
+    B --> sub1
+    sub1 --> C{generate}
+    C --> |True| sub2
+    C --> |False| D[Loads already created training data]
+    sub2 --> G{create_visual}
     D --> G
     G --> |True| sub5
     G --> |False| L[generate_labels]
@@ -287,17 +288,17 @@ graph TD
     F --> |True| sub4
     sub3 --> K
 
-    subgraph sub1[Generate data]
-        C1[generate.py] --> C2(data_creation)
+    subgraph sub1[EngineDataset class]
+        C1[engine_dataset.py] --> C2(Initialize the dataset)
+    end
+
+    subgraph sub2[Generate data]
+        C1[generate.py] --> C2(simulation)
         C2 --> C3[utils.py]
         C3 --> C4(experiment_noise)
         C4 --> C5(NLSE)
     end
-    subgraph sub2[Augment data]
-        F1[augment.py] --> F2(data_augmentation)  
-        F2 --> F3[utils.py]
-        F3 --> F5(line_noise)
-    end
+    
     subgraph sub3[Training the model]
         D1[training_manager.py]
         D1 --> D2[prep_training]
