@@ -26,6 +26,6 @@ waist = 1.7e-3#m
 ###Find your parameters (n2 and Isat):
 exp_image_path="data/field.npy"
 
-sandbox(resolution_simulation, window_simulation, window_training, 
-        n2, input_power, alpha, isat, waist, length, 
-        exp_image_path, saving_path)
+sandbox(resolution_simulation=resolution_simulation, window_simulation=window_simulation, 
+        window_training=window_training, n2_values=n2, input_power=input_power, alpha_values=alpha, 
+        isat_values=isat, waist=waist, length=length, exp_image_path=exp_image_path, saving_path=saving_path)
