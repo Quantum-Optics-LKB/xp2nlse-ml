@@ -27,7 +27,7 @@ This repository uses the machine learning model dedicated to the estimation of p
 
 ### Source
 
-The code for back bone of this model is [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html). This adaptation is inspired by the paper ["A ConvNet for the 2020s" by Zhuang Liu, et al., 2022](https://arxiv.org/abs/2201.03545). 
+The code for the back bone of this model is [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html). This adaptation is inspired by the paper ["A ConvNet for the 2020s" by Zhuang Liu, et al., 2022](https://arxiv.org/abs/2201.03545). 
 
 ## Workflow
 
@@ -484,19 +484,19 @@ $$
     - **R² Score**: Evaluates the accuracy of predictions for `n2`, `Isat`, and `alpha`.
 
 - **Optimization and Early Stopping**
-- The learning rate is adjusted based on validation loss trends along with the batch size.
-- Training halts early if validation loss does not improve for a specified number of epochs (patience).
+  - The learning rate is adjusted based on validation loss trends along with the batch size.
+  - Training halts early if validation loss does not improve for a specified number of epochs (patience).
 
 - **Checkpointing**
-- Saves the model’s state, optimizer settings, and training progress periodically.
-- The best-performing model (based on validation loss) is saved.
+  - Saves the model’s state, optimizer settings, and training progress periodically.
+  - The best-performing model (based on validation loss) is saved.
 
 
 During training, on the spot modifications are applied to help the model generalize.
 
 ### Data Augmentation Techniques
 
-To enhance the robustness and generalizability of the model, the following augmentations are applied during training:
+To enhance the robustness and generalizability of the model, the following augmentations are applied during training. Some of the augmentations are made using the [Kornia](https://kornia.github.io/) library.
 
 1. **Density Augmentation**:
     - **Random Elastic Transformations**:
