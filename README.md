@@ -493,14 +493,15 @@ In `standardize.txt`, this file has the minimum and maximum values of the parame
 
 Aside from the measures of average MSE and MAE another method to test the goodness of the model is to visualize how close the computed values are for each triplet. Based on that we can generate computed vs true plots. Hence, you will find in your directory `predictedvstrue_alpha.png`, `predictedvstrue_n2.png` and `predictedvstrue_isat.png`.
 
-<div style="text-align: center;">
-    <div style="display: inline-flex; justify-content: space-around; align-items: center;">
-        <img src="img/predictedvstrue_n2.png" alt="n2" style="width: 30%; margin: 10px;">
-        <img src="img/predictedvstrue_alpha.png" alt="alpha" style="width: 30%; margin: 10px;">
-        <img src="img/predictedvstrue_isat.png" alt="isat" style="width: 30%; margin: 10px;">
-    </div>
-</div>
-Finally, if you provide a field of your experimental data it will compute what $n_2$, $I_{sat}$ and $\alpha$ are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
+<table>
+  <tr>
+    <td><img src="img/predictedvstrue_n2.png" alt="n2" width="200"></td>
+    <td><img src="img/predictedvstrue_alpha.png" alt="alpha" width="200"></td>
+    <td><img src="img/predictedvstrue_isat.png" alt="isat" width="200"></td>
+  </tr>
+</table>
+
+Finally, if you provide a field of your experimental data it will compute what n2, Isat and alpha are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
 
 ![Results](data/prediction_n250_isat50_alpha50_power2.1_detuning0.png)
 
