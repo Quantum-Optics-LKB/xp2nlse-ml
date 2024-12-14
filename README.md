@@ -578,3 +578,4 @@ graph TD
 
 - Implement different propagators (CNLSE)
 - Add more parameters
+- Add ability to use pretrained models to quicker convergence

@@ -124,7 +124,10 @@ def sandbox(
     
     # Perform simulation on the specified GPU device
     with cp.cuda.Device(device_number):
+        temp_saving_path = dataset.saving_path
+        dataset.saving_path = ""
         simulation(dataset)
+        dataset.saving_path = temp_saving_path 
 
     dataset.field[:,0,:,:] = dataset.field[:,0,:,:] - np.min(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
     dataset.field[:,0,:,:] = dataset.field[:,0,:,:] / np.max(dataset.field[:,0,:,:], axis=(-2, -1), keepdims=True)
