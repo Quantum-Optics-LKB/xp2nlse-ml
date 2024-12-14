@@ -47,7 +47,7 @@ def exam(
     
     print("---- MODEL ANALYSIS ----")
     # Print model parameter statistics
-    count_parameters_pandas(model, file)
+    count_parameters(model, file)
 
     print("---- MODEL TESTING ----")
     # Perform model testing
@@ -127,7 +127,7 @@ def test_model(
     # Visualize true vs predicted values  
     plot_prediction(true_labels, predictions, new_path)
 
-def count_parameters_pandas(
+def count_parameters(
         model: torch.nn.Module,
         file: TextIOWrapper,
         ) -> int:

@@ -264,73 +264,7 @@ manager(generate=generate, training=training, create_visual=create_visual, use=u
 
 This next part is to help anyone that has a bug it does not understand or to anyone who wishes to improve the code.
 
-## Program flowchart
-
-Here is a flowchart of the general structure of the code.
-
-```mermaid
-graph TD
-    A[parameters.py] --> B[parameter_manager.py]
-    B --> sub1
-    sub1 --> C{generate}
-    C --> |True| sub2
-    C --> |False| D[Loads already created training data]
-    sub2 --> G{create_visual}
-    D --> G
-    G --> |True| sub5
-    G --> |False| L[generate_labels]
-    sub5 --> L[generate_labels]
-    L --> sub2
-    sub2 --> E{training}
-    E --> |True| sub3
-    E --> |False| K[Loads the model: \\n It implies the model has already been created and trained\\n and matches the naming convention]
-    K --> F{use}
-    F --> |True| sub4
-    sub3 --> K
-
-    subgraph sub1[EngineDataset class]
-        C1[engine_dataset.py] --> C2(Initialize the dataset)
-    end
-
-    subgraph sub2[Generate data]
-        C1[generate.py] --> C2(simulation)
-        C2 --> C3[utils.py]
-        C3 --> C4(experiment_noise)
-        C4 --> C5(NLSE)
-    end
-    
-    subgraph sub3[Training the model]
-        D1[training_manager.py]
-        D1 --> D2[prep_training]
-        D2 --> D3(network_init)
-        D3 --> D15[utils.py]
-        D15 --> D4(data_split)
-        D4 --> D5(create_loaders)
-        D5 --> D6(manage_training)
-        D6 --> D7[training.py] 
-        D7 --> D8(network_training)
-        D8 --> D16[utils.py]
-        D16 --> D9[loss_plot]
-        D9 --> D11[test.py]
-        D11 --> D12(exam)
-        D12 --> D13(count_parameters_pandas)
-        D13 --> D14(test_model)
-    end
-
-    subgraph sub4[Use the model]
-        E1[use.py]
-        E1 --> E4[utils.py]
-        E4 --> E2{plot_results}
-        E2 --> |True| E3[Creates a comparison plot \\n between your experimental data and \\nthe parameters the model computed]
-    end
-
-    subgraph sub5[Visualize training data]
-        G1[utils.py]
-        G1 --> G2(plot_generated_set)
-    end
-```
-
-In order to find you parameters, you will first need to compute some training data. 
+First, in order to find you parameters, you will first need to compute some training data. 
 
 ## Generate
 
@@ -567,7 +501,80 @@ Finally, if you provide a field of your experimental data it will compute what $
 
 ![Results](img/prediction_n210_isat10_alpha10_power0.57.png)
 
+## Program flowchart
+
+Here is a flowchart of the general structure of the code.
+
+```mermaid
+graph TD
+    A[parameters.py] --> B[parameter_manager.py]
+    B --> sub1
+    sub1 --> C{generate}
+    C --> |True| sub2
+    C --> |False| D[Loads the model: It implies the model has already been created and trained and matches the naming convention]
+    sub2 --> E{create_visual}
+    D --> E
+    E --> |True| sub10
+    E --> |False| F{training}
+    sub10 --> F
+    F --> |True| sub3
+    sub3 --> sub4
+    sub4 --> sub5
+    F --> |False| G[Loads the model: It implies the model has already been created and trained and matches the naming convention]
+    sub5 --> H{use}
+    G --> H
+    H--> |True| sub6
+
+    subgraph sub1[EngineDataset class]
+        A1[engine_dataset.py] --> A2(Initialize the dataset)
+        A2 --> A3(Generate the labels)
+    end
+
+    subgraph sub2[Generate data]
+        B1[generate.py] --> B2(simulation)
+        B2 --> B3[utils.py]
+        B3 --> B4(experiment_noise)
+        B4 --> B5(NLSE)
+    end
+    
+    subgraph sub3[Prepare training]
+        C1[training_manager.py] --> C2(prepare_training)
+        C2 --> C3[Create NetworkDatasets]
+        C3 --> sub7
+    end
+
+    subgraph sub4[Manage training]
+        D1[training_manager.py] --> D2(manage_training)
+        D2 --> D3[training.py] 
+        D3 --> D4(network_training)
+        D4 --> D5[utils.py]
+        D5 --> D6[loss_plot]
+    end
+
+    subgraph sub5[Test training]
+        E1[Test.py]
+        E1 --> E2(exam)
+        E2 --> E3(test_model)
+        E3 --> E4(count_parameters)
+    end
+    subgraph sub6[Use the model]
+        F1[use.py]
+        F1 --> F4[utils.py]
+        F4 --> F2{plot_results}
+        F2 --> |True| F3[Creates a comparison plot between your experimental data and the parameters the model computed]
+    end
+
+    subgraph sub7[NetworkDataset class]
+        G1[network_dataset.py] --> G2(Initialize the dataset for training)
+    end
+
+    subgraph sub10[Visualize training data]
+        H1[utils.py]
+        H1 --> H2(plot_generated_set)
+    end
+```
 
 # Future improvements:
 
-- Implement different propagators (CNLSE with more parameters)
+- Implement different propagators (CNLSE)
+- Add more parameters
