@@ -202,7 +202,7 @@ sandbox(resolution_simulation, window_simulation, window_training,
         n2, input_power, alpha, isat, waist, length, 
         exp_image_path, saving_path)
 ```
-This should save the ouptut figure as [`sandbox.png`](/data/sandbox.png):
+This should save the outut figure as [`sandbox.png`](/data/sandbox.png):
 
 ![`sandbox.png`](/data/sandbox.png)
 
