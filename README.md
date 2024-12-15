@@ -234,7 +234,7 @@ number_of_alpha = 50
 
 n2_values = -np.linspace(1e-9, 1e-10, number_of_n2)
 isat_values = np.linspace(5e4, 1e6, number_of_isat)
-alpha_values = np.linspace(21, 30, number_of_alpha)
+alpha_values = np.linspace(13, 30, number_of_alpha)
 
 ###Laser Parameters:
 input_power = 2.1 #W
