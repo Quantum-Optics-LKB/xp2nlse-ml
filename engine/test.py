@@ -119,7 +119,12 @@ def test_model(
     average_mae = mae / len(test_loader)
 
     # Log and print the results
-    file.write(f"Average MSE: {average_mse:.4f}\n")
+    file.write("Performance Metrics:\n")
+    for i, param in enumerate(["n2", "Isat", "alpha"]):
+        file.write(f"{param} - MAE: {np.mean(np.abs(true_labels[:, i] - predictions[:, i])):.4f}\n")
+        print(f"{param} - MAE: {np.mean(np.abs(true_labels[:, i] - predictions[:, i])):.4f}")
+    
+    file.write(f"\nAverage MSE: {average_mse:.4f}\n")
     file.write(f"Average MAE: {average_mae:.4f}\n")
     print(f"Average MSE: {average_mse:.4f}")
     print(f"Average MAE: {average_mae:.4f}") 
