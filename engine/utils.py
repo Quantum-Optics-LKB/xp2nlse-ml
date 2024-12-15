@@ -570,7 +570,7 @@ def plot_sandbox(
         fig.colorbar(im, cax=cax)
 
     axs[0, 0].set_title("Density")
-    axs[1, 0].set_title("phase")
+    axs[1, 0].set_title("Phase")
     axs[0, 1].set_title("Experimental density")
     axs[1, 1].set_title("Experimental phase")
     for ax in axs.flatten():
