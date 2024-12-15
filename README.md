@@ -501,7 +501,7 @@ Aside from the measures of average MSE and MAE another method to test the goodne
 
 Finally, if you provide a field of your experimental data it will compute what n2, Isat and \alpha are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
 
-![Results](data/prediction_n250_isat50_alpha50_power2.1_detuning0.png)
+![Results](data/prediction_n250_isat50_alpha50_power2.1.png)
 
 ## Program flowchart
 
