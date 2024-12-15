@@ -83,7 +83,7 @@ class EngineDataset(Dataset):
             window_simulation: float,
             window_training: float,
             saving_path: str,
-            learning_rate: list, 
+            learning_rate: float, 
             batch_size: int, 
             num_epochs: int, 
             accumulator: int,
@@ -120,8 +120,8 @@ class EngineDataset(Dataset):
             Training dataset window size in meters.
         saving_path : str
             Path to save generated data and results.
-        learning_rate : list
-            List of learning rates for training.
+        learning_rate : float
+            Learning rate for training.
         batch_size : int
             Batch size for training.
         num_epochs : int
