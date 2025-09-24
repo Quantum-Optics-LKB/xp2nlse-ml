@@ -581,3 +581,19 @@ graph TD
 - Implement different propagators (CNLSE)
 - Add more parameters
 - Add ability to use pretrained models to quicker convergence
+
+# Cite
+
+If you use this work, please cite it as:
+
+```bibtex
+@misc{rossignol2025machinelearningapproachsingleshot,
+  title={Machine learning approach to single-shot multiparameter estimation for the non-linear Schr\"odinger equation}, 
+  author={Louis Rossignol and Tangui Aladjidi and Myrann Baker-Rasooli and Quentin Glorieux},
+  year={2025},
+  eprint={2509.18479},
+  archivePrefix={arXiv},
+  primaryClass={quant-ph},
+  url={https://arxiv.org/abs/2509.18479}, 
+}
+```
