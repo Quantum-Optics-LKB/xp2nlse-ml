@@ -1,5 +1,20 @@
 # XP2NLSE-ML: Experiment to Nonlinear Schrödinger Equation Parameter Estimation with machine learning
+[![arXiv](https://img.shields.io/badge/arXiv-2301.01234-b31b1b.svg)](https://arxiv.org/abs/2301.01234)
+# Cite
 
+If you use this work, please cite it as:
+
+```bibtex
+@misc{rossignol2025machinelearningapproachsingleshot,
+  title={Machine learning approach to single-shot multiparameter estimation for the non-linear Schr\"odinger equation}, 
+  author={Louis Rossignol and Tangui Aladjidi and Myrann Baker-Rasooli and Quentin Glorieux},
+  year={2025},
+  eprint={2509.18479},
+  archivePrefix={arXiv},
+  primaryClass={quant-ph},
+  url={https://arxiv.org/abs/2509.18479}, 
+}
+```
 # Problem
 
 ## Physical situation
@@ -581,19 +596,3 @@ graph TD
 - Implement different propagators (CNLSE)
 - Add more parameters
 - Add ability to use pretrained models to quicker convergence
-
-# Cite
-
-If you use this work, please cite it as:
-
-```bibtex
-@misc{rossignol2025machinelearningapproachsingleshot,
-  title={Machine learning approach to single-shot multiparameter estimation for the non-linear Schr\"odinger equation}, 
-  author={Louis Rossignol and Tangui Aladjidi and Myrann Baker-Rasooli and Quentin Glorieux},
-  year={2025},
-  eprint={2509.18479},
-  archivePrefix={arXiv},
-  primaryClass={quant-ph},
-  url={https://arxiv.org/abs/2509.18479}, 
-}
-```
