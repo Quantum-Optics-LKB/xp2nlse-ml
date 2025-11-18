@@ -1,5 +1,5 @@
 # XP2NLSE-ML: Experiment to Nonlinear Schrödinger Equation Parameter Estimation with machine learning
-[![arXiv](https://img.shields.io/badge/arXiv-2301.01234-b31b1b.svg)](https://arxiv.org/abs/2301.01234)
+[![arXiv](https://img.shields.io/badge/arXiv-2509.18479-b31b1b.svg)](https://arxiv.org/abs/2509.18479)
 # Cite
 
 If you use this work, please cite it as:
