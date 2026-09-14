@@ -1,598 +1,356 @@
-# XP2NLSE-ML: Experiment to Nonlinear Schrödinger Equation Parameter Estimation with machine learning
-[![arXiv](https://img.shields.io/badge/arXiv-2509.18479-b31b1b.svg)](https://arxiv.org/abs/2509.18479)
-# Cite
+# XP2NLSE-ML
 
-If you use this work, please cite it as:
+**Machine-learning estimation of nonlinear Schrödinger equation parameters from a single complex optical field.**
+
+[![arXiv](https://img.shields.io/badge/arXiv-2509.18479-b31b1b.svg)](https://arxiv.org/abs/2509.18479)
+
+XP2NLSE-ML combines GPU-accelerated nonlinear Schrödinger equation (NLSE) simulations with a modified ConvNeXt-Tiny network to estimate three physical parameters of a nonlinear optical medium:
+
+- nonlinear refractive index `n2`
+- saturation intensity `Isat`
+- absorption coefficient `alpha`
+
+The model takes two image channels derived from a complex optical field: normalized density and normalized phase.
+
+> The repository has evolved significantly since the original README. The documentation below reflects the current code on `main` as of September 2026. See [Known implementation caveats](#known-implementation-caveats) before launching a new training run.
+
+## Citation
+
+If you use this work, please cite:
 
 ```bibtex
 @misc{rossignol2025machinelearningapproachsingleshot,
-  title={Machine learning approach to single-shot multiparameter estimation for the non-linear Schr\"odinger equation}, 
+  title={Machine learning approach to single-shot multiparameter estimation for the non-linear Schr\"odinger equation},
   author={Louis Rossignol and Tangui Aladjidi and Myrann Baker-Rasooli and Quentin Glorieux},
   year={2025},
   eprint={2509.18479},
   archivePrefix={arXiv},
   primaryClass={quant-ph},
-  url={https://arxiv.org/abs/2509.18479}, 
+  url={https://arxiv.org/abs/2509.18479}
 }
 ```
-# Problem
 
-## Physical situation
+## What the repository does
 
-[NLSE](https://github.com/Quantum-Optics-LKB/NLSE) offers a powerful simulation tool to solve a typical [non linear Schrödinger](https://en.wikipedia.org/wiki/Nonlinear_Schr%C3%B6dinger_equation) / [Gross-Pitaevskii](https://en.wikipedia.org/wiki/Gross%E2%80%93Pitaevskii_equation) equation of the type :
-$$i\partial_{t}\psi = -\frac{1}{2}\nabla^2\psi+g|\psi|^2\psi$$
+The end-to-end workflow is:
 
-In this particular instance, it can solve in the formalism of the propagation of a pulse of light in a non linear medium (here a Rubidium cell).
-Within the [paraxial approximation](https://en.wikipedia.org/wiki/Paraxial_approximation), the propagation equation for the field $E$ in $V/m$ solved is:
+1. choose a physically meaningful parameter domain;
+2. validate representative parameters with `sandbox_parameters.py`;
+3. generate a synthetic grid of NLSE simulations;
+4. convert each simulated complex field into density and phase channels;
+5. normalize and shuffle the dataset;
+6. train a two-channel ConvNeXt-based regressor;
+7. evaluate predictions on a held-out test split;
+8. optionally compute saliency and depth-wise Grad-CAM maps;
+9. apply a trained model to an experimental complex field;
+10. optionally re-simulate the inferred parameters for a visual experiment/simulation comparison.
 
-$$
-i\partial_{z}E = -\frac{1}{2k_0}\nabla_{\perp}^2 E - n_2 \frac{k_0c\epsilon_0}{2}|E|^2E - i \frac{\alpha}{2}
-$$
+The main orchestration entry point is `engine.parameter_manager.manager`.
 
-The system holds 3 unknowns: the non-linear index $n_2$, the absorption $\alpha$ and the saturation intensity $I_{sat}$.
-Aside from $\alpha$, these parameters are coupled and cannot be measured in the experiment. They are intrinsic properties of the system.
+## Repository layout
 
-With the recent research in machine learning and optimization tools thriving, the idea was to attempt and solve this problem with neural networks. 
+```text
+xp2nlse-ml/
+├── README.md
+├── requirements.txt
+├── parameters.py
+├── sandbox_parameters.py
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── USAGE.md
+└── engine/
+    ├── engine_dataset.py
+    ├── generate.py
+    ├── interpretability.py
+    ├── model.py
+    ├── network_dataset.py
+    ├── nlse_sandbox.py
+    ├── parameter_manager.py
+    ├── test.py
+    ├── training.py
+    ├── training_manager.py
+    ├── use.py
+    └── utils.py
+```
 
-# Solution
+For a module-by-module explanation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). For commands, parameters, file formats, and workflows, see [docs/USAGE.md](docs/USAGE.md).
 
-## Overview
+## Installation
 
-This repository uses the machine learning model dedicated to the estimation of parameters within the Nonlinear Schrödinger Equation (NLSE) representing the propagation of a laser beam inside a hot Rubidium vapor cell.
-
-### Source
-
-The code for the back bone of this model is [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html). This adaptation is inspired by the paper ["A ConvNet for the 2020s" by Zhuang Liu, et al., 2022](https://arxiv.org/abs/2201.03545). 
-
-## Workflow
-
-1. **Create Your Setup**: Design your experimental setup.
-2. **Record Output parameters**: Take note of all the parameters of your system to ensure the data you will generate will be able to represent your system.
-3. **Explore the parameter space**: There is a sandbox program that allows you to tryout your generation parameters to check that your simulations converge and looks a bit like your experiment. This will help the process of generating your training data.
-4. **Generate Training Data**: The data is generated using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) based on your parameters.
-5. **Train the Model**: Train the model using the generated data.
-6. **Estimate your parameters**: Apply the trained model to experimental data to estimate parameters.
-
-
-
-# Getting Started
-
-## Prerequisites
-
-Ensure you have Python 3.x installed. This project requires the following external libraries:
-
-- **NumPy**
-- **Matplotlib**
-- **SciPy**
-- **CuPy**
-- **NLSE**
-- **PyTorch**
-- **Skimage**
-- **Sklearn**
-- **tqdm**
-- **Kornia**
-- **Torchvision**
-
-These dependencies can be installed using mamba.
-
-The requirements are in the requirements.txt at the root of the repo.
-
-### Installation
-
-Clone the repository and navigate into the project directory:
+The project is GPU-oriented. NLSE generation uses CuPy, and training is designed for PyTorch on an accelerator.
 
 ```bash
 git clone https://github.com/Quantum-Optics-LKB/xp2nlse-ml.git
 cd xp2nlse-ml
+
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-# Usage
+The current dependency list includes CuPy for CUDA 12, PyTorch, Torchvision, Kornia, NumPy/SciPy, scikit-image, scikit-learn, Matplotlib, tqdm, and the `NLSE` package.
 
-When starting I suggest you start with:
+On HPC systems, use the CUDA/Python environment that matches the installed CuPy and PyTorch builds.
 
-The [`sandbox_parameters.py`](/sandbox_parameters.py) script is where you can try parameters for the data generation and see how the generated data would look like from your parameters. Then you can just take these parameters and put them into the [`parameters.py`](/parameters.py) script.
+## Quick start
+
+### 1. Check the physical parameter regime
+
+Edit `sandbox_parameters.py` and provide a complex experimental field stored as a NumPy `.npy` array.
 
 ```bash
 python sandbox_parameters.py
 ```
 
-The [`parameters.py`](/parameters.py) script is where you store the parameters for the data generation, training, and parameter estimation processes:
+The sandbox performs a single NLSE simulation and saves a comparison plot to:
+
+```text
+<saving_path>/sandbox.png
+```
+
+Use this step to verify simulation resolution, simulation window, training window, cell length, beam waist, and representative `n2`, `Isat`, and `alpha` values.
+
+### 2. Configure the full pipeline
+
+`parameters.py` defines the parameter grid and calls `manager(...)`.
+
+Important groups are:
+
+- simulation geometry: `resolution_simulation`, `window_simulation`, `window_training`, `length`
+- parameter grid: `n2_values`, `isat_values`, `alpha_values`
+- beam: `input_power`, `waist`
+- numerical controls: `delta_z`, `non_locality`, `device_number`, `resolution_training`
+- training: `learning_rate`, `batch_size`, `accumulator`, `num_epochs`
+- pipeline switches: `generate`, `training`, `create_visual`, `use`, `plot_generate_compare`
+- interpretability: `interpretability`, `interp_methods`, `interp_num_samples`, `interp_output_subdir`, `interp_overlay_alpha`, `interp_dpi`
+
+Run:
 
 ```bash
 python parameters.py
 ```
 
-## Parameters
+See [docs/USAGE.md](docs/USAGE.md) for a complete, explicit `manager(...)` example.
 
-### <ins>Path and Device Settings<ins>
-- `saving_path`: Directory where data and models will be saved.
+## Simulation dataset
 
-### <ins>Data Generation <ins>
-You generate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) which will propagate with your parameters the gaussian beam on which noise was added to mimic the experiment setup. 
-This will help the model generalize the fitting of the parameters regardless of the noise.
+`EngineDataset` builds the Cartesian product of all `alpha`, `n2`, and `Isat` values.
 
-- `generate`: Set to `True` to generate new data using NLSE.
+The generated field has shape:
 
-### <ins>Data Generation Parameters using NLSE <ins>
-- `length`: Length of the rubidium cell (m).
-- `output_camera_resolution`: Resolution of the output camera (in case not square give the smallest).
-- `output_pixel_size`: Size of pixels of the output camera (m).
-- `resolution_simulation`: Resolution of the input beam. (Note that it is better to keep it a power of 2)
-- `window_simulation`: Window size of the input beam (m).
-
-### <ins>Parameter Spaces<ins>
-- `number_of_n2`: Number of different $n_2$ values for training.
-- `number_of_isat`: Number of different $I_{sat}$ values for training.
-- `number_of_alpha`: Number of different $\alpha$ values for training.
-- `n2`: Range of n2 values ($m^{2}$/W).
-- `isat`: Range of Isat values (W/$m^{2}$).
-- `alpha`: Range of $\alpha$ values (m $^{-1}$).
-
-
-### <ins>Laser Parameters<ins>
-- `input_power`: Input power of the laser (W).
-- `waist`: Waist $\sigma$ (m) of the input gaussian beam: $I_0 = e^{\frac{-(X^2 + Y^2)}{ \sigma^2} }$.
-
-For for more information on the generation process see [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) documentation.
-
-### <ins>Training Parameters<ins>
-- `training`:  Boolean indicating whether to train the model.
-- `learning_rate`: Learning rate for training.
-
-The training is done in batches.
-It means that when it does a forward pass (ie. the model takes a training image through the model) through the model it does not train the full dataset at the same time.
-It is done for memory reasons (ie. you would not be able to load a big dataset on the GPU) but also because training is better if the model receives samples by samples. It ensures the parameters of the model get trained more times.
-It improves the speed of the convergence.
-
-- `batch_size` : The size of each batches (default 128).
-
-The training method implements gradient accumulation.
-It means that when you found the perfect batchsize but this many images don't fit on the GPU, you still can train at this batch size but the programs will divide the batch in the number you set to have the same training.
-The accumulator variable is a multiplier that does that.
-
-<ins>Example:<ins>
-
- You want total_batch_size = 99 but it is too big. What you can do is set batch_size = 33 and accumulator = 3. Therefore, only batchsize will be loaded on the GPU.
-
-- `accumulator`: The number of accumulation of gradient steps (default 32).
-- `number of epochs`: Number of times the training data will train the model (default 200).
-
-<ins>Note<ins>: 
-
-- Since you need to accumulate, the training takes more time.
-- To have no accumulation set `accumulator` to 1.
-
-### <ins>Experimental Data<ins>
-- `exp_image_path`: Path to the experimental data. Experiment Data must be a complex array of shape (`output_camera_resolution`, `output_camera_resolution`).
-- `use`: Boolean indicating whether to compute parameters for the dataset.
-- `plot_generate_compare`: If True it will use the computed n2 and Isat generate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE). You would be able to compare the result it to your estimate.
-
-# Example:
-
-## Explore parameter space
-
-You choose your parameters.
-We pick here:
-- `output_camera_resolution` = $1024$
-- `output_pixel_size` = $3.45\cdot10^{-6}$ m
-- `length` = $20\cdot10^{-2}$ m
-- `n2` $\in$ [ $-1\cdot10^{-9}$ ; $-1\cdot10^{-10}$ ] m $^2$/W
-- `isat` $\in$ [ $5\cdot10^{4}$ ; $1\cdot10^{6}$ ] W/m $^2$
-- `alpha` $\in$ [ $21$ ;  $30$ ] m $^{-1}$
-- `input_power` = $2.1$ W
-- `waist`= $1.7\cdot10^{-3}$ m
-
-## Sandbox
-When you train, (trust me I have been through it) you want to be sure your dataset represents the experimental data. It implies checking that the edge cases of your range triplet ($n_2$, $I_{sat}$ and $\alpha$) converge and make sense. This sandbox is designed for you to figure the best parameters for the simulation in the parameters for `resolution_simulation`, or `window_simulation`.
-
-The [`sandbox_parameters.py`](/sandbox_parameters.py) contains this code.
-You can just choose your parameters and launch the code.
-
-```python
-from engine.nlse_sandbox import sandbox
-
-saving_path="data"
-
-###Data generation Parameters:
-resolution_simulation = 1024
-window_simulation = 20e-3 #m
-output_camera_resolution = 2000
-output_pixel_size = 3.45e-6 #m
-window_training = output_pixel_size * output_camera_resolution #m
-length=20e-2 #m
-
-###Parameter spaces:
-n2 = -1e-9 #switch this to an actual range using numpy to launch the real simulation 
-isat = 1e6 #switch this to an actual range using numpy to launch the real simulation
-alpha = 130 #switch this to an actual range using numpy to launch the real simulation
-
-###Laser Parameters:
-input_power = 2.1 #W
-waist = 1.7e-3#m
-
-###Find your parameters (n2 and Isat):
-exp_image_path="data/field.npy"
-
-sandbox(resolution_simulation, window_simulation, window_training, 
-        n2, input_power, alpha, isat, waist, length, 
-        exp_image_path, saving_path)
-```
-This should save the output figure as [`sandbox.png`](/data/sandbox.png):
-
-![`sandbox.png`](/data/sandbox.png)
-
-## LAUNCH !
-Once the edge cases are checked you can launch [`parameters.py`](/parameters.py) with your parameters.
-
-```python
-import numpy as np
-from engine.utils import set_seed
-from engine.parameter_manager import manager
-set_seed(10)
-
-saving_path="data"
-
-###Data generation Parameters:
-resolution_simulation = 1024
-window_simulation = 20e-3 #m
-output_camera_resolution = 2000
-output_pixel_size = 3.45e-6 #m
-window_training = output_pixel_size * output_camera_resolution #m
-length=20e-2 #m
-generate = True
-create_visual = True
-
-###Parameter spaces:
-number_of_n2 = 50
-number_of_isat = 50
-number_of_alpha = 50
-
-n2_values = -np.linspace(1e-9, 1e-10, number_of_n2)
-isat_values = np.linspace(5e4, 1e6, number_of_isat)
-alpha_values = np.linspace(13, 30, number_of_alpha)
-
-###Laser Parameters:
-input_power = 2.1 #W
-waist = 1.7e-3 #m
-
-###Training Parameters:
-training = True
-learning_rate=1e-4
-batch_size=128
-accumulator=32
-num_epochs=200
-
-###Find your parameters (n2, Isat and alpha):
-exp_image_path="data/field.npy"
-use = True
-plot_generate_compare = True
-
-manager(generate=generate, training=training, create_visual=create_visual, use=use, 
-        plot_generate_compare=plot_generate_compare, resolution_simulation=resolution_simulation,
-          window_simulation=window_simulation, window_training=window_training,
-          n2_values=n2_values, input_power=input_power, alpha_values=alpha_values, isat_values=isat_values, 
-          waist=waist, length=length, saving_path=saving_path, 
-          exp_image_path=exp_image_pat
+```text
+(N_alpha * N_n2 * N_Isat, 2, resolution_training, resolution_training)
 ```
 
-# How does the program work ?
+with `float32` storage.
 
-This next part is to help anyone that has a bug it does not understand or to anyone who wishes to improve the code.
+Channels:
 
-First, in order to find you parameters, you will first need to compute some training data. 
+- channel 0: optical density/intensity, computed as `|A|^2 c epsilon_0 / 2`
+- channel 1: optical phase, computed with `angle(A)`
 
-## Generate
+The current generator creates a Gaussian input beam, propagates it with the external `NLSE` package, crops the simulated window, and resamples to the training resolution.
 
-The simulation function simulates the propagation of a laser beam through a nonlinear medium using the Nonlinear Schrödinger Equation ([NLSE](https://github.com/Quantum-Optics-LKB/NLSE)). This process generates a dataset containing the beam’s intensity (density) and phase.
+**Generation-time noise is not currently applied**, despite older documentation and an unused `experiment_noise` helper remaining in the repository.
 
-### 1. Dataset Preparation
-- The `EngineDataset` object is initialized with parameters such as `alpha`, `n2`, `input_power`, `waist`, and others, which define the rubidium cell and beam properties.
+### Dataset files
 
-### 2. Beam Initialization
-- A Gaussian beam profile is created on a spatial grid defined by the simulation resolution.
-- Experimental noise (Poisson and Gaussian) is applied to the beam to introduce realism.
+Generation currently writes both:
 
-### 3. Solving the NLSE
-- For each combination of `Isat`, `alpha`, and `n2` parameters:
-    - The NLSE solver initializes with the simulation parameters and medium properties.
-    - The equation is solved numerically to simulate the propagation of the beam through the medium.
-    - The resulting field (complex amplitude) contains both intensity and phase information.
-
-### 4. Post-processing
-- The simulated field is cropped and rescaled to match the training resolution and window size.
-- Density (intensity) and phase are computed from the complex field:
-    - **Density**: The squared magnitude of the complex field, scaled by physical constants.
-    - **Phase**: The angle of the complex field.
-
-### 5. Storing Results
-- The computed density and phase values are stored in the `EngineDataset` object.
-- If a saving path is provided, the results are saved as `.npy` files for later use.
-
-#### Dataset Format
-If a saving path is provided, the dataset is saved as a `.npy` file in the specified directory. It will be stored in your `saving_path` under the name:
-```python
-f"Es_w{resolution_training}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.npy"
+```text
+Es_w<resolution>_n2<Nn2>_isat<NIsat>_alpha<Nalpha>_power<P>.npz
 ```
 
-This dataset has the shape:
+and a raw-array representation:
+
+```text
+Es_w<resolution>_n2<Nn2>_isat<NIsat>_alpha<Nalpha>_power<P>.raw
+Es_w<resolution>_n2<Nn2>_isat<NIsat>_alpha<Nalpha>_power<P>.json
 ```
-(number_of_alpha * number_of_n2 * number_of_isat, 2, resolution_training, resolution_training)
+
+The `.json` file stores dtype, shape, and memory order. The current reload path in `parameter_manager.py` uses the `.raw + .json` representation.
+
+## Preprocessing
+
+Before training:
+
+1. each density image is shifted by its own minimum;
+2. each density image is divided by its own maximum;
+3. phase is mapped from `[-pi, pi]` to `[0, 1]`;
+4. fields and labels are shuffled together;
+5. each target parameter is min-max normalized to `[0, 1]`;
+6. data are split 80% / 10% / 10% into train / validation / test sets.
+
+The min/max values used for target de-normalization are written to `standardize.txt`.
+
+## Model
+
+The network is defined in `engine/model.py`.
+
+### Backbone
+
+A Torchvision `convnext_tiny(weights=None)` model is modified to:
+
+- accept 2 input channels instead of RGB;
+- remove the classification head;
+- expose the 768-dimensional ConvNeXt representation.
+
+### Regression heads
+
+The 768-dimensional representation passes through shared fully connected layers:
+
+```text
+768 -> 2048 -> 1024 -> 512
 ```
-The data type is `np.float32`.
 
-- **Channel 1** (`[:, 0, :, :]`): The **density** values.
-- **Channel 2** (`[:, 1, :, :]`): The **phase** values.
+with BatchNorm, ReLU, and dropout.
 
-Using the `create_visual` variable you can get Density and Phase with `n2` and `Isat` evolving at a specific `alpha`.
+From the shared 512-dimensional representation:
 
+- `Isat` is predicted by an independent sigmoid head;
+- `alpha` is predicted by an independent sigmoid head;
+- `n2` is predicted conditionally using the shared features plus learned embeddings of the predicted `Isat` and `alpha`;
+- a six-value covariance head parameterizes uncertainty/correlation information for the three outputs.
 
-## Training preparation
+## Loss and optimization
 
-### 1. Preparation of Training Data
+The current `MultivariateNLLLoss` builds a lower-triangular Cholesky factor from six predicted covariance parameters and evaluates a multivariate Gaussian negative log-likelihood using triangular solves.
 
-- **Shuffling and Normalization**:
-  - Dataset fields are shuffled to randomize the data order.
-  - Intensity (density) and phase values are normalized for consistent scaling.
+The current implementation additionally applies a strong Smooth-L1 penalty to the normalized `n2` prediction:
 
-- **Dataset Splitting**:
-  - Data is split into 80% training, 10% validation, and 10% test sets.
-
-### 2. Model Initialization
-
-The model is initialized.
-- **Neural Network Architecture**:
-
-The neural network consists of three main components:
-
-1. **Feature Extraction**:
-    - A modified [Convnext_tiny](https://pytorch.org/vision/main/models/generated/torchvision.models.convnext_tiny.html) model is used for feature extraction.
-    - The model is adapted to accept two-channel input and outputs feature embeddings.
-    - The classification head of ConvNeXt is replaced with an identity layer, providing intermediate features for further processing.
-
-2. **Shared Fully Connected Layers**:
-    - The extracted features are processed through shared fully connected layers to create a unified feature representation.
-    - These layers use dropout, batch normalization, and ReLU activation for regularization and efficient learning.
-
-3. **Prediction Heads**:
-    - **Independent Heads for `Isat` and `alpha`**:
-        - Separate prediction heads output normalized values for `Isat` and `alpha`.
-    - **Conditional Network for `n2`**:
-        - `n2` is predicted using a specialized conditional network (`N2CondNet`) that takes as input:
-            - Feature embeddings from the shared layers.
-            - Embedded representations of `Isat` and `alpha`.
-        - This design allows the network to model dependencies between `n2`, `Isat`, and `alpha`.
-    - **Covariance Estimation**:
-        - A separate head predicts the covariance matrix elements (variances and covariances) between `n2`, `Isat`, and `alpha`.
-        - This enables uncertainty estimation and interdependence modeling.
-    
-## 3. Loss Function: Multivariate Negative Log-Likelihood (NLL)
-
-The Multivariate NLL Loss is derived from the **probability density function (PDF)** of the multivariate normal distribution:
-
-$$
-f(\mathbf{x}) = \frac{1}{(2\pi)^{d/2} |\Sigma|^{1/2}} \exp\left(-\frac{1}{2} (\mathbf{x} - \mu)^\top \Sigma^{-1} (\mathbf{x} - \mu)\right)
-$$
-
-Where:
-- $\mathbf{x}$: Predicted parameters vector.
-- $\mu$: True parameters vector.
-- $\Sigma$: Predicted covariance matrix.
-
-The **log-likelihood function** is:
-
-$$
-\log f(\mathbf{x}) = -\frac{d}{2} \log(2\pi) - \frac{1}{2} \log|\Sigma| - \frac{1}{2} (\mathbf{x} - \mu)^\top \Sigma^{-1} (\mathbf{x} - \mu)
-$$
-
-The loss function is the **negative log-likelihood**:
-
-$$
-\text{Loss} = \frac{1}{2} (\mathbf{x} - \mu)^\top \Sigma^{-1} (\mathbf{x} - \mu) + \frac{1}{2} \log|\Sigma| + \frac{d}{2} \log(2\pi)
-$$
-
-### Key Concepts:
-- **Mahalanobis Distance**: Measures the distance between predicted and true parameters, considering their interdependencies via the covariance matrix.
-
-$$
-(\mathbf{x} - \mu)^\top \Sigma^{-1} (\mathbf{x} - \mu) 
-$$
-
-- **Uncertainty Quantification**: The model learns to predict both the parameter values and the associated uncertainties. This helps the model map properly the 3 correlated parameters.
-
----
-
-## 4. Optimizer and Learning Rate Scheduler
-
-- **Optimizer**:
-  - The **AdamW optimizer** is used for weight updates, incorporating weight decay for better generalization.
-  
-- **Learning Rate Scheduler**:
-  - The **ReduceLROnPlateau scheduler** adjusts the learning rate based on validation loss trends.
-
----
-
-## Training
-
-- **Training Loop**:
-  - The model processes batches of images to predict `n2`, `Isat`, and `alpha`.
-  - Predictions and their covariance parameters are used to compute the Multivariate NLL loss.
-  - Gradients are computed and the optimizer updates the model's weights.
-
-- **Gradient Accumulation**:
-  - Gradients are accumulated over multiple iterations to handle large batches efficiently.
-
-- **Dynamic Batch Size Adjustment**:
-  - Batch size is reduced dynamically if the loss threshold is achieved, improving efficiency.
-
-- **Validation Loops**:
-  - After each epoch, the model is evaluated on the validation set.
-  - Metrics computed include:
-    - **Validation Loss**: Using the Multivariate NLL loss.
-    - **Mean Absolute Error (MAE)**: Measures absolute prediction error.
-    - **R² Score**: Evaluates the accuracy of predictions for `n2`, `Isat`, and `alpha`.
-
-- **Optimization and Early Stopping**
-  - The learning rate is adjusted based on validation loss trends along with the batch size.
-  - Training halts early if validation loss does not improve for a specified number of epochs (patience).
-
-- **Checkpointing**
-  - Saves the model’s state, optimizer settings, and training progress periodically.
-  - The best-performing model (based on validation loss) is saved.
-
-
-During training, on the spot modifications are applied to help the model generalize.
-
-### Data Augmentation Techniques
-
-To enhance the robustness and generalizability of the model, the following augmentations are applied during training. Some of the augmentations are made using the [Kornia](https://kornia.github.io/) library.
-
-1. **Density Augmentation**:
-    - **Random Elastic Transformations**:
-        - Elastic deformations are applied using a kernel size of `(63, 63)` and sigma `(32.0, 32.0)` with randomly chosen alpha values.
-        - Probability of application: 25%.
-    - **Affine Transformations**:
-        - Includes random shear and translation within specified ranges.
-        - Maximum rotation angle: `rotation_degrees`.
-        - Shear range: `shear`.
-        - Probability of application: 50% for translation, 25% for shear.
-
-2. **Phase Augmentation**:
-    - **Random Phase Shifts**:
-        - Phase values are shifted randomly within the range `[π/6, π/2]`.
-        - Probability of application: 75%.
-    - **Circular Masks**:
-        - Circular filters with randomized radii are applied to the images.
-        - Radius range: `[0.5, 0.75]`.
-        - Probability of application: 25%.
-    - **Affine Transformations**:
-        - Similar to the density augmentation pipeline, affine transformations with random shear and translations are applied.
-
-These augmentations are implemented to simulate variations in experimental conditions, improve data diversity, and reduce overfitting.
-
-## Results
-
-At the end of the training, the model is saved in a directory of the name:
-```python
-f"training_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}"
+```text
+loss = multivariate_NLL + 5000 * smooth_L1(n2_pred, n2_true)
 ```
-This directory contains 9 files:
 
-- **Model**:
-```python
-f"n2_net_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_power{input_power}.pth"
+Training is configured around:
+
+- AdamW;
+- weight decay `1e-5`;
+- `ReduceLROnPlateau`;
+- gradient clipping;
+- gradient accumulation;
+- validation MAE and R² reporting;
+- best-validation checkpointing;
+- early stopping logic.
+
+See the caveat below: the present `network_training()` contains a debug `break` that currently prevents the intended training loop from executing.
+
+## Training artifacts
+
+Training outputs are written under:
+
+```text
+<saving_path>/training_n2<Nn2>_isat<NIsat>_alpha<Nalpha>_power<P>/
 ```
-- **Plot of the losses**:
 
-The two parameters that are measured during training are the training loss and the validation loss.
-Prior to training the model was splitted into 3 arrays (80% for training, 10% validation, 10% test). The goal is that while the training is going and the 80% are used to compute the good parameters for the model, the model also computes the loss on the 10% of the validation. The validation loss is not use to update the model but rather as a measure for us to check that the model is not overfitting. Namely, that it is not learning by heart the training set and its noise as well rather than generalising.
-```python
-f"losses_w{resolution_training}_n2{number_of_2}_isat{number_of_isat}_alpha{number_of_alpha}_alpha{number_of_alpha}.pth"
-```
-![image info](./img/losses_w224_n250_isat50_alpha50.png)
+The code is designed to produce:
 
-- **Parameters file**:
+- `n2_net_w...pth` — model state dictionary
+- `checkpoint.pth.tar` — resumable best-validation checkpoint
+- `params.txt` — physical and training configuration
+- `standardize.txt` — target min/max values
+- `testing.txt` — training/test diagnostics
+- `losses_w...png` — loss curve
+- `losses_w...csv` — numeric loss history
+- `predictedvstrue_n2.png`
+- `predictedvstrue_isat.png`
+- `predictedvstrue_alpha.png`
+- `predictions.csv` — normalized expected/predicted test values
 
-In `params.txt`, there are all the parameters that generated the model for you to keep track of the model parameters.
+Model-weight binaries are not intended to be committed to GitHub. Keep generated datasets and trained weights as external experiment artifacts.
 
-- **Testing file**:
+## Interpretability
 
-In `testing.txt`, there is the trace of the training loss and the validation loss. There is also measurements of the last 10% of the original set that is used to compute the average mean square error (MSE) and the average mean absolute error (MAE) on $n_2$, $I_{sat}$ and $\alpha$.
+`engine/interpretability.py` implements two dataset-driven interpretation methods:
 
-- **Checkpoint file**:
+### Saliency
 
-In `checkpoint.pth.tar`, there is the checkpoint of the model. It is updated through the training. It is made such that if the training stops or if the you think after a certain amount of epochs it could be further trained.
+For selected samples, gradients of each output with respect to both input channels are computed:
 
-- **Standardization file**:
+- `|d y_n2 / d density|`
+- `|d y_n2 / d phase|`
+- `|d y_Isat / d density|`
+- `|d y_Isat / d phase|`
+- `|d y_alpha / d density|`
+- `|d y_alpha / d phase|`
 
-In `standardize.txt`, this file has the minimum and maximum values of the parameters of the selected ranges. This way the computed parameters will be properly denormalized.
+The effective implementation also reports raw channel saliency statistics and phase/density ratios.
 
-- **Plot of the computed parameters vs real parameters**:
+### Depth Grad-CAM
 
-Aside from the measures of average MSE and MAE another method to test the goodness of the model is to visualize how close the computed values are for each triplet. Based on that we can generate computed vs true plots. Hence, you will find in your directory `predictedvstrue_alpha.png`, `predictedvstrue_n2.png` and `predictedvstrue_isat.png`.
+Grad-CAM is evaluated at the first, middle, and last Conv2d layers. The effective implementation uses channel ablation:
 
+- density CAM: phase channel zeroed;
+- phase CAM: density channel zeroed.
 
-![Prediction](img/predictionvstrue.png)
+Samples are selected approximately uniformly across normalized `(n2, Isat, alpha)` label space.
 
+Interpretability requires an already-trained matching `.pth` model and an already-loaded simulation dataset.
 
-Finally, if you provide a field of your experimental data it will compute what n2, Isat and \alpha are and will be able to propagate using [NLSE](https://github.com/Quantum-Optics-LKB/NLSE) to visually compare with your results.
+See [docs/USAGE.md](docs/USAGE.md) for configuration.
 
-![Results](data/prediction_n250_isat50_alpha50_power2.1.png)
+## Experimental inference
 
-## Program flowchart
+`engine/use.py` loads a complex experimental `.npy` field, resizes it to `resolution_training`, constructs normalized density and phase channels, loads `standardize.txt` plus the trained `.pth` weights, and returns physical `n2`, `Isat`, and `alpha` values.
 
-Here is a flowchart of the general structure of the code.
+If `plot_generate_compare=True`, the inferred parameters are fed back into the NLSE simulator and a comparison image is written under `saving_path`.
+
+## Known implementation caveats
+
+The September 2026 code contains several issues worth fixing before relying on a fresh end-to-end run:
+
+1. **Training loop debug break** — `engine/training.py::network_training` has an unconditional `break` at the beginning of the epoch loop, so the intended optimizer loop is currently skipped.
+2. **Interpretability module duplicated** — `engine/interpretability.py` contains two complete implementations in the same file. Python uses the later definitions; the earlier implementation is effectively shadowed.
+3. **Interpretability defaults in `manager`** — several defaults are Python type objects (`bool`, `list`, `int`, etc.) rather than usable default values. Pass all interpretability arguments explicitly.
+4. **Test-path trailing call** — `engine/test.py::test_model` makes an additional call to `save_predictions_to_csv(true_values, predictions, path)` using undefined names after `plot_prediction`. The plotting utility already saves `predictions.csv`.
+5. **Dataset is written twice** — generation currently saves both `.npz` and `.raw/.json`, while the manager reloads only the raw representation.
+6. **Interpretability output extension** — the current code constructs a PNG path and then immediately replaces it with an SVG path, so the effective per-sample interpretability output is SVG.
+7. **Old noise description** — `experiment_noise` still exists in `utils.py`, but `generate.py` no longer applies it to the Gaussian beam.
+
+These are implementation issues rather than conceptual requirements of the method. They are documented so that results are reproducible against the actual repository state.
+
+## Program flow
 
 ```mermaid
-graph TD
-    A[parameters.py] --> B[parameter_manager.py]
-    B --> sub1
-    sub1 --> C{generate}
-    C --> |True| sub2
-    C --> |False| D[Loads the model: It implies the model has already been created and trained and matches the naming convention]
-    sub2 --> E{create_visual}
-    D --> E
-    E --> |True| sub10
-    E --> |False| F{training}
-    sub10 --> F
-    F --> |True| sub3
-    sub3 --> sub4
-    sub4 --> sub5
-    F --> |False| G[Loads the model: It implies the model has already been created and trained and matches the naming convention]
-    sub5 --> H{use}
-    G --> H
-    H--> |True| sub6
+flowchart TD
+    A[parameters.py] --> B[parameter_manager.manager]
+    S[sandbox_parameters.py] --> SB[nlse_sandbox.sandbox]
 
-    subgraph sub1[EngineDataset class]
-        A1[engine_dataset.py] --> A2(Initialize the dataset)
-        A2 --> A3(Generate the labels)
-    end
+    B --> C[EngineDataset]
+    C --> D{generate?}
+    D -->|yes| E[generate.simulation / NLSE]
+    D -->|no, data required| F[load_field_raw]
 
-    subgraph sub2[Generate data]
-        B1[generate.py] --> B2(simulation)
-        B2 --> B3[utils.py]
-        B3 --> B4(experiment_noise)
-        B4 --> B5(NLSE)
-    end
-    
-    subgraph sub3[Prepare training]
-        C1[training_manager.py] --> C2(prepare_training)
-        C2 --> C3[Create NetworkDatasets]
-        C3 --> sub7
-    end
+    E --> G[normalize density + phase]
+    F --> G
+    G --> H[shuffle fields + labels]
 
-    subgraph sub4[Manage training]
-        D1[training_manager.py] --> D2(manage_training)
-        D2 --> D3[training.py] 
-        D3 --> D4(network_training)
-        D4 --> D5[utils.py]
-        D5 --> D6[loss_plot]
-    end
+    H --> I{training?}
+    I -->|yes| J[prepare_training]
+    J --> K[NetworkDataset train/val/test]
+    K --> L[manage_training]
+    L --> M[model weights + checkpoint + diagnostics]
 
-    subgraph sub5[Test training]
-        E1[Test.py]
-        E1 --> E2(exam)
-        E2 --> E3(test_model)
-        E3 --> E4(count_parameters)
-    end
-    subgraph sub6[Use the model]
-        F1[use.py]
-        F1 --> F4[utils.py]
-        F4 --> F2{plot_results}
-        F2 --> |True| F3[Creates a comparison plot between your experimental data and the parameters the model computed]
-    end
+    H --> N{interpretability?}
+    N -->|yes| O[saliency + channel-ablated depth Grad-CAM]
 
-    subgraph sub7[NetworkDataset class]
-        G1[network_dataset.py] --> G2(Initialize the dataset for training)
-    end
-
-    subgraph sub10[Visualize training data]
-        H1[utils.py]
-        H1 --> H2(plot_generated_set)
-    end
+    B --> P{use?}
+    P -->|yes| Q[load experimental complex field]
+    Q --> R[model inference]
+    R --> T[n2, Isat, alpha]
+    T --> U{plot_generate_compare?}
+    U -->|yes| V[NLSE re-simulation + comparison plot]
 ```
 
-# Future improvements:
+## Further documentation
 
-- Implement different propagators (CNLSE)
-- Add more parameters
-- Add ability to use pretrained models to quicker convergence
+- [Architecture and implementation](docs/ARCHITECTURE.md)
+- [Usage, parameters, files, and workflows](docs/USAGE.md)
+- [NLSE simulator](https://github.com/Quantum-Optics-LKB/NLSE)
+- [ConvNeXt](https://arxiv.org/abs/2201.03545)
+- [Project preprint](https://arxiv.org/abs/2509.18479)
+
+## Future directions
+
+Natural extensions include additional NLSE/CNLSE propagators, additional inferred physical parameters, transfer learning/pretraining, more explicit uncertainty calibration, and a cleaner experiment-artifact/versioning workflow.
