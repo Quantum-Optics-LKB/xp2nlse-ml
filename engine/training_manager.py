@@ -4,6 +4,7 @@
 
 import os
 import torch
+import math
 import numpy as np
 import torch.nn as nn
 from engine.test import exam
@@ -31,44 +32,70 @@ class MultivariateNLLLoss(nn.Module):
     construct_covariance_matrix(cov_params):
         Constructs the covariance matrix from the predicted covariance parameters using Cholesky decomposition.
     """
-    def __init__(self):
-        super(MultivariateNLLLoss, self).__init__()
+    # def __init__(self):
+    #     super(MultivariateNLLLoss, self).__init__()
+    #     self.eps = eps
+    #     self._log2pi = math.log(2.0 * math.pi)
+    def __init__(self, eps=1e-6):
+        super().__init__()
+        self.eps = eps
+        self._log2pi = math.log(2.0 * math.pi)
+
+
+    # def forward(self, mean_predictions, cov_params, true_values):
+    #     """
+    #     Computes the negative log-likelihood (NLL) for multivariate Gaussian predictions.
+
+    #     Parameters:
+    #     -----------
+    #     mean_predictions : torch.Tensor
+    #         Predicted mean values, shape [batch_size, 3].
+    #     cov_params : torch.Tensor
+    #         Covariance parameters for constructing the covariance matrix, shape [batch_size, 6].
+    #     true_values : torch.Tensor
+    #         True target values, shape [batch_size, 3].
+
+    #     Returns:
+    #     --------
+    #     torch.Tensor
+    #         The mean NLL loss over the batch.
+    #     """
+    #     # Construct the covariance matrix from the predicted parameters
+    #     cov_matrix = self.construct_covariance_matrix(cov_params)
+    #     cov_matrix = cov_matrix 
+        
+    #     # Compute the inverse and determinant of the covariance matrix for each batch
+    #     cov_inv = torch.inverse(cov_matrix)
+    #     cov_det = torch.det(cov_matrix)
+        
+    #     # Calculate the Mahalanobis distance
+    #     diff = (true_values - mean_predictions).unsqueeze(-1)  # Shape [batch_size, 3, 1]
+    #     mahalanobis_term = torch.matmul(torch.matmul(diff.transpose(1, 2), cov_inv), diff)  # Shape [batch_size, 1, 1]
+        
+    #     # Log-likelihood (negative log of multivariate Gaussian)
+    #     nll = 0.5 * (mahalanobis_term.squeeze() + torch.log(cov_det) + 3 * torch.log(torch.tensor(2 * torch.pi)))
+        
+    #     return torch.mean(nll)  # Return the average loss over the batch
 
     def forward(self, mean_predictions, cov_params, true_values):
-        """
-        Computes the negative log-likelihood (NLL) for multivariate Gaussian predictions.
+        # Build Cholesky factor L (lower-triangular)
+        L = self.construct_cholesky(cov_params)  # [B,3,3]
 
-        Parameters:
-        -----------
-        mean_predictions : torch.Tensor
-            Predicted mean values, shape [batch_size, 3].
-        cov_params : torch.Tensor
-            Covariance parameters for constructing the covariance matrix, shape [batch_size, 6].
-        true_values : torch.Tensor
-            True target values, shape [batch_size, 3].
+        diff = (true_values - mean_predictions).unsqueeze(-1)  # [B,3,1]
 
-        Returns:
-        --------
-        torch.Tensor
-            The mean NLL loss over the batch.
-        """
-        # Construct the covariance matrix from the predicted parameters
-        cov_matrix = self.construct_covariance_matrix(cov_params)
-        cov_matrix = cov_matrix 
-        
-        # Compute the inverse and determinant of the covariance matrix for each batch
-        cov_inv = torch.inverse(cov_matrix)
-        cov_det = torch.det(cov_matrix)
-        
-        # Calculate the Mahalanobis distance
-        diff = (true_values - mean_predictions).unsqueeze(-1)  # Shape [batch_size, 3, 1]
-        mahalanobis_term = torch.matmul(torch.matmul(diff.transpose(1, 2), cov_inv), diff)  # Shape [batch_size, 1, 1]
-        
-        # Log-likelihood (negative log of multivariate Gaussian)
-        nll = 0.5 * (mahalanobis_term.squeeze() + torch.log(cov_det) + 3 * torch.log(torch.tensor(2 * torch.pi)))
-        
-        return torch.mean(nll)  # Return the average loss over the batch
+        # Solve L * y = diff  -> y = L^{-1} diff
+        # torch.linalg.solve_triangular is stable and fast
+        y = torch.linalg.solve_triangular(L, diff, upper=False)  # [B,3,1]
+        mahal = (y.squeeze(-1) ** 2).sum(dim=1)  # [B]
 
+        # logdet(Sigma) = 2 * sum(log(diag(L)))
+        diag = torch.diagonal(L, dim1=1, dim2=2)  # [B,3]
+        logdet = 2.0 * torch.log(diag + self.eps).sum(dim=1)     # [B]
+
+        d = mean_predictions.shape[1]  # 3
+        nll = 0.5 * (mahal + logdet + d * self._log2pi)  + 5000 * F.smooth_l1_loss(mean_predictions[:,0], true_values[:,0])# [B]
+        return nll.mean()
+    
     @staticmethod
     def construct_covariance_matrix(cov_params):
         """
@@ -108,6 +135,34 @@ class MultivariateNLLLoss(nn.Module):
         cov_matrix = torch.matmul(L, L.transpose(1, 2))
         
         return cov_matrix
+
+    @staticmethod
+    def construct_cholesky(cov_params, var_floor=1e-4, rho_scale=0.99):
+        B = cov_params.size(0)
+        device = cov_params.device
+        dtype = cov_params.dtype
+
+        # stds
+        s1 = torch.sqrt(F.softplus(cov_params[:, 0]) + var_floor)  # n2
+        s2 = torch.sqrt(F.softplus(cov_params[:, 1]) + var_floor)  # Isat
+        s3 = torch.sqrt(F.softplus(cov_params[:, 2]) + var_floor)  # alpha
+
+        # bounded "correlations"
+        r12 = rho_scale * torch.tanh(cov_params[:, 3])
+        r13 = rho_scale * torch.tanh(cov_params[:, 4])
+        r23 = rho_scale * torch.tanh(cov_params[:, 5])
+
+        L = torch.zeros(B, 3, 3, device=device, dtype=dtype)
+        L[:, 0, 0] = s1
+        L[:, 1, 1] = s2
+        L[:, 2, 2] = s3
+
+        # scale off-diagonals to variance scale (prevents wild condition numbers)
+        L[:, 1, 0] = r12 * s2
+        L[:, 2, 0] = r13 * s3
+        L[:, 2, 1] = r23 * s3
+
+        return L
     
 def prepare_training(
         dataset: EngineDataset,
@@ -138,6 +193,7 @@ def prepare_training(
     # Split the dataset indices into training, validation, and test subsets
     indices = np.arange(len(dataset.n2_labels))
     train_index, validation_index = data_split(indices, 0.8, 0.1, 0.1)
+
 
     # Partition the dataset fields into training, validation, and test sets
     training_field = dataset.field[:train_index,:,:,:]
@@ -209,7 +265,7 @@ def prepare_training(
     optimizer = torch.optim.AdamW(model.parameters(), lr=dataset.learning_rate, weight_decay=weight_decay)
 
     # Set up a learning rate scheduler to reduce the learning rate on plateau
-    scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=5, )
+    scheduler = ReduceLROnPlateau(optimizer, factor=0.01, patience=50, )
 
     # Transfer the model to the specified device (e.g., GPU or CPU)
     model = model.to(device)
@@ -265,20 +321,20 @@ def manage_training(
         loss_list = checkpoint['loss_list'] # Retrieve training loss history
         val_loss_list = checkpoint['val_loss_list'] # Retrieve validation loss history
         loss_threshold = checkpoint["loss_threshold"] # Retrieve loss threshold
-        new_learning_rate = checkpoint["learning_rate"] # Retrieve learning rate
+        new_learning_rate = checkpoint["learning_rate"][0] # Retrieve learning rate
         dataset.accumulator = checkpoint["accumulator"] # Retrieve accumulator value
 
         # Reinitialize optimizer and scheduler
         weight_decay =  1e-5
         optimizer = torch.optim.AdamW(model.parameters(), lr=new_learning_rate, weight_decay=weight_decay)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.01, patience=10)
     except FileNotFoundError:
 
         # Initialize new training if no checkpoint is found
         start_epoch = 0
         loss_list = []
         val_loss_list = []
-        loss_threshold = 0.05
+        loss_threshold = 0.001
     
     # Begin training
     print("---- MODEL TRAINING ----")
@@ -331,8 +387,9 @@ def manage_training(
     # Plot training and validation loss
     plot_loss(loss_list,val_loss_list, new_path, dataset.resolution_training, dataset.number_of_n2, dataset.number_of_isat, dataset.number_of_alpha)
 
-    # Evaluate the model on the test set
+    # Evaluate the model on the test set    
     exam(model_settings, test_set, dataset, f)
+    
 
     # Close the log file
     f.close()   

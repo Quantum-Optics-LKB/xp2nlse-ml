@@ -125,14 +125,13 @@ def network_training(
     
     for epoch in progress_bar:  
         running_loss = 0.0
+        break
         model.train()
         
         # Iterate through training batches
         for i, (images, n2_labels, isat_labels, alpha_labels) in enumerate(training_loader, 0):      
             
             images = images.to(device = device)
-            images[:,0, :, :] = augment_density(images[:,0, :, :]).to(device = device)
-            images[:,1, :, :] = augment_phase(images[:,1, :, :]).to(device = device)
 
             # Move labels to device
             n2_labels = n2_labels.to(device = device)
@@ -219,8 +218,8 @@ def network_training(
                     lr=current_lr[0] / batch_reduction_factor, 
                     weight_decay=weight_decay
                     )
-                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5)
-                
+                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10)
+
                 loss_threshold *= 0.9
                 
                 file.write(f"Batch size reduced to {int(dataset.batch_size*dataset.accumulator)}")

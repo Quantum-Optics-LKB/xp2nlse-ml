@@ -7,8 +7,11 @@ import numpy as np
 from engine.use import get_parameters
 from engine.generate import simulation
 from engine.engine_dataset import EngineDataset
-from engine.utils import plot_generated_set, set_seed, shuffle_dataset
 from engine.training_manager import manage_training, prepare_training
+from engine.utils import plot_generated_set, set_seed, shuffle_dataset, load_field_raw
+from engine.interpretability import run_interpretability_from_dataset, InterpretabilityConfig
+
+
 set_seed(10)
 
 def manager(
@@ -28,6 +31,16 @@ def manager(
         exp_image_path: str,
         resolution_simulation: int,
         window_simulation: float,
+
+
+        interpretability=bool,
+        interp_methods=list,
+        interp_num_samples=int,
+        interp_output_subdir=str,
+        interp_overlay_alpha=float,
+        interp_dpi=int,
+
+
         device_number: int = 0, 
         resolution_training: int = 224,
         non_locality: float = 0,
@@ -35,7 +48,7 @@ def manager(
         learning_rate: float = 1e-4, 
         batch_size: int = 128, 
         num_epochs: int = 200, 
-        accumulator: int = 32
+        accumulator: int = 32,
         ) -> None:
     """
     Manages dataset generation, training, visualization, and usage processes.
@@ -111,8 +124,10 @@ def manager(
                 simulation(dataset)
         else:
             # Load previously generated field data from file
-            path = f'{saving_path}/Es_w{resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{input_power:.2f}.npy'
-            dataset.field = np.load(path)
+            path = f'{saving_path}/Es_w{resolution_training}'
+            path += f'_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}'
+            path += f'_power{input_power:.2f}'
+            dataset.field = load_field_raw(path)
         
         if create_visual:
             # Create visualizations for the generated data
@@ -136,15 +151,53 @@ def manager(
             print("---- TRAINING ----")
             training_set, validation_set, test_set, model_settings = prepare_training(dataset)
             manage_training(dataset, training_set, validation_set, test_set, model_settings)
+
+        if interpretability:
+
+            path = f'{saving_path}/Es_w{resolution_training}'
+            path += f'_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}'
+            path += f'_power{input_power:.2f}'
+
+            cfg = InterpretabilityConfig(
+                num_samples=interp_num_samples,
+                out_dir=f"{path}/{interp_output_subdir}",
+                methods=tuple(interp_methods),
+                sample_split="test",
+                dpi=interp_dpi,
+                verbose=True,
+            )
+            run_interpretability_from_dataset(dataset, cfg)
     
     # If not generating or training but visualizations are requested
     if not generate and not training and create_visual:
         # Load the field data from file and generate visualizations
         path = f'{saving_path}/Es_w{resolution_training}'
         path += f'_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}'
-        path += f'_power{input_power:.2f}.npy'
-        dataset.field = np.load(path)
+        path += f'_power{input_power:.2f}'
+
+        dataset.field = load_field_raw(path)
+
         plot_generated_set(dataset)
+
+    if not generate and not training and interpretability:
+        path = f'{saving_path}/Es_w{resolution_training}'
+        path += f'_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}'
+        path += f'_power{input_power:.2f}'
+
+        dataset.field = load_field_raw(path)
+
+        cfg = InterpretabilityConfig(
+            num_samples=interp_num_samples,
+            out_dir=f"{path}/{interp_output_subdir}",
+            methods=tuple(interp_methods),
+            sample_split="test",
+            dpi=interp_dpi,
+            verbose=True,
+        )
+        run_interpretability_from_dataset(dataset, cfg)
+
+
+
 
     # If using the data for parameter computation
     if use:

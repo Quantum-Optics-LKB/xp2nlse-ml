@@ -51,7 +51,8 @@ def exam(
 
     print("---- MODEL TESTING ----")
     # Perform model testing
-    test_model(model_settings, test_loader, dataset, file)
+    # test_model(model_settings, test_loader, dataset, file)
+    test_model(model_settings, test_loader, file)
 
 
 def test_model(
@@ -131,6 +132,9 @@ def test_model(
 
     # Visualize true vs predicted values  
     plot_prediction(true_labels, predictions, new_path)
+    save_predictions_to_csv(true_values, predictions, path)
+
+
 
 def count_parameters(
         model: torch.nn.Module,

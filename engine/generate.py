@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @author: Louis Rossignol
-
+import os
 import cupy as cp
 import numpy as np
 from tqdm import tqdm
@@ -9,7 +9,7 @@ from NLSE import NLSE
 from cupyx.scipy.ndimage import zoom
 from scipy.constants import c, epsilon_0
 from engine.engine_dataset import EngineDataset
-from engine.utils import experiment_noise, set_seed
+from engine.utils import experiment_noise, set_seed, save_field_raw
 set_seed(10)
 
 def simulation(
@@ -55,10 +55,6 @@ def simulation(
     
     # Initialize Gaussian beam profile
     beam = np.ones((dataset.number_of_isat, dataset.resolution_simulation, dataset.resolution_simulation), dtype=np.complex64)*np.exp(-(XX**2 + YY**2) / dataset.waist**2)
-    
-    # Add experimental noise to the beam
-    poisson_noise_lam, normal_noise_sigma = 0.1 , 0.01
-    beam = experiment_noise(beam, poisson_noise_lam, normal_noise_sigma)
 
     # Iterate over alpha and n2 values to simulate the beam propagation
     for alpha_index, alpha_value in tqdm(enumerate(dataset.alpha_values),desc=f"NLSE", total=len(dataset.alpha_values), unit="alpha"):
@@ -98,4 +94,13 @@ def simulation(
     # Save the dataset field to the specified path
     if dataset.saving_path != "":
       path = f'{dataset.saving_path}/Es_w{dataset.resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}'
-      np.save(path, dataset.field)
+      np.savez(path + '.npz', field=dataset.field)
+    
+
+    # Save the dataset field to the specified path
+    if dataset.saving_path != "":
+        path = f'{dataset.saving_path}/Es_w{dataset.resolution_training}_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_power{dataset.input_power:.2f}'
+        save_field_raw(path, dataset.field)
+
+
+      

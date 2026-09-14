@@ -3,6 +3,7 @@
 # @author: Louis Rossignol
 
 import os
+import json
 import torch
 import random
 import numpy as np
@@ -12,6 +13,49 @@ import kornia.augmentation as K
 from matplotlib import pyplot as plt
 from engine.engine_dataset import EngineDataset
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from sklearn.metrics import r2_score
+from sklearn.linear_model import LinearRegression
+
+def load_field_raw(base_path: str) -> np.ndarray:
+    meta = json.load(open(base_path + ".json"))
+    arr = np.memmap(
+        base_path + ".raw",
+        dtype=np.dtype(meta["dtype"]),
+        mode="r",
+        shape=tuple(meta["shape"]),
+        order=meta.get("order", "C"),
+    )
+    return np.asarray(arr, copy=True)
+
+def save_field_raw(base_path: str, arr: np.ndarray, chunk_bytes: int = 16 * 1024 * 1024) -> None:
+    arr = np.ascontiguousarray(arr)  # stable contiguous buffer
+    raw_path  = base_path + ".raw"
+    meta_path = base_path + ".json"
+    tmp_raw   = raw_path  + f".{os.getpid()}.tmp"
+    tmp_meta  = meta_path + f".{os.getpid()}.tmp"
+
+    mv = memoryview(arr).cast("B")
+
+    with open(tmp_raw, "wb") as f:
+        off = 0
+        while off < len(mv):
+            # IMPORTANT: force bytes (avoid zero-copy buffer write that is EFAULTing)
+            chunk = mv[off: off + chunk_bytes].tobytes()
+            n = f.write(chunk)
+            if n == 0:
+                raise OSError("write returned 0 bytes")
+            off += n
+        f.flush()
+        os.fsync(f.fileno())
+
+    meta = {"dtype": str(arr.dtype), "shape": arr.shape, "order": "C"}
+    with open(tmp_meta, "w") as g:
+        json.dump(meta, g)
+
+    os.replace(tmp_raw, raw_path)
+    os.replace(tmp_meta, meta_path)
+
 
 class CircularFilterAugmentation(nn.Module):
     """
@@ -344,21 +388,71 @@ def plot_loss(
     --------
     None
         Saves the plot as a PNG file in the specified path.
+        Saves the data as a CSV file in the specified path.
     """
+
+    # --- Ensure output directory exists ---
+    os.makedirs(path, exist_ok=True)
+
+    # --- Plot ---
     fig, ax = plt.subplots(figsize=(10, 6))
 
     plt.rcParams['font.family'] = 'DejaVu Serif'
     plt.rcParams['font.size'] = 12
 
-    ax.plot(y_train, label="Training Loss", marker='^', linestyle='-', color='blue', mfc='lightblue', mec='indigo', markersize=10, mew=2)
-    ax.plot(y_val, label="Validation Loss", marker='^', linestyle='-', color='orange', mfc='#FFEDA0', mec='darkorange', markersize=10, mew=2)
+    ax.plot(
+        y_train,
+        label="Training Loss",
+        marker='^',
+        linestyle='-',
+        color='blue',
+        mfc='lightblue',
+        mec='indigo',
+        markersize=10,
+        mew=2,
+    )
+
+    ax.plot(
+        y_val,
+        label="Validation Loss",
+        marker='^',
+        linestyle='-',
+        color='orange',
+        mfc='#FFEDA0',
+        mec='darkorange',
+        markersize=10,
+        mew=2,
+    )
+
     ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
     ax.set_xlabel("Epochs")
     ax.set_ylabel("Loss")
     fig.suptitle("Training and Validation Losses")
     ax.legend()
-    fig.savefig(f"{path}/losses_w{resolution}_n2{number_of_n2}_isat{number_of_isat}_alpha{number_of_alpha}.png")
+
+    # --- File base name ---
+    filename_base = (
+        f"losses_w{resolution}"
+        f"_n2{number_of_n2}"
+        f"_isat{number_of_isat}"
+        f"_alpha{number_of_alpha}"
+    )
+
+    # --- Save plot ---
+    fig.savefig(f"{path}/{filename_base}.png")
     plt.close()
+
+    # --- Save CSV data ---
+    epochs = np.arange(1, len(y_train) + 1)
+
+    df = pd.DataFrame({
+        "epoch": epochs,
+        "training_loss": y_train,
+        "validation_loss": y_val,
+    })
+
+    df.to_csv(f"{path}/{filename_base}.csv", index=False)
+    
 
 def plot_generated_set(
         dataset: EngineDataset
@@ -432,6 +526,8 @@ def plot_generated_set(
 
         plt.tight_layout()
         plt.savefig(f'{dataset.saving_path}/density_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_{alpha_value}_power{dataset.input_power:.2f}.png')
+        plt.savefig(f'{dataset.saving_path}/density_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_{alpha_value}_power{dataset.input_power:.2f}.svg')
+
         plt.close(fig_density) 
         
         # Plot phase channels
@@ -453,6 +549,8 @@ def plot_generated_set(
                 ax.axis('off')
 
         plt.savefig(f'{dataset.saving_path}/phase_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_{alpha_value}_power{dataset.input_power:.2f}.png')
+        plt.savefig(f'{dataset.saving_path}/phase_n2{dataset.number_of_n2}_isat{dataset.number_of_isat}_alpha{dataset.number_of_alpha}_{alpha_value}_power{dataset.input_power:.2f}.svg')
+
         plt.close(fig_phase)
 
 def plot_results(
@@ -611,6 +709,8 @@ def plot_prediction(true_values, predictions, path):
     units = [n2_u, isat_u, alpha_u]
     labels = ["n2", "isat", "alpha"]
 
+    save_predictions_to_csv(true_values, predictions, path)
+
     for i in range(3):
         plt.figure(figsize=(10, 10))
         plt.scatter(true_values[:, i], predictions[:, i], alpha=0.5)
@@ -619,3 +719,144 @@ def plot_prediction(true_values, predictions, path):
         plt.ylabel(f'Predicted {variables[i]} ({units[i]})')
         plt.title(f'Predicted vs True for {variables[i]}')
         plt.savefig(f"{path}/predictedvstrue_{labels[i]}.png")
+
+
+import pandas as pd
+
+def save_predictions_to_csv(true_values, predictions, path):
+    """
+    Save true and predicted values for n2, Isat, and alpha to a CSV file.
+
+    Parameters:
+    -----------
+    true_values : np.ndarray
+        Array of true parameter values, shape [num_samples, 3].
+    predictions : np.ndarray
+        Array of predicted parameter values, shape [num_samples, 3].
+    path : str
+        Path to save the CSV file.
+
+    Returns:
+    --------
+    None
+        Saves a CSV file with true and predicted values.
+    """
+    data = {
+        "True_n2": true_values[:, 0],
+        "Predicted_n2": predictions[:, 0],
+        "True_Isat": true_values[:, 1],
+        "Predicted_Isat": predictions[:, 1],
+        "True_alpha": true_values[:, 2],
+        "Predicted_alpha": predictions[:, 2]
+    }
+
+    df = pd.DataFrame(data)
+    csv_path = f"{path}/predictions.csv"
+    df.to_csv(csv_path, index=False)
+
+    plot_with_linear_shaded_regions(csv_path)
+    return csv_path
+
+def plot_with_linear_shaded_regions(file_path):
+    # Load the CSV file
+    data = pd.read_csv(file_path)
+    
+    plt.rcParams['font.family'] = 'DejaVu Serif'
+    plt.rcParams['font.size'] = 20
+
+    # Variable labels and units
+    n2_str = r"$n_2$"
+    n2_u = r"$m^2$/$W$"
+    isat_str = r"$I_{sat}$"
+    isat_u = r"$W$/$m^2$"
+    alpha_str = r"$\alpha$"
+    alpha_u = r"$m^{-1}$"
+    variables = [n2_str, isat_str, alpha_str]
+    true_cols = ["True_n2", "True_Isat", "True_alpha"]
+    pred_cols = ["Predicted_n2", "Predicted_Isat", "Predicted_alpha"]
+
+    fig, axes = plt.subplots(1, 3, figsize=(12, 6), sharey=True)
+    
+    for i in range(3):
+        true_values = data[true_cols[i]].values.reshape(-1, 1)  # Reshape for sklearn
+        predicted_values = data[pred_cols[i]].values
+
+        # Sort true values and predictions for envelope and trend calculation
+        sorted_indices = np.argsort(true_values[:, 0])
+        sorted_true = true_values[sorted_indices]
+        sorted_pred = predicted_values[sorted_indices]
+
+        # Calculate standard deviation and max-min bounds for each true value
+        unique_true_values = np.unique(sorted_true)
+        upper_std, lower_std, upper_max, lower_max = [], [], [], []
+
+        for utv in unique_true_values:
+            mask = (sorted_true[:, 0] == utv)
+            preds = sorted_pred[mask]
+            if len(preds) > 0:
+                std = preds.std()
+                mean = preds.mean()
+                upper_std.append(mean + std)
+                lower_std.append(mean - std)
+                upper_max.append(mean + 4 * std)
+                lower_max.append(mean - 4 * std)
+
+        upper_std = np.array(upper_std)
+        lower_std = np.array(lower_std)
+        upper_max = np.array(upper_max)
+        lower_max = np.array(lower_max)
+
+        # Fit a regression line to the data
+        reg_model = LinearRegression()
+        reg_model.fit(sorted_true, sorted_pred)
+        fitted_line = reg_model.predict(sorted_true)
+
+        # Calculate the R² score
+        r2 = r2_score(sorted_true, sorted_pred)
+
+        # Plot the linear shaded regions
+        axes[i].fill_between(
+            unique_true_values, lower_std, upper_std, color='royalblue', alpha=0.3, edgecolor='none'
+        )
+        axes[i].fill_between(
+            unique_true_values, lower_max, upper_max, color='cornflowerblue', alpha=0.3, edgecolor='none'
+        )
+
+        # Plot the fitted regression line
+        axes[i].scatter(unique_true_values, (upper_std + lower_std) / 2, edgecolor='darkblue',
+                        facecolor='none', linewidth=1.2, label='Fitted Line')
+
+        # Plot the expected y = x line
+        axes[i].plot(np.linspace(0, 1, 100), np.linspace(0, 1, 100), '--', color='royalblue')
+
+        # Set axis limits to [0, 1] for both axes
+        axes[i].set_xlim(0, 1)
+        axes[i].set_ylim(0, 1)
+
+        # Set ticks to only 0 and 1
+        axes[i].set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        axes[i].set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+
+        # Add axis labels and title
+        axes[i].set_xlabel('Expected')
+        axes[i].set_title(f'{variables[i]}')
+
+        if i == 0:
+            axes[i].set_ylabel('Estimated')
+        else:
+            # Remove ticks for the last two plots
+            axes[i].tick_params(left=False, labelleft=False)
+
+        # Add R^2 to the top left
+        axes[i].text(0.05, 0.95, f"$R^2$: {r2:.2f}",
+                     transform=axes[i].transAxes,
+                     fontsize=20,
+                     verticalalignment='top',
+                     horizontalalignment='left')
+
+        # axes[i].grid(linestyle='--', linewidth=0.5)
+
+    # Adjust layout
+    plt.tight_layout(w_pad=0.1)
+    plt.savefig("predictions_linear_interpolated.png")
+    plt.savefig("predictions_linear_interpolated.svg")

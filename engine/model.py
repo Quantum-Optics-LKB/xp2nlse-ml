@@ -86,7 +86,8 @@ class SubModel(nn.Module):
         super(SubModel, self).__init__()
         
         # Load pre-trained ConvNeXt model and modify it for two-channel input
-        self.net = models.convnext_tiny(weights=ConvNeXt_Tiny_Weights.DEFAULT)
+        self.net = models.convnext_tiny(weights=None)
+
         self.net.features[0][0] = nn.Conv2d(2, self.net.features[0][0].out_channels, kernel_size=4, stride=4)
         self.net.classifier = nn.Identity()  # Remove the final classification layer
         
